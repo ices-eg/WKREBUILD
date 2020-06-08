@@ -1,0 +1,28 @@
+EqSim analysis based on output from WK17 assessment 
+**************************************************
+Biology years 2006 2015 
+Selection years 2006 2015 
+Mean SSB 2201415 
+Mean FBar 0.09829515 
+Fitting SRR...
+Breakpoint,Mean= 472797.9 1689331 
+Flim
+Fmsy
+FP05
+0.1203103 0.1478936 
+**********************************************
+Case 2.2, excluding 1982
+Blim (abs,rel) =  472797.9 0.21477 
+Bpa (abs,rel) =  661917 0.300678 
+Flim (abs,rel) =  0.1659168 1.687945 
+Fpa (abs,rel) =  0.118512 1.205675 
+MSYBtrigger (abs,rel) =  661917 0.300678 
+FMSY (abs,rel) =  0.1203103 1.22397 
+FP05 (abs,rel) =  0.1478936 1.504587 
+FMSY (abs,rel) =  0.118512 1.205675 
+Revised 2018 advice F/Catch (WK17 settings)=  0.1464723 172561 
+Revised 2019 advice F/Catch (WK17 settings)=  0.118512 151203.1 
+**********************************************
+Fitting SRR, 1995 on
+Breakpoint,Mean= 472797.9 1494714 
+Flim calculation...

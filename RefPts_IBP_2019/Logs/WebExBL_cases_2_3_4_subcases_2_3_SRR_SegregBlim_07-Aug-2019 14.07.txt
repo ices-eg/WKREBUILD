@@ -1,0 +1,9 @@
+EqSim analysis based on output from WK17 assessment 
+**************************************************
+Biology years 2006 2015 
+Selection years 2006 2015 
+Mean SSB 2201415 
+Mean FBar 0.09829515 
+Fitting SRR...
+Breakpoint,Mean= 472797.9 1689331 
+Flim

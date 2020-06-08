@@ -1,0 +1,675 @@
+EqSim analysis based on output from WK17 assessment 
+**************************************************
+Biology years 2006 2015 
+Selection years 2006 2015 
+Mean SSB 2201415 
+Mean FBar 0.09829515 
+Case1.1 (all years, including 1982)
+Fitting SRR...
+Breakpoint,Mean= 1251849 2776542 
+Flim calculation...
+Initial Fmsy calculation...
+Precautionary check FP05...
+**********************************************
+Case 1.1, including 1982
+Blim (abs,rel) =  1251849 0.5686568 
+Bpa (abs,rel) =  1722457 0.782432 
+Flim (abs,rel) =  0.08669755 0.8820125 
+Fpa (abs,rel) =  0.06192682 0.630009 
+MSYBtrigger (abs,rel) =  1722457 0.782432 
+FMSY (abs,rel) =  0.072002 0.7325082 
+FP05 (abs,rel) =  0.05282051 0.5373664 
+FMSY (abs,rel) =  0.05282051 0.5373664 
+Revised 2018 advice F/Catch (WK17 settings)=  0.02508713 31502.9 
+Revised 2019 advice F/Catch (WK17 settings)=  0.0310991 46594.98 
+**********************************************
+Case1.2, all years, excluding 1982
+Fitting SRR...
+Breakpoint,Mean= 1251849 2542070 
+Flim calculation...
+Initial Fmsy calculation...
+Precautionary check FP05...
+**********************************************
+Case 1.2, excluding 1982
+Blim (abs,rel) =  1251849 0.5686568 
+Bpa (abs,rel) =  1722457 0.782432 
+Flim (abs,rel) =  0.07068208 0.71908 
+Fpa (abs,rel) =  0.0504872 0.5136286 
+MSYBtrigger (abs,rel) =  1722457 0.782432 
+FMSY (abs,rel) =  0.06249249 0.6357638 
+FP05 (abs,rel) =  0.04532051 0.4610656 
+FMSY (abs,rel) =  0.04532051 0.4610656 
+Revised 2018 advice F/Catch (WK17 settings)=  0.021525 27081.66 
+Revised 2019 advice F/Catch (WK17 settings)=  0.02679766 40398.74 
+**********************************************
+Case1.3, 1995 on
+Fitting SRR...
+Breakpoint,Mean= 1251849 2343917 
+Flim calculation...
+Initial Fmsy calculation...
+Precautionary check FP05...
+**********************************************
+Case 1.3, 1995 on
+Blim (abs,rel) =  1251849 0.939861 
+Bpa (abs,rel) =  1722457 1.293183 
+Flim (abs,rel) =  0.06194178 0.4795923 
+Fpa (abs,rel) =  0.04424413 0.342566 
+MSYBtrigger (abs,rel) =  1722457 1.293183 
+FMSY (abs,rel) =  0.05640641 0.436734 
+FP05 (abs,rel) =  0.03116201 0.2412759 
+FMSY (abs,rel) =  0.03116201 0.2412759 
+Revised 2018 advice F/Catch (WK17 settings)=  0.01480041 18687.45 
+Revised 2019 advice F/Catch (WK17 settings)=  0.01855168 28265.28 
+**********************************************
+Case2.1
+Fitting SRR...
+Breakpoint,Mean= 472797.9 1849070 
+Flim
+Fmsy
+FP05
+0.1332432 0.1627568 
+**********************************************
+Case 2.1, including 1982
+Blim (abs,rel) =  472797.9 0.21477 
+Bpa (abs,rel) =  661917 0.300678 
+Flim (abs,rel) =  0.1934184 1.967731 
+Fpa (abs,rel) =  0.138156 1.405522 
+MSYBtrigger (abs,rel) =  661917 0.300678 
+FMSY (abs,rel) =  0.1332432 1.355542 
+FP05 (abs,rel) =  0.1627568 1.655797 
+FMSY (abs,rel) =  0.1332432 1.355542 
+Revised 2018 advice F/Catch (WK17 settings)=  0.1646791 192192.7 
+Revised 2019 advice F/Catch (WK17 settings)=  0.1332432 165960.7 
+**********************************************
+Fitting SRR...
+Breakpoint,Mean= 472797.9 1689331 
+Flim
+Fmsy
+FP05
+0.1193594 0.1465319 
+**********************************************
+Case 2.2, excluding 1982
+Blim (abs,rel) =  472797.9 0.21477 
+Bpa (abs,rel) =  661917 0.300678 
+Flim (abs,rel) =  0.1642475 1.670962 
+Fpa (abs,rel) =  0.1173196 1.193544 
+MSYBtrigger (abs,rel) =  661917 0.300678 
+FMSY (abs,rel) =  0.1193594 1.214296 
+FP05 (abs,rel) =  0.1465319 1.490733 
+FMSY (abs,rel) =  0.1173196 1.193544 
+Revised 2018 advice F/Catch (WK17 settings)=  0.1449987 170954.7 
+Revised 2019 advice F/Catch (WK17 settings)=  0.1173196 150031 
+**********************************************
+Fitting SRR, 1995 on
+Breakpoint,Mean= 472797.9 1494714 
+Flim calculation...
+Initial Fmsy calculation...
+Precautionary check FP05...
+0.1047147 0.1210688 
+**********************************************
+Case 2.3, from 1995
+Blim (abs,rel) =  472797.9 0.3549662 
+Bpa (abs,rel) =  661917 0.4969527 
+Flim (abs,rel) =  0.1454897 1.126473 
+Fpa (abs,rel) =  0.1039212 0.8046238 
+MSYBtrigger (abs,rel) =  661917 0.4969527 
+FMSY (abs,rel) =  0.1047147 0.8107674 
+FP05 (abs,rel) =  0.1210688 0.937391 
+FMSY (abs,rel) =  0.1039212 0.8046238 
+Revised 2018 advice F/Catch (WK17 settings)=  0.1284392 152739.5 
+Revised 2019 advice F/Catch (WK17 settings)=  0.1039212 135890.1 
+**********************************************
+Case3.1
+Fitting SRR...
+Breakpoint,Mean= 661917 2588698 
+Flim calculation...
+Initial Fmsy calculation...
+FP05
+**********************************************
+Case 3.1, including 1982
+Blim (abs,rel) =  661917 0.300678 
+Bpa (abs,rel) =  910751.6 0.4137119 
+Flim (abs,rel) =  0.1754835 1.785272 
+Fpa (abs,rel) =  0.1253454 1.275194 
+MSYBtrigger (abs,rel) =  910751.6 0.4137119 
+FMSY (abs,rel) =  0.1330531 1.353608 
+FP05 (abs,rel) =  0.1317257 1.340104 
+FMSY (abs,rel) =  0.1253454 1.275194 
+Revised 2018 advice F/Catch (WK17 settings)=  0.1125914 135004.6 
+Revised 2019 advice F/Catch (WK17 settings)=  0.1253454 164509.7 
+**********************************************
+Fitting SRR, excluding 1982...
+Breakpoint,Mean= 661917 2365063 
+Flim calculation...
+Initial Fmsy calculation...
+Precautionary check Fp05...
+**********************************************
+Case 3.2, excluding 1982
+Blim (abs,rel) =  661917 0.300678 
+Bpa (abs,rel) =  910751.6 0.4137119 
+Flim (abs,rel) =  0.1505848 1.531966 
+Fpa (abs,rel) =  0.1075606 1.094261 
+MSYBtrigger (abs,rel) =  910751.6 0.4137119 
+FMSY (abs,rel) =  0.1195495 1.21623 
+FP05 (abs,rel) =  0.1223705 1.244929 
+FMSY (abs,rel) =  0.1075606 1.094261 
+Revised 2018 advice F/Catch (WK17 settings)=  0.09661622 116822 
+Revised 2019 advice F/Catch (WK17 settings)=  0.1075606 144621.5 
+**********************************************
+Fitting SRR, 1995 on...
+Breakpoint,Mean= 661917 2092600 
+Flim calculation...
+Initial Fmsy calculation...
+Precautionary check Fp05...
+**********************************************
+Case 3.3, 1995 on
+Blim (abs,rel) =  661917 0.4969527 
+Bpa (abs,rel) =  910751.6 0.6837722 
+Flim (abs,rel) =  0.1303823 1.009502 
+Fpa (abs,rel) =  0.09313023 0.721073 
+MSYBtrigger (abs,rel) =  910751.6 0.6837722 
+FMSY (abs,rel) =  0.1056657 0.8181302 
+FP05 (abs,rel) =  0.09822297 0.7605042 
+FMSY (abs,rel) =  0.09313023 0.721073 
+Revised 2018 advice F/Catch (WK17 settings)=  0.08365419 101839.8 
+Revised 2019 advice F/Catch (WK17 settings)=  0.09313023 127726.6 
+**********************************************
+Case4.1
+Fitting SRR, all data...
+Breakpoint,Mean= 894178.2 2625409 
+Flim calculation...
+Initial Fmsy calculation...
+Precautionary check FP05...
+**********************************************
+Case 4.1, including 1982
+Blim (abs,rel) =  894178.2 0.4061834 
+Bpa (abs,rel) =  1251849 0.5686568 
+Flim (abs,rel) =  0.1282186 1.304425 
+Fpa (abs,rel) =  0.09158472 0.9317318 
+MSYBtrigger (abs,rel) =  1251849 0.5686568 
+FMSY (abs,rel) =  0.1014815 1.032416 
+FP05 (abs,rel) =  0.0915436 0.9313135 
+FMSY (abs,rel) =  0.0915436 0.9313135 
+Revised 2018 advice F/Catch (WK17 settings)=  0.05982363 73749.65 
+Revised 2019 advice F/Catch (WK17 settings)=  0.07149534 101437.1 
+**********************************************
+Case 4.2
+Fitting SRR, excluding 1982...
+Breakpoint,Mean= 894178.2 2399627 
+Flim calculation...
+Initial Fmsy calculation...
+Precautionary check FP05...
+**********************************************
+Case 4.2, excluding 1982
+Blim (abs,rel) =  894178.2 0.4061834 
+Bpa (abs,rel) =  1251849 0.5686568 
+Flim (abs,rel) =  0.1062304 1.080729 
+Fpa (abs,rel) =  0.07587885 0.7719491 
+MSYBtrigger (abs,rel) =  1251849 0.5686568 
+FMSY (abs,rel) =  0.08721722 0.8872993 
+FP05 (abs,rel) =  0.08040929 0.8180393 
+FMSY (abs,rel) =  0.07587885 0.7719491 
+Revised 2018 advice F/Catch (WK17 settings)=  0.04958674 61462.29 
+Revised 2019 advice F/Catch (WK17 settings)=  0.05994414 86457.4 
+**********************************************
+Case 4.3
+Fitting SRR, 1995 on...
+Breakpoint,Mean= 894178.2 2140856 
+Flim calculation...
+Initial Fmsy calculation...
+Precautionary check FP05...
+**********************************************
+Case 4.3, 1995 on
+Blim (abs,rel) =  894178.2 0.6713293 
+Bpa (abs,rel) =  1251849 0.939861 
+Flim (abs,rel) =  0.0927221 0.717913 
+Fpa (abs,rel) =  0.07587885 0.5875019 
+MSYBtrigger (abs,rel) =  1251849 0.939861 
+FMSY (abs,rel) =  0.07770771 0.6016621 
+FP05 (abs,rel) =  0.06099946 0.4722963 
+FMSY (abs,rel) =  0.06099946 0.4722963 
+Revised 2018 advice F/Catch (WK17 settings)=  0.03986307 49665.82 
+Revised 2019 advice F/Catch (WK17 settings)=  0.0486544 71211.08 
+**********************************************
+EqSim analysis based on output from WG17 assessment 
+**************************************************
+Biology years 2007 2016 
+Selection years 2007 2016 
+Mean SSB 2265624 
+Mean FBar 0.09032086 
+Case1.1 (all years, including 1982)
+Fitting SRR...
+Breakpoint,Mean= 1317591 2908212 
+Flim calculation...
+Initial Fmsy calculation...
+Precautionary check FP05...
+**********************************************
+Case 1.1, including 1982
+Blim (abs,rel) =  1317591 0.5815578 
+Bpa (abs,rel) =  1812913 0.8001829 
+Flim (abs,rel) =  0.08812798 0.9757213 
+Fpa (abs,rel) =  0.06294856 0.6969438 
+MSYBtrigger (abs,rel) =  1812913 0.8001829 
+FMSY (abs,rel) =  0.07295295 0.8077088 
+FP05 (abs,rel) =  0.0527002 0.5834776 
+FMSY (abs,rel) =  0.0527002 0.5834776 
+Revised 2018 advice F/Catch (WG17 settings)=  0.02378111 29883.97 
+**********************************************
+Case1.2, all years, excluding 1982
+Fitting SRR...
+Breakpoint,Mean= 1317591 2672187 
+Flim calculation...
+Initial Fmsy calculation...
+Precautionary check FP05...
+**********************************************
+Case 1.2, excluding 1982
+Blim (abs,rel) =  1317591 0.5815578 
+Bpa (abs,rel) =  1812913 0.8001829 
+Flim (abs,rel) =  0.06919018 0.7660487 
+Fpa (abs,rel) =  0.04942156 0.5471776 
+MSYBtrigger (abs,rel) =  1812913 0.8001829 
+FMSY (abs,rel) =  0.06116116 0.6771543 
+FP05 (abs,rel) =  0.04306897 0.4768441 
+FMSY (abs,rel) =  0.04306897 0.4768441 
+Revised 2018 advice F/Catch (WG17 settings)=  0.01943499 24479.49 
+**********************************************
+Case1.3, 1995 on
+Fitting SRR...
+Breakpoint,Mean= 1317591 2529292 
+Flim calculation...
+Initial Fmsy calculation...
+Precautionary check FP05...
+**********************************************
+Case 1.3, 1995 on
+Blim (abs,rel) =  1317591 0.9268485 
+Bpa (abs,rel) =  1812913 1.275279 
+Flim (abs,rel) =  0.06566045 0.5665392 
+Fpa (abs,rel) =  0.04690032 0.4046708 
+MSYBtrigger (abs,rel) =  1812913 1.275279 
+FMSY (abs,rel) =  0.05754755 0.4965385 
+FP05 (abs,rel) =  0.03430715 0.2960129 
+FMSY (abs,rel) =  0.03430715 0.2960129 
+Revised 2018 advice F/Catch (WG17 settings)=  0.01548119 19539.95 
+**********************************************
+Case2.1
+Fitting SRR...
+Breakpoint,Mean= 575157.9 1963247 
+Flim
+Fmsy
+FP05
+0.1147948 0.1373824 
+**********************************************
+Case 2.1, including 1982
+Blim (abs,rel) =  575157.9 0.253863 
+Bpa (abs,rel) =  805221.1 0.3554082 
+Flim (abs,rel) =  0.1655911 1.833365 
+Fpa (abs,rel) =  0.1182794 1.309547 
+MSYBtrigger (abs,rel) =  805221.1 0.3554082 
+FMSY (abs,rel) =  0.1147948 1.270967 
+FP05 (abs,rel) =  0.1373824 1.521049 
+FMSY (abs,rel) =  0.1147948 1.270967 
+Revised 2018 advice F/Catch (WG17 settings)=  0.1166283 139550.3 
+**********************************************
+Fitting SRR...
+Breakpoint,Mean= 575157.9 1800921 
+Flim
+Fmsy
+FP05
+0.1054755 0.1252238 
+**********************************************
+Case 2.2, excluding 1982
+Blim (abs,rel) =  575157.9 0.253863 
+Bpa (abs,rel) =  805221.1 0.3554082 
+Flim (abs,rel) =  0.1424026 1.57663 
+Fpa (abs,rel) =  0.1017161 1.126164 
+MSYBtrigger (abs,rel) =  805221.1 0.3554082 
+FMSY (abs,rel) =  0.1054755 1.167786 
+FP05 (abs,rel) =  0.1252238 1.386432 
+FMSY (abs,rel) =  0.1017161 1.126164 
+Revised 2018 advice F/Catch (WG17 settings)=  0.1033408 124512.7 
+**********************************************
+Fitting SRR, 1995 on
+Breakpoint,Mean= 575157.9 1651419 
+Flim calculation...
+Initial Fmsy calculation...
+Precautionary check FP05...
+0.09558559 0.103712 
+**********************************************
+Case 2.3, from 1995
+Blim (abs,rel) =  575157.9 0.4045901 
+Bpa (abs,rel) =  805221.1 0.5664261 
+Flim (abs,rel) =  0.128774 1.111103 
+Fpa (abs,rel) =  0.09198142 0.7936448 
+MSYBtrigger (abs,rel) =  805221.1 0.5664261 
+FMSY (abs,rel) =  0.09558559 0.8247428 
+FP05 (abs,rel) =  0.103712 0.8948602 
+FMSY (abs,rel) =  0.09198142 0.7936448 
+Revised 2018 advice F/Catch (WG17 settings)=  0.09345055 113181.3 
+**********************************************
+Case3.1
+Fitting SRR...
+Breakpoint,Mean= 805221.1 2748546 
+Flim calculation...
+Initial Fmsy calculation...
+FP05
+**********************************************
+Case 3.1, including 1982
+Blim (abs,rel) =  805221.1 0.3554082 
+Bpa (abs,rel) =  1107928 0.4890168 
+Flim (abs,rel) =  0.1517129 1.67971 
+Fpa (abs,rel) =  0.1083663 1.199793 
+MSYBtrigger (abs,rel) =  1107928 0.4890168 
+FMSY (abs,rel) =  0.1170771 1.296235 
+FP05 (abs,rel) =  0.1120711 1.240811 
+FMSY (abs,rel) =  0.1083663 1.199793 
+Revised 2018 advice F/Catch (WG17 settings)=  0.08001653 97597.81 
+**********************************************
+Fitting SRR, excluding 1982...
+Breakpoint,Mean= 805221.1 2521289 
+Flim calculation...
+Initial Fmsy calculation...
+Precautionary check Fp05...
+**********************************************
+Case 3.2, excluding 1982
+Blim (abs,rel) =  805221.1 0.3554082 
+Bpa (abs,rel) =  1107928 0.4890168 
+Flim (abs,rel) =  0.1280418 1.417633 
+Fpa (abs,rel) =  0.09145846 1.012595 
+MSYBtrigger (abs,rel) =  1107928 0.4890168 
+FMSY (abs,rel) =  0.1043343 1.155152 
+FP05 (abs,rel) =  0.1015361 1.124171 
+FMSY (abs,rel) =  0.09145846 1.012595 
+Revised 2018 advice F/Catch (WG17 settings)=  0.06753194 82914.09 
+**********************************************
+Fitting SRR, 1995 on...
+Breakpoint,Mean= 805221.1 2311987 
+Flim calculation...
+Initial Fmsy calculation...
+Precautionary check Fp05...
+**********************************************
+Case 3.3, 1995 on
+Blim (abs,rel) =  805221.1 0.5664261 
+Bpa (abs,rel) =  1107928 0.7793627 
+Flim (abs,rel) =  0.1157658 0.9988637 
+Fpa (abs,rel) =  0.08268983 0.7134741 
+MSYBtrigger (abs,rel) =  1107928 0.7793627 
+FMSY (abs,rel) =  0.09444444 0.8148966 
+FP05 (abs,rel) =  0.08322584 0.718099 
+FMSY (abs,rel) =  0.08268983 0.7134741 
+Revised 2018 advice F/Catch (WG17 settings)=  0.06105728 75221.62 
+**********************************************
+Case4.1
+Fitting SRR, all data...
+Breakpoint,Mean= 941136.5 2769280 
+Flim calculation...
+Initial Fmsy calculation...
+Precautionary check FP05...
+**********************************************
+Case 4.1, including 1982
+Blim (abs,rel) =  941136.5 0.4153984 
+Bpa (abs,rel) =  1317591 0.5815578 
+Flim (abs,rel) =  0.1270177 1.406294 
+Fpa (abs,rel) =  0.09072692 1.004496 
+MSYBtrigger (abs,rel) =  1317591 0.5815578 
+FMSY (abs,rel) =  0.1014815 1.123566 
+FP05 (abs,rel) =  0.09120744 1.009816 
+FMSY (abs,rel) =  0.09072692 1.004496 
+Revised 2018 advice F/Catch (WG17 settings)=  0.05633165 69573.27 
+**********************************************
+Case 4.2
+Fitting SRR, excluding 1982...
+Breakpoint,Mean= 941136.5 2540870 
+Flim calculation...
+Initial Fmsy calculation...
+Precautionary check FP05...
+**********************************************
+Case 4.2, excluding 1982
+Blim (abs,rel) =  941136.5 0.4153984 
+Bpa (abs,rel) =  1317591 0.5815578 
+Flim (abs,rel) =  0.1098294 1.215992 
+Fpa (abs,rel) =  0.07844959 0.8685656 
+MSYBtrigger (abs,rel) =  1317591 0.5815578 
+FMSY (abs,rel) =  0.08930931 0.9888005 
+FP05 (abs,rel) =  0.08388889 0.9287875 
+FMSY (abs,rel) =  0.07844959 0.8685656 
+Revised 2018 advice F/Catch (WG17 settings)=  0.04870875 60402.17 
+**********************************************
+Case 4.3
+Fitting SRR, 1995 on...
+Breakpoint,Mean= 941136.5 2339794 
+Flim calculation...
+Initial Fmsy calculation...
+Precautionary check FP05...
+**********************************************
+Case 4.3, 1995 on
+Blim (abs,rel) =  941136.5 0.6620346 
+Bpa (abs,rel) =  1317591 0.9268485 
+Flim (abs,rel) =  0.09620366 0.8300757 
+Fpa (abs,rel) =  0.07844959 0.676888 
+MSYBtrigger (abs,rel) =  1317591 0.9268485 
+FMSY (abs,rel) =  0.07903904 0.6819739 
+FP05 (abs,rel) =  0.06565737 0.5665126 
+FMSY (abs,rel) =  0.06565737 0.5665126 
+Revised 2018 advice F/Catch (WG17 settings)=  0.04076615 50766.21 
+**********************************************
+EqSim analysis based on output from WG18 assessment 
+**************************************************
+Biology years 2008 2017 
+Selection years 2008 2017 
+Mean SSB 2274957 
+Mean FBar 0.08608774 
+Case1.1 (all years, including 1982)
+Fitting SRR...
+Breakpoint,Mean= 1346656 2964499 
+Flim calculation...
+Initial Fmsy calculation...
+Precautionary check FP05...
+**********************************************
+Case 1.1, including 1982
+Blim (abs,rel) =  1346656 0.591948 
+Bpa (abs,rel) =  1852905 0.8144792 
+Flim (abs,rel) =  0.08625392 1.00193 
+Fpa (abs,rel) =  0.06160994 0.7156645 
+MSYBtrigger (abs,rel) =  1852905 0.8144792 
+FMSY (abs,rel) =  0.07257257 0.843007 
+FP05 (abs,rel) =  0.0540078 0.6273576 
+FMSY (abs,rel) =  0.0540078 0.6273576 
+Revised 2019 advice F/Catch (WG18 settings)=  0.02961016 44468.22 
+**********************************************
+Case1.2, all years, excluding 1982
+Fitting SRR...
+Breakpoint,Mean= 1346656 2731772 
+Flim calculation...
+Initial Fmsy calculation...
+Precautionary check FP05...
+**********************************************
+Case 1.2, excluding 1982
+Blim (abs,rel) =  1346656 0.591948 
+Bpa (abs,rel) =  1852905 0.8144792 
+Flim (abs,rel) =  0.06988824 0.8118257 
+Fpa (abs,rel) =  0.04992017 0.5798755 
+MSYBtrigger (abs,rel) =  1852905 0.8144792 
+FMSY (abs,rel) =  0.06192192 0.7192885 
+FP05 (abs,rel) =  0.0449325 0.5219385 
+FMSY (abs,rel) =  0.0449325 0.5219385 
+Revised 2019 advice F/Catch (WG18 settings)=  0.02476102 37455.58 
+**********************************************
+Case1.3, 1995 on
+Fitting SRR...
+Breakpoint,Mean= 1346656 2614130 
+Flim calculation...
+Initial Fmsy calculation...
+Precautionary check FP05...
+**********************************************
+Case 1.3, 1995 on
+Blim (abs,rel) =  1346656 0.9246723 
+Bpa (abs,rel) =  1852905 1.272285 
+Flim (abs,rel) =  0.06499771 0.5988608 
+Fpa (abs,rel) =  0.04642693 0.4277577 
+MSYBtrigger (abs,rel) =  1852905 1.272285 
+FMSY (abs,rel) =  0.05716717 0.5267135 
+FP05 (abs,rel) =  0.03446907 0.3175831 
+FMSY (abs,rel) =  0.03446907 0.3175831 
+Revised 2019 advice F/Catch (WG18 settings)=  0.01905962 29009.03 
+**********************************************
+Case2.1
+Fitting SRR...
+Breakpoint,Mean= 622865.2 2006295 
+Flim
+Fmsy
+FP05
+0.1106106 0.13107 
+**********************************************
+Case 2.1, including 1982
+Blim (abs,rel) =  622865.2 0.2737921 
+Bpa (abs,rel) =  872011.3 0.383309 
+Flim (abs,rel) =  0.1551522 1.802257 
+Fpa (abs,rel) =  0.110823 1.287326 
+MSYBtrigger (abs,rel) =  872011.3 0.383309 
+FMSY (abs,rel) =  0.1106106 1.284859 
+FP05 (abs,rel) =  0.13107 1.522516 
+FMSY (abs,rel) =  0.1106106 1.284859 
+Revised 2019 advice F/Catch (WG18 settings)=  0.1106106 145699.2 
+**********************************************
+Fitting SRR...
+Breakpoint,Mean= 622865.2 1845948 
+Flim
+Fmsy
+FP05
+0.09748749 0.1183624 
+**********************************************
+Case 2.2, excluding 1982
+Blim (abs,rel) =  622865.2 0.2737921 
+Bpa (abs,rel) =  872011.3 0.383309 
+Flim (abs,rel) =  0.1330299 1.545283 
+Fpa (abs,rel) =  0.09502136 1.103773 
+MSYBtrigger (abs,rel) =  872011.3 0.383309 
+FMSY (abs,rel) =  0.09748749 1.13242 
+FP05 (abs,rel) =  0.1183624 1.374904 
+FMSY (abs,rel) =  0.09502136 1.103773 
+Revised 2019 advice F/Catch (WG18 settings)=  0.09502136 127775 
+**********************************************
+Fitting SRR, 1995 on
+Breakpoint,Mean= 622865.2 1716050 
+Flim calculation...
+Initial Fmsy calculation...
+Precautionary check FP05...
+0.0914014 0.1005486 
+**********************************************
+Case 2.3, from 1995
+Blim (abs,rel) =  622865.2 0.4276862 
+Bpa (abs,rel) =  872011.3 0.5987607 
+Flim (abs,rel) =  0.121969 1.12377 
+Fpa (abs,rel) =  0.08712071 0.8026925 
+MSYBtrigger (abs,rel) =  872011.3 0.5987607 
+FMSY (abs,rel) =  0.0914014 0.842133 
+FP05 (abs,rel) =  0.1005486 0.9264116 
+FMSY (abs,rel) =  0.08712071 0.8026925 
+Revised 2019 advice F/Catch (WG18 settings)=  0.08712071 118803.8 
+**********************************************
+Case3.1
+Fitting SRR...
+Breakpoint,Mean= 872011.3 2808813 
+Flim calculation...
+Initial Fmsy calculation...
+FP05
+**********************************************
+Case 3.1, including 1982
+Blim (abs,rel) =  872011.3 0.383309 
+Bpa (abs,rel) =  1199827 0.5274064 
+Flim (abs,rel) =  0.1419475 1.64887 
+Fpa (abs,rel) =  0.1013911 1.177764 
+MSYBtrigger (abs,rel) =  1199827 0.5274064 
+FMSY (abs,rel) =  0.1111812 1.291487 
+FP05 (abs,rel) =  0.1034889 1.202133 
+FMSY (abs,rel) =  0.1013911 1.177764 
+Revised 2019 advice F/Catch (WG18 settings)=  0.0808642 111991.6 
+**********************************************
+Fitting SRR, excluding 1982...
+Breakpoint,Mean= 872011.3 2584327 
+Flim calculation...
+Initial Fmsy calculation...
+Precautionary check Fp05...
+**********************************************
+Case 3.2, excluding 1982
+Blim (abs,rel) =  872011.3 0.383309 
+Bpa (abs,rel) =  1199827 0.5274064 
+Flim (abs,rel) =  0.1202281 1.396577 
+Fpa (abs,rel) =  0.08587725 0.9975548 
+MSYBtrigger (abs,rel) =  1199827 0.5274064 
+FMSY (abs,rel) =  0.09843844 1.143466 
+FP05 (abs,rel) =  0.09369914 1.088414 
+FMSY (abs,rel) =  0.08587725 0.9975548 
+Revised 2019 advice F/Catch (WG18 settings)=  0.06942013 97900.9 
+**********************************************
+Fitting SRR, 1995 on...
+Breakpoint,Mean= 872011.3 2402470 
+Flim calculation...
+Initial Fmsy calculation...
+Precautionary check Fp05...
+**********************************************
+Case 3.3, 1995 on
+Blim (abs,rel) =  872011.3 0.5987607 
+Bpa (abs,rel) =  1199827 0.8238529 
+Flim (abs,rel) =  0.111146 1.024051 
+Fpa (abs,rel) =  0.07939 0.7314651 
+MSYBtrigger (abs,rel) =  1199827 0.8238529 
+FMSY (abs,rel) =  0.09102102 0.8386283 
+FP05 (abs,rel) =  0.08186083 0.7542303 
+FMSY (abs,rel) =  0.07939 0.7314651 
+Revised 2019 advice F/Catch (WG18 settings)=  0.06463447 91968.2 
+**********************************************
+Case4.1
+Fitting SRR, all data...
+Breakpoint,Mean= 961897.2 2822437 
+Flim calculation...
+Initial Fmsy calculation...
+Precautionary check FP05...
+**********************************************
+Case 4.1, including 1982
+Blim (abs,rel) =  961897.2 0.42282 
+Bpa (abs,rel) =  1346656 0.591948 
+Flim (abs,rel) =  0.1263746 1.467974 
+Fpa (abs,rel) =  0.09026756 1.048553 
+MSYBtrigger (abs,rel) =  1346656 0.591948 
+FMSY (abs,rel) =  0.1007207 1.169977 
+FP05 (abs,rel) =  0.09361408 1.087426 
+FMSY (abs,rel) =  0.09026756 1.048553 
+Revised 2019 advice F/Catch (WG18 settings)=  0.06576784 93894.08 
+**********************************************
+Case 4.2
+Fitting SRR, excluding 1982...
+Breakpoint,Mean= 961897.2 2597228 
+Flim calculation...
+Initial Fmsy calculation...
+Precautionary check FP05...
+**********************************************
+Case 4.2, excluding 1982
+Blim (abs,rel) =  961897.2 0.42282 
+Bpa (abs,rel) =  1346656 0.591948 
+Flim (abs,rel) =  0.1075865 1.249731 
+Fpa (abs,rel) =  0.0768475 0.8926648 
+MSYBtrigger (abs,rel) =  1346656 0.591948 
+FMSY (abs,rel) =  0.08854855 1.028585 
+FP05 (abs,rel) =  0.08458587 0.9825542 
+FMSY (abs,rel) =  0.0768475 0.8926648 
+Revised 2019 advice F/Catch (WG18 settings)=  0.05648482 81683.77 
+**********************************************
+Case 4.3
+Fitting SRR, 1995 on...
+Breakpoint,Mean= 961897.2 2420737 
+Flim calculation...
+Initial Fmsy calculation...
+Precautionary check FP05...
+**********************************************
+Case 4.3, 1995 on
+Blim (abs,rel) =  961897.2 0.6604802 
+Bpa (abs,rel) =  1346656 0.9246723 
+Flim (abs,rel) =  0.09858595 0.9083283 
+Fpa (abs,rel) =  0.0768475 0.7080396 
+MSYBtrigger (abs,rel) =  1346656 0.9246723 
+FMSY (abs,rel) =  0.08113113 0.7475071 
+FP05 (abs,rel) =  0.07021636 0.6469432 
+FMSY (abs,rel) =  0.07021636 0.6469432 
+Revised 2019 advice F/Catch (WG18 settings)=  0.05201784 75936.74 
+**********************************************
