@@ -1,0 +1,46 @@
+#operating models
+
+#operating model
+#implementation model
+#biology and fishery
+#initial numbers
+#SRR object, autocorrelation flag, min/max residuals (extreme trim)
+#Bio vector years (number and stochastic flag)
+#Sel vector years (number and stochastic flag)
+#observation model (NA here)
+
+#WGWIDE2018 update assessment, WKWIDE 2017 reference points
+OM1 <- list("code" = "OM1", 
+            "desc" = "WGWIDE18", 
+            "IM" = NA, 
+            "SRR" = "SRR.WG18.SegReg_Blim.exterm", "RecAR" = TRUE, maxRecRes = c(3,-3),
+            "BioYrs" = c(2015,2017), "BioConst" = FALSE, 
+            "SelYrs" = c(2015,2017), "SelConst" = FALSE,
+            "Obs" = NA,
+            refPts = list("Fpa" = 0.108, "Flim" = 0.151, "Fmsy" = 0.108, "Bpa" = 911587,
+                          "Blim" = 661917, "MSYBtrigger" = 911587, "Bloss" = 872011),
+            "pBlim" = 0.05)
+
+#WGWIDE2019 Update assessment, IBPWHM reference points, constant bio and selection
+OM2.1 <- list("code" = "OM2.1",
+            "desc" = "WGWIDE19, const bio,sel",
+            "IM" = NA,
+            "SRR" = "SRR.WG19.SegReg_Blim.exterm", "RecAR" = TRUE, maxRecRes = c(3,-3),
+            "BioYrs" = c(2008,2017), "BioConst" = TRUE, 
+            "SelYrs" = c(2008,2017), "SelConst" = TRUE,
+            "Obs" = NA,
+            refPts = list("Fpa" = 0.074, "Flim" = 0.103, "Fmsy" = 0.074, "Bpa" = 1168272,
+                          "Blim" = 834480, "MSYBtrigger" = 1168272, "Bloss" = 761613),
+            "pBlim" = 0.05)
+
+#WGWIDE2019 Update assessment, IBPWHM reference points, stochastic bio and selection
+OM2.2 <- list("code" = "OM2.2",
+            "desc" = "WGWIDE19",
+            "IM" = NA,
+            "SRR" = "SRR.WG19.SegReg_Blim.exterm", "RecAR" = TRUE, maxRecRes = c(3,-3),
+            "BioYrs" = c(2008,2017), "BioConst" = FALSE, 
+            "SelYrs" = c(2008,2017), "SelConst" = FALSE,
+            "Obs" = NA,
+            refPts = list("Fpa" = 0.074, "Flim" = 0.103, "Fmsy" = 0.074, "Bpa" = 1168272,
+                          "Blim" = 834480, "MSYBtrigger" = 1168272, "Bloss" = 761613),
+            "pBlim" = 0.05)
