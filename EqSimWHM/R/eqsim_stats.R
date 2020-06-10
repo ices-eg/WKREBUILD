@@ -63,8 +63,10 @@ fStatPercs <- function(stat, lStatPer, percs=c(0.01,0.025,0.05,0.10,0.25,0.5,0.7
           x["sd",names(lStatPer)[p]]   <- sd(stat[,y1,,,,ITS]@.Data, na.rm=T)
           x["mean",names(lStatPer)[p]] <- mean(stat[,y1,,,,ITS]@.Data, na.rm=T)
           x["CV",names(lStatPer)[p]] <- sd(stat[,y1,,,,ITS]@.Data, na.rm=T)/mean(stat[,y1,,,,ITS]@.Data, na.rm=T)
-          x["min",names(lStatPer)[p]]  <- min(stat[,y1,,,,ITS]@.Data, na.rm=T)
-          x["max",names(lStatPer)[p]]  <- max(stat[,y1,,,,ITS]@.Data, na.rm=T)
+          #x["min",names(lStatPer)[p]]  <- min(stat[,y1,,,,ITS]@.Data, na.rm=T)
+          if (any(!is.na(stat[,y1,,,,ITS]@.Data))){x["min",names(lStatPer)[p]] <- min(stat[,y1,,,,ITS]@.Data, na.rm=T)}else{x["min",names(lStatPer)[p]]<-NA}
+          #x["max",names(lStatPer)[p]]  <- max(stat[,y1,,,,ITS]@.Data, na.rm=T)
+          if (any(!is.na(stat[,y1,,,,ITS]@.Data))){x["max",names(lStatPer)[p]] <- max(stat[,y1,,,,ITS]@.Data, na.rm=T)}else{x["max",names(lStatPer)[p]]<-NA}
           x[2:(length(percs)+1),names(lStatPer)[p]]   <- quantile(stat[,y1,,,,ITS]@.Data,probs=percs,na.rm=T)
         } else {
           #x["var",names(lStatPer)[p]]  <- var(stat[,y12,,,,ITS]@.Data, na.rm=T)
@@ -78,8 +80,9 @@ fStatPercs <- function(stat, lStatPer, percs=c(0.01,0.025,0.05,0.10,0.25,0.5,0.7
           x["sd",names(lStatPer)[p]] <- sd(apply(stat[,y12,,,,ITS]@.Data,FUN='mean',6,na.rm=TRUE), na.rm=T)
           x["mean",names(lStatPer)[p]] <- mean(apply(stat[,y12,,,,ITS]@.Data,FUN='mean',6,na.rm=TRUE), na.rm=T)
           x["CV",names(lStatPer)[p]] <- sd(apply(stat[,y12,,,,ITS]@.Data,FUN='mean',6,na.rm=TRUE), na.rm=T)/mean(apply(stat[,y12,,,,ITS]@.Data,FUN='mean',6,na.rm=TRUE), na.rm=T)
-          x["min",names(lStatPer)[p]] <- min(apply(stat[,y12,,,,ITS]@.Data,FUN='mean',6,na.rm=TRUE), na.rm=T)
-          x["max",names(lStatPer)[p]] <- max(apply(stat[,y12,,,,ITS]@.Data,FUN='mean',6,na.rm=TRUE), na.rm=T)
+          if (any(!is.na(stat[,y12,,,,ITS]@.Data))){x["min",names(lStatPer)[p]] <- min(apply(stat[,y12,,,,ITS]@.Data,FUN='mean',6,na.rm=TRUE), na.rm=T)}else{x["min",names(lStatPer)[p]]<-NA}
+          #x["max",names(lStatPer)[p]] <- max(apply(stat[,y12,,,,ITS]@.Data,FUN='mean',6,na.rm=TRUE), na.rm=T)
+          if (any(!is.na(stat[,y12,,,,ITS]@.Data))){x["max",names(lStatPer)[p]] <- max(apply(stat[,y12,,,,ITS]@.Data,FUN='mean',6,na.rm=TRUE), na.rm=T)}else{x["max",names(lStatPer)[p]]<-NA}
           x[2:(length(percs)+1),names(lStatPer)[p]] <- quantile(apply(stat[,y12,,,,ITS]@.Data,FUN='mean',6,na.rm=TRUE),probs=percs,na.rm=TRUE)
         }
       }

@@ -1,7 +1,10 @@
-fPlotTraj <- function(sim, plot.dir, fileFormat="png", wth=7, hght=7, lStatPer){
+#fPlotTraj <- function(sim, plot.dir, fileFormat="png", wth=7, hght=7, lStatPer){
+fPlotTraj <- function(sim, plot.dir, lStatPer){
  
   require(gplots)
   require(scales)
+  require(officer)
+  require(devEMF)
   
   cols <- rich.colors(10)
   
@@ -63,10 +66,12 @@ fPlotTraj <- function(sim, plot.dir, fileFormat="png", wth=7, hght=7, lStatPer){
         ylims <- c(0,1.1*ceiling(max(max(worms,na.rm=TRUE),max(stats["95%",],na.rm=TRUE))))
       }
     
-      cat(file.path(plot.dir,runName,paste0(what,"_",runName,"_",fv.rep,".",fileFormat)),"\n")
+      #cat(file.path(plot.dir,runName,paste0(what,"_",runName,"_",fv.rep,".",fileFormat)),"\n")
+      #cat(what,runName,fv.rep,"\n")
       
-      Cairo(file = file.path(plot.dir,runName,paste0(what,"_",runName,"_",fv.rep,".",fileFormat)),
-            type=fileFormat, units="in", height=hght, width=2*wth, bg="white", dpi=96, pointsize=12)
+      emf(file = file.path(plot.dir,paste0(what,".emf")), width = 7, height = 7)
+      #Cairo(file = file.path(plot.dir,runName,paste0(what,"_",runName,"_",fv.rep,".",fileFormat)),
+      #      type=fileFormat, units="in", height=hght, width=2*wth, bg="white", dpi=96, pointsize=12)
     
       #setup the plot area
       plot(allYears, rep(0,length(allYears)), 
@@ -155,17 +160,41 @@ fPlotTraj <- function(sim, plot.dir, fileFormat="png", wth=7, hght=7, lStatPer){
       phi <- apply(dat2Plot[[what]], MARGIN=2, FUN = fGetLag1)
     
       if (sum(!is.nan(phi))>0) {
-        Cairo(file = file.path(plot.dir,runName,paste0(what,"_",runName,"_",fv.rep,".",fileFormat)),
-              type=fileFormat, units="in", height=hght, width=2*wth, bg="white", dpi=96, pointsize=12)
+        
+        
+        emf(file = file.path(plot.dir,paste0(what,".emf")), width = 7, height = 7)
+        #Cairo(file = file.path(plot.dir,runName,paste0(what,"_",runName,"_",fv.rep,".",fileFormat)),
+        #      type=fileFormat, units="in", height=hght, width=2*wth, bg="white", dpi=96, pointsize=12)
     
         hist(phi)
-      
         dev.off()
       }
       
     }
     
-  }
+    #create word doc
+    
+    #graphics files
+    gFiles <- list.files(path=file.path(plot.dir), pattern=".emf", full.names=TRUE)
+    
+    if (length(gFiles)>0){
+      op <- read_docx() 
+      for (fl in gFiles) {
+        op <- op %>%
+          body_add_img(src = fl, width = 7, height = 7) %>%
+          body_add_break()
+      }
+      
+      op <- op %>%
+      print(target = file.path(plot.dir,paste0(runName,"_Ftgt_",f,".docx")))
+      
+      cat(paste0(runName,"_Ftgt_",f,".docx"),"\n")
+      
+      sapply(gFiles,file.remove)
+      
+    }
+
+  } #end f loop
   
   return(1)
   

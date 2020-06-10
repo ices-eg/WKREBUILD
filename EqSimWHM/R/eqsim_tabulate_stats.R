@@ -80,7 +80,6 @@ fMakeTable <- function(dfStats,q,s,om,mp,Title="",LowLimit=NA,HighLimit=NA,divFa
 
 fTabulateStats <- function(sim, plot.dir){
   
-  
   require(dplyr)
   require(flextable)
   require(officer)
@@ -145,6 +144,6 @@ fTabulateStats <- function(sim, plot.dir){
     
 
   #write the file
-  print(my_doc, target = file.path(plot.dir,runName,paste0(runName,".docx")))
+  print(my_doc, target = file.path(plot.dir,runName,paste0(runName,"_Stats_Tables.docx")))
   
 }

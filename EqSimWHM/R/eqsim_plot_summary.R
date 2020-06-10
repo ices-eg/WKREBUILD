@@ -1,5 +1,7 @@
 fPlotSummary <- function(sim, plot.dir, fileFormat="png", wth=7, hght=7, lStatPer) {
   
+  require(ggplot2)
+  
   AllStats <- sim$stats
   runName <- sim$runName
   
@@ -107,7 +109,6 @@ fPlotSummary <- function(sim, plot.dir, fileFormat="png", wth=7, hght=7, lStatPe
     pBlim = "Blim Risk (%)"
   )
   
-  library(ggplot2)
   p <- ggplot(subset(dfSummary,Ftgt %in% c(0,0.05,0.074,0.1)), aes(Year,p50))
   p <- p + geom_ribbon(aes(ymin = p1, ymax = p99), fill = "grey90")
   p <- p + geom_ribbon(aes(ymin = p5, ymax = p95), fill = "grey80")
@@ -121,13 +122,12 @@ fPlotSummary <- function(sim, plot.dir, fileFormat="png", wth=7, hght=7, lStatPe
   p <- p + ggtitle(MP$desc)
   p <- p + theme()
   p <- p + theme(panel.background = element_rect(fill = "white", colour = "grey50"),
-                 axis.title.y = element_blank(),
-                 strip.text.x = element_text(size=12, face="bold"),
-                 strip.text.y = element_text(size=12, face="bold"),
-                 strip.background = element_rect(colour="red", fill="#CCCCFF"),
-                 plot.title = element_text(hjust = 0.5))
-
+                  axis.title.y = element_blank(),
+                  strip.text.x = element_text(size=12, face="bold"),
+                  strip.text.y = element_text(size=12, face="bold"),
+                  strip.background = element_rect(colour="red", fill="#CCCCFF"),
+                  plot.title = element_text(hjust = 0.5))
+   
   ggsave(file.path(plot.dir,runName,"summary.png"))
-  
 
 }

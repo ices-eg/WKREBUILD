@@ -14,6 +14,9 @@ library(dplyr)
 library(tidyr)
 library(ggplot2)
 
+#stop on warning
+#options(warn=2)
+
 sessionInfo()
 #R version 3.5.3 (2019-03-11)
 #Platform: x86_64-w64-mingw32/x64 (64-bit)
@@ -105,7 +108,10 @@ SegregBlim  <- function(ab, ssb) log(ifelse(ssb >= Blimloss, ab$a * Blimloss, ab
 set.seed(1)
 #segmented regression with breakpoint at Blim, from 1995 excluding terminal
 SRR <- eqsr_fit(window(WHOM.WGWIDE2019,1995,2018), remove.years = c(2018), nsamp=niters, models = c("SegregBlim"))
+
+emf(file = file.path(Res.dir,"SRR.emf"), width = 7, height = 7)
 eqsr_plot(SRR)
+dev.off()
 
 #stock/catch weights (SS3 models catch/stock weights at age as time invariant)
 dfSW <- readr::read_delim(file = file.path(Data.dir,"StockWeights.dat"),delim=",")
@@ -126,7 +132,7 @@ gCW <- ggplot(data = dfWeights, mapping = aes(x=Year,y=CW)) +
   geom_hline(data = dfSAWeights, mapping=aes(yintercept=CW), col="red") + 
   facet_wrap(~Age) + ylab("Catch Weight")
 
-emf(file = file.path(res.Dir,"CW.emf"), width = 7, height = 7)
+emf(file = file.path(Res.dir,"CW.emf"), width = 7, height = 7)
 print(gCW)
 dev.off()
 
@@ -135,7 +141,7 @@ gSW <- ggplot(data = dfWeights, mapping = aes(x=Year,y=SW)) +
   geom_hline(data = dfSAWeights, mapping=aes(yintercept=SW), col="red") + 
   facet_wrap(~Age) + ylab("Stock Weight")
 
-emf(file = file.path(res.Dir,"SW.emf"), width = 7, height = 7)
+emf(file = file.path(Res.dir,"SW.emf"), width = 7, height = 7)
 print(gSW)
 dev.off()
 
@@ -145,10 +151,13 @@ read_docx() %>%
   body_add_break() %>%
   body_add("Stock Weights") %>%
   body_add_img(src = file.path(Res.dir,"SW.emf"), width = 7, height = 7) %>% 
-  print(target = file.path(Res.dir,"HistWeights.docx"))
+  body_add_break() %>%
+  body_add("Stock Weights") %>%
+  body_add_img(src = file.path(Res.dir,"SRR.emf"), width = 7, height = 7) %>% 
+  print(target = file.path(Res.dir,"Graphics.docx"))
   
-file.remove(file.path(res.Dir,"CW.emf"))
-file.remove(file.path(res.Dir,"SW.emf"))
+#remove temp graphics
+sapply(list.files(path=file.path(Res.dir), pattern=".emf", full.names=TRUE), file.remove)
 
 #assign the stock and catch weights into the assessment FLStock object
 tSW <- FLQuant(t(dfSW[,-1]), dim=dim(stock.wt(WHOM.WGWIDE2019)), dimnames=dimnames(stock.wt(WHOM.WGWIDE2019)))
@@ -243,13 +252,10 @@ SimRuns <- sim$simStks
   
 #save ouptut
 #create a folder for the output
-#dir.create(path = file.path(MSE.dir,"Results",runName), showWarnings = TRUE, recursive = TRUE)
-dir.create(path = file.path(getwd(),"Results",runName), showWarnings = TRUE, recursive = TRUE)
+dir.create(path = file.path(Res.dir,runName), showWarnings = TRUE, recursive = TRUE)
 #and write the output (necessary to save entire image?)
-#save.image(file = file.path(MSE.dir,"Results",runName,paste0(runName,"_eqSim_Workspace.Rdata")))
-save.image(file = file.path(getwd(),"Results",runName,paste0(runName,"_eqSim_Workspace.Rdata")))
-#save(SimRuns,file = file.path(MSE.dir,"Results",runName,paste0(runName,"_SimRuns.RData")))
-save(SimRuns,file = file.path(getwd(),"Results",runName,paste0(runName,"_SimRuns.RData")))
+save.image(file = file.path(Res.dir,runName,paste0(runName,"_eqSim_Workspace.Rdata")))
+save(SimRuns,file = file.path(Res.dir,runName,paste0(runName,"_SimRuns.RData")))
   
 #Percentiles to report, number of worm lines for plots
 percentiles = c(0.025,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.975)
@@ -266,7 +272,7 @@ m(stockTemplate)[,simYears] <- m(stockTemplate)[,ac(yStart-1)]
 m.spwn(stockTemplate)[,simYears] <- m.spwn(stockTemplate)[,ac(yStart-1)]
 harvest.spwn(stockTemplate)[,simYears] <- harvest.spwn(stockTemplate)[,ac(yStart-1)]
 #quick look
-plot(stockTemplate)
+#plot(stockTemplate)
   
 #extend object to store neessary number of iterations
 stockTemplate <- FLCore::propagate(stockTemplate,niters)
@@ -306,50 +312,51 @@ for (ii in names(SimRuns)) {
   SSB.true <- ssb(Stocks[[ii]])
   Stats[["SSB"]][["val"]] <- fStatPercs(SSB.true, lStatPer=lStatPer)
   Stats[["SSB"]][["worm"]] <- FLCore::iter(SSB.true,1:numWorm)
-  
+
   #SSB error
   tSSB <- FLQuant(SimRuns[[ii]]$SSBratio[1:(yEnd-yStart+1),],
                   dim = c(1,yEnd-yStart+1,1,1,1,niters),
                   dimnames = list(age="all",year=ac(seq(yStart,yEnd)),unit="unique",season="all",
                                   area="unique",iter=ac(seq(1,niters))))
-    
+
   Stats[["SSBratio"]][["val"]] <- fStatPercs(tSSB, lStatPer = lStatPer)
   Stats[["SSBratio"]][["worm"]] <- FLCore::iter(tSSB,1:numWorm)
-    
+
   SSB.dev <- SimRuns[[ii]][["SSBdev"]]
   Stats[["SSB.dev"]] <- SSB.dev
-    
+
   #FBar - realised F
   FBar <- fbar(Stocks[[ii]])
   Stats[["FBar"]][["val"]] <- fStatPercs(FBar, lStatPer=lStatPer)
   Stats[["FBar"]][["worm"]] <- FLCore::iter(FBar,1:numWorm)
-  
+
   #FBar error
   tFBar <- FLQuant(SimRuns[[ii]]$Fratio[1:(yEnd-yStart+1),],
                   dim = c(1,yEnd-yStart+1,1,1,1,niters),
                   dimnames = list(age="all",year=ac(seq(yStart,yEnd)),unit="unique",season="all",
                                   area="unique",iter=ac(seq(1,niters))))
-  
+
+  #browser()
   Stats[["Fratio"]][["val"]] <- fStatPercs(tFBar, lStatPer = lStatPer)
   Stats[["Fratio"]][["worm"]] <- FLCore::iter(tFBar,1:numWorm)
-  
+
   Fdev <- SimRuns[[ii]][["Fdev"]]
   Stats[["Fdev"]] <- Fdev
-  
+
   #yield
   Catch <- catch(Stocks[[ii]])
   Stats[["Catch"]][["val"]] <- fStatPercs(Catch, lStatPer=lStatPer)
   Stats[["Catch"]][["worm"]] <- FLCore::iter(Catch,1:numWorm)
-  
+
   #TAC
   tTAC <- FLQuant(SimRuns[[ii]]$TAC[1:(yEnd-yStart+1),],
                   dim = c(1,yEnd-yStart+1,1,1,1,niters),
                   dimnames = list(age="all",year=ac(seq(yStart,yEnd)),unit="unique",season="all",
                                   area="unique",iter=ac(seq(1,niters))))
-    
+
   Stats[["TAC"]][["val"]] <- fStatPercs(tTAC, lStatPer = lStatPer)
   Stats[["TAC"]][["worm"]] <- FLCore::iter(tTAC,1:numWorm)
-    
+
   #IAV
   # IAV <- FLQuant(apply(SimRuns[[ii]]$TAC,MARGIN=2,FUN = function(x){(x-dplyr::lag(x))/x}),
   #                 dim = c(1,yEnd-yStart+1,1,1,1,niters),
@@ -360,15 +367,15 @@ for (ii in names(SimRuns)) {
                  dim = c(1,yEnd-yStart+1,1,1,1,niters),
                  dimnames = list(age="all",year=ac(seq(yStart,yEnd)),unit="unique",season="all",
                                  area="unique",iter=ac(seq(1,niters))))
-  
+
   Stats[["IAV"]][["val"]] <- fStatPercs(IAV, lStatPer = lStatPer2)
   Stats[["IAV"]][["worm"]] <- FLCore::iter(IAV,1:numWorm)
-    
+
   #Recruitment
   Rec <- rec(Stocks[[ii]])
   Stats[["Rec"]][["val"]] <- fStatPercs(Rec, lStatPer=lStatPer)
   Stats[["Rec"]][["worm"]] <- FLCore::iter(Rec,1:numWorm)
-  
+
   #probability that SSB is below RP (should this be true or observed SSB?)
   Stats[["pBlim"]][["val"]] <- fStatRisk(SSB = SSB.true, RP = OM$refPts$Blim, lStatPer = lStatPer)
   Stats[["pBpa"]][["val"]] <- fStatRisk(SSB = SSB.true, RP = OM$refPts$Bpa, lStatPer = lStatPer)
@@ -384,8 +391,8 @@ lOp <- list(stats = AllStats, runName = runName, lStatPer = lStatPer, OM = OM, M
 save(lOp,file = file.path(getwd(),"Results",runName,paste0(runName,"_eqSim_Stats.Rdata")))
 
 #generate the stock/stat trajectories
-fPlotTraj(sim = lOp, plot.dir = Res.dir, lStatPer = lStatPer)
-fPlotSummary(sim = lOp, plot.dir = Res.dir, lStatPer = lStatPer)
+fPlotTraj(sim = lOp, plot.dir = file.path(Res.dir,runName), lStatPer = lStatPer)
+suppressWarnings(fPlotSummary(sim = lOp, plot.dir = Res.dir, lStatPer = lStatPer))
 fTabulateStats(sim = lOp, plot.dir = Res.dir)
 
 # #SSB vs Blim
