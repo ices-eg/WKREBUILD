@@ -16,20 +16,17 @@ library(ggplot2)
 Drive <- "C:"
 Base.dir <- file.path(Drive,"Stocks","hom_27_2a4a5b6a7a-ce-k8")
 Assessment.Dir <- file.path(Base.dir,"Assessment")
-#MSE.dir <- file.path(Base.dir,"MP_MSE","MSE 2019","whm.MSE2019.WKREBUILD")
-#MSE.dir <- file.path(Base.dir,"MP_MSE","MSE 2020")
-MSE.dir <- Base.dir
-#Data.dir <- file.path(MSE.dir,"Data")              #this is where the results of the 1000 assessment runs for initialisation of the MSE are saved
-Data.dir <- file.path(getwd(),"Data")              #this is where the results of the 1000 assessment runs for initialisation of the MSE are saved
-#RData.dir <- file.path(MSE.dir,"RData")            #historic assessment outputs, stock-recruit fits
-RData.dir <- file.path(getwd(),"RData")            #historic assessment outputs, stock-recruit fits
-#Log.dir <- file.path(MSE.dir,"Logs")              #debug/verbose output
-#Res.dir <- file.path(MSE.dir, "Results")
-Res.dir <- file.path(getwd(), "Results")
-Log.dir <- file.path(getwd(),"Logs")              #debug/verbose output
 
-Source.dir <- file.path(getwd(),"R")              #R functions
-Scripts.dir <- file.path(getwd(), "Scripts")      #R scripts
+#MSE.dir <- file.path(Base.dir,"MP_MSE","MSE 2019","whm.MSE2019.WKREBUILD")
+MSE.dir <- file.path(Base.dir,"MP_MSE","wk_WKREBUILD","RqSimWHM")
+
+Data.dir <- file.path(MSE.dir,"Data")              #this is where the results of the 1000 assessment runs for initialisation of the MSE are saved
+RData.dir <- file.path(MSE.dir,"RData")            #historic assessment outputs, stock-recruit fits
+Log.dir <- file.path(MSE.dir,"Logs")              #debug/verbose output
+Res.dir <- file.path(MSE.dir, "Results")
+
+Source.dir <- file.path(Base.dir,"R")              #R functions
+Scripts.dir <- file.path(Base.dir, "Scripts")      #R scripts
 
 #OMs, MPs
 source(file = file.path(Scripts.dir,"OMs.R"))
@@ -47,11 +44,11 @@ sapply(list.files(path=file.path(Source.dir), pattern=".R", full.names=TRUE), so
 
 #OM <- OM2.1   #WGWIDE 2019, const weights, selection
 OM <- OM2.2   #WGWIDE 2019, stochastic weights, selection
-#MP <- MP1.0   #baseline, constant F harvest rule, no IAV control, no minimum TAC, no assessment/advice error
+MP <- MP1.0   #baseline, constant F harvest rule, no IAV control, no minimum TAC, no assessment/advice error
 #MP <- MP1.1   #baseline, constant F harvest rule, no IAV control, 80kt minimum TAC, no assessment/advice error
 #MP <- MP1.2   #baseline, constant F harvest rule, no IAV control, 150kt maximum TAC, no assessment/advice error
 #MP <- MP1.3   #baseline, constant F harvest rule, no IAV control, 80kt min TAC, 150kt max TAC, no assessment/advice error
-MP <- MP1.4   #baseline, constant F harvest rule, no IAV control, no min/max TAC, includes assessment/advice error
+#MP <- MP1.4   #baseline, constant F harvest rule, no IAV control, no min/max TAC, includes assessment/advice error
 
 runName <- paste(OM$code,MP$code,sep="_")
 
