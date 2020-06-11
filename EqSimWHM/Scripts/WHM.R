@@ -433,7 +433,9 @@ fTabulateStats(sim = lStats, plot.dir = Res.dir)
 
 #IAV
 runs2Compare <- c("OM2.2_MP1.0","OM2.2_MP1.5","OM2.2_MP1.6","OM2.2_MP1.7")
-for (stat in c("Catch","SSB","Risk3","Risk1")){
- fCompare_runs(runs2Compare = runs2Compare, Res.dir = Res.dir, Plot.dir = Res.dir,
+#create folder
+dir.create(path = file.path(Res.dir,"Comparisons","IAV"), showWarnings = TRUE, recursive = TRUE)
+for (stat in c("Catch","SSB","Risk3","Risk1","IAV")){
+ fCompare_runs(runs2Compare = runs2Compare, Res.dir = Res.dir, Plot.dir = file.path(Res.dir,"Comparisons","IAV"),
                PerfStat = stat, TargetFs = c(0,0.05,0.074,0.1,0.108,0.2),
                lStatPer = lStatPer, Blim = OM$refPts$Blim)}

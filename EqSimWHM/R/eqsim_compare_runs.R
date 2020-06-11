@@ -25,7 +25,7 @@ fCompare_runs <- function(runs2Compare, Res.dir, Plot.dir, PerfStat, TargetFs,lS
       #simulation stats
       t2 <- lStats$stats[[ac(ftgt)]]
       
-      if (PerfStat=="Catch") {
+      if (PerfStat %in% c("Catch","IAV")) {
         #catch numbers
         Cnum <- t[["C"]]
         #catch weights
@@ -33,13 +33,32 @@ fCompare_runs <- function(runs2Compare, Res.dir, Plot.dir, PerfStat, TargetFs,lS
         #catch weight (tons)
         CW <- apply(Cnum*Cwgt,2:3,sum)/1e3
         dimnames(CW)$year <- t2$simYears
-        ST = as.numeric(apply(CW[ac(seq(lStatPer$ST[1],lStatPer$ST[2])),],2,mean))
-        MT = as.numeric(apply(CW[ac(seq(lStatPer$MT[1],lStatPer$MT[2])),],2,mean))
-        LT = as.numeric(apply(CW[ac(seq(lStatPer$LT[1],lStatPer$LT[2])),],2,mean))
         
-        StatName = "Yield"
-        StatUnit = "(kt)"
+        if (PerfStat=="Catch"){
+          
+          ST = as.numeric(apply(CW[ac(seq(lStatPer$ST[1],lStatPer$ST[2])),],2,mean))
+          MT = as.numeric(apply(CW[ac(seq(lStatPer$MT[1],lStatPer$MT[2])),],2,mean))
+          LT = as.numeric(apply(CW[ac(seq(lStatPer$LT[1],lStatPer$LT[2])),],2,mean))
+          
+          StatName = "Yield"
+          StatUnit = "(kt)"
+        }
+        
+        if (PerfStat=="IAV"){
 
+          IAV <- abs(1-CW[-1,]/CW[-nrow(CW),])
+          #replace Inf with NA (NA results from comparing with zero catch)
+          IAV <- ifelse(is.finite(IAV),IAV,NA)
+          
+          ST = apply(IAV[as.character(seq(lStatPer$ST[1],lStatPer$ST[2])),],2,mean)
+          MT = apply(IAV[as.character(seq(lStatPer$MT[1],lStatPer$MT[2])),],2,mean)
+          LT = apply(IAV[as.character(seq(lStatPer$LT[1],lStatPer$LT[2])),],2,mean)
+          
+          StatName = "IAV"
+          StatUnit = ""
+          
+        }
+          
       } else if (PerfStat %in% c("SSB","Risk3","Risk1")){
 
         #abundance
@@ -92,8 +111,6 @@ fCompare_runs <- function(runs2Compare, Res.dir, Plot.dir, PerfStat, TargetFs,lS
     
   }
 
-  browser()
-  
   #geom_col for risks, boxplots otherwise
   #p <- ggplot(data = dfAll, aes(x=factor(RunRef), y=Val, fill=factor(Period, levels = c("ST","MT","LT"))))
   p <- ggplot(data = dfAll, aes(x=factor(Label), y=Val, fill=factor(Period, levels = c("ST","MT","LT"))))
