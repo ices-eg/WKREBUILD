@@ -9,15 +9,15 @@ fCompare_runs <- function(runs2Compare, Res.dir, Plot.dir, PerfStat, TargetFs,lS
   require(ggplot2)
   require(dplyr)
   
-  dfAll <- data.frame(RunRef = c(), Ftgt = c(), PerfStat = c(), Period = c(), Val = c(), stringsAsFactors = FALSE)
+  dfAll <- data.frame(RunRef = c(), Label=c(), Ftgt = c(), PerfStat = c(), Period = c(), Val = c(), stringsAsFactors = FALSE)
   
   #get the data
   for (r in runs2Compare){
     
     #load the output of the simulation and the summary statistics
     load(file = file.path(Res.dir,r,paste0(r,"_SimRuns.RData")))
-    load(file = file.path(Res.dir,r,paste0(r,"_eqSim_Stats.RData")))
-    
+    load(file = file.path(Res.dir,r,paste0(r,"_Stats.RData")))
+
     for (ftgt in TargetFs){
       
       #simulation op
@@ -81,6 +81,7 @@ fCompare_runs <- function(runs2Compare, Res.dir, Plot.dir, PerfStat, TargetFs,lS
       
       dfAll <- dplyr::bind_rows(dfAll,
                                 data.frame(RunRef = rep(r,length(ST)),
+                                           Label = rep(t2$MP$xlab,length(ST)),
                                            Ftgt = rep(ftgt,length(ST)),
                                            PerfStat = rep(StatName,length(ST)),
                                            Period = rep(c("ST","MT","LT"),each=length(ST)),
@@ -91,9 +92,12 @@ fCompare_runs <- function(runs2Compare, Res.dir, Plot.dir, PerfStat, TargetFs,lS
     
   }
 
+  browser()
+  
   #geom_col for risks, boxplots otherwise
-  p <- ggplot(data = dfAll, aes(x=factor(RunRef), y=Val, fill=factor(Period, levels = c("ST","MT","LT"))))
-    
+  #p <- ggplot(data = dfAll, aes(x=factor(RunRef), y=Val, fill=factor(Period, levels = c("ST","MT","LT"))))
+  p <- ggplot(data = dfAll, aes(x=factor(Label), y=Val, fill=factor(Period, levels = c("ST","MT","LT"))))
+  
   if (PerfStat %in% c("Risk1","Risk3")){
     p <- p + geom_col(position="dodge") + geom_hline(yintercept = 0.05, col="black", linetype=2)
   } else {
