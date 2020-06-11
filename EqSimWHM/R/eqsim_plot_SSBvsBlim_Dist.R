@@ -10,7 +10,7 @@ fAnnSSBvsBlimDist <- function(OM,MP,res.dir,plot.dir){
   
   load(file = file.path(Res.dir, runName, paste0(runName,"_eqsim_Stats.Rdata")))
   
-  AllStats <- lOp$stats
+  AllStats <- lStats$stats
   
   for (ftgt in names(AllStats)){
 

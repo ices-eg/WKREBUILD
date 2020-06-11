@@ -5,7 +5,7 @@
 
 #baseline, no harvest rule, no IAV control, no minimum TAC, no assessment/advice error
 MP1.0 <- list("code" = "MP1.0",
-              "desc" = "NoHCR",
+              "desc" = "NoHCR_Test",
               "HCRName" = "None",
               "F_target" = c(0,0.05,0.074,0.1,0.108,0.2,0.3),
               "B_trigger" = NA,
@@ -16,7 +16,7 @@ MP1.0 <- list("code" = "MP1.0",
 
 #minimum TAC test
 MP1.1 <- list("code" = "MP1.1",
-              "desc" = "NoHCR_MinTAC",
+              "desc" = "NoHCR_MinTACTest",
               "HCRName" = "None",
               "F_target" = c(0,0.05,0.074,0.1,0.108,0.2,0.3),
               "B_trigger" = NA,
@@ -27,7 +27,7 @@ MP1.1 <- list("code" = "MP1.1",
 
 #maximum TAC test
 MP1.2 <- list("code" = "MP1.2",
-              "desc" = "NoHCR_MaxTAC",
+              "desc" = "NoHCR_MaxTACTest",
               "HCRName" = "None",
               "F_target" = c(0,0.05,0.074,0.1,0.108,0.2,0.3),
               "B_trigger" = NA,
@@ -38,7 +38,7 @@ MP1.2 <- list("code" = "MP1.2",
 
 #min/max TAC in combination
 MP1.3 <- list("code" = "MP1.3",
-              "desc" = "NoHCR_MinMaxTAC",
+              "desc" = "NoHCR_MinMaxTACTest",
               "HCRName" = "None",
               "F_target" = c(0,0.05,0.074,0.1,0.108,0.2,0.3),
               "B_trigger" = NA,
@@ -49,7 +49,7 @@ MP1.3 <- list("code" = "MP1.3",
 
 #baseline, no harvest rule, no IAV control, no minimum TAC plus assessment/advice error
 MP1.4 <- list("code" = "MP1.4",
-              "desc" = "NoHCR_IncObsErr",
+              "desc" = "NoHCR_ObsErrTest",
               "HCRName" = "None",
               "F_target" = c(0,0.05,0.074,0.1,0.108,0.2,0.3),
               "B_trigger" = NA,
@@ -57,6 +57,50 @@ MP1.4 <- list("code" = "MP1.4",
               "maxTAC" = NA,
               "TAC_IAV" = NA,
               "Obs" = list("cvF" = 0.22, "phiF" = 0.03, "cvSSB" = 0.36, "phiSSB" = 0.51))
+
+#baseline, no harvest rule, 20% TAC change limitation, no min/max TAC, no assessment/advice error
+MP1.5 <- list("code" = "MP1.5", 
+             "desc" = "NoHCR_20PctIAVTest", 
+             "HCRName" = "None",
+             "F_target" = c(0,0.05,0.074,0.1,0.108,0.2,0.3),
+             "B_trigger" = NA,
+             "minTAC" = NA,
+             "maxTAC" = NA,
+             "TAC_IAV" = 0.2,
+             "Obs" = list("cvF" = 0, "phiF" = 0, "cvSSB" = 0, "phiSSB" = 0))
+
+#baseline, no harvest rule, 30% TAC change limitation, no min/max TAC, no assessment/advice error
+MP1.6 <- list("code" = "MP1.6", 
+              "desc" = "NoHCR_30PctIAVTest", 
+              "HCRName" = "None",
+              "F_target" = c(0,0.05,0.074,0.1,0.108,0.2,0.3),
+              "B_trigger" = NA,
+              "minTAC" = NA,
+              "maxTAC" = NA,
+              "TAC_IAV" = 0.3,
+              "Obs" = list("cvF" = 0, "phiF" = 0, "cvSSB" = 0, "phiSSB" = 0))
+
+#baseline, no harvest rule, 10% TAC change limitation, no min/max TAC, no assessment/advice error
+MP1.7 <- list("code" = "MP1.7", 
+              "desc" = "NoHCR_10PctIAVTest", 
+              "HCRName" = "None",
+              "F_target" = c(0,0.05,0.074,0.1,0.108,0.2,0.3),
+              "B_trigger" = NA,
+              "minTAC" = NA,
+              "maxTAC" = NA,
+              "TAC_IAV" = 0.1,
+              "Obs" = list("cvF" = 0, "phiF" = 0, "cvSSB" = 0, "phiSSB" = 0))
+
+#ICES HCR, no IAV control, no minimum TAC, with assessment/advice error
+MP2.1 <- list("code" = "MP2.1",
+              "desc" = "ICESHCR",
+              "HCRName" = "ICES",
+              "F_target" = c(0,0.05,0.074,0.1,0.108,0.2,0.3),
+              "B_trigger" = "MSYBtrigger",
+              "minTAC" = NA,
+              "maxTAC" = NA,
+              "TAC_IAV" = NA,
+              "Obs" = list("cvF" = 0.3, "phiF" = 0.3, "cvSSB" = 0, "phiSSB" = 0))
 
 # #baseline, no harvest rule, no IAV control, no minimum TAC, observation error on SSB
 # #with no management decision based on SSB, this should be similar to MP1.0

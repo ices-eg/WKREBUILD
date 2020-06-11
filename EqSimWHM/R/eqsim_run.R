@@ -297,6 +297,7 @@ eqsim_run <- function(fit,
 
   if (verbose) icesTAF::msg("Running forward simulations.")
   if (verbose) loader(0)
+  cat("\n")
   
   #browser()
   
@@ -352,11 +353,11 @@ eqsim_run <- function(fit,
       
       if (!is.na(minTAC) & sum(Yld1 < minTAC) > 0){
         tgt[Yld1<minTAC] <- minTAC
-        icesTAF::msg(paste0(sum(Yld1<minTAC)," Minimum TAC set in year 1"))
+        icesTAF::msg(paste0(sum(Yld1<minTAC)," Minimum TAC set in year 1\n"))
       }
       if (!is.na(maxTAC) & sum(Yld1 > maxTAC) > 0) {
         tgt[Yld1>maxTAC] <- maxTAC
-        icesTAF::msg(paste0(sum(Yld1>maxTAC)," Maximum TAC set in year 1"))
+        icesTAF::msg(paste0(sum(Yld1>maxTAC)," Maximum TAC set in year 1\n"))
       }
       
       if (sum(is.na(tgt)) < Nmod) {
@@ -380,19 +381,23 @@ eqsim_run <- function(fit,
     
     #check for IAV
     if (nrow(dplyr::filter(dfExplConstraints,YearNum==1 & toupper(Type) %in% c("IAV")))>0) {
+      
       IAV <- fNAifEmpty(dfExplConstraints[dfExplConstraints$YearNum==1 & toupper(dfExplConstraints$Type)=="IAV",]$Val)
 
       tgt <- rep(NA,Nmod)
       
-      if (!is.na(IAV) & sum((abs(Yld1-lastTAC)/lastTAC) > IAV)>0){
-        #increase
-        tgt[((Yld1-lastTAC)/lastTAC) > (1+IAV)] <- (1+IAV)*lastTAC[((Yld1-lastTAC)/lastTAC) > (1+IAV)]
-        #decrease
-        tgt[((Yld1-lastTAC)/lastTAC) < (0-IAV)] <- (1-IAV)*lastTAC[((Yld1-lastTAC)/lastTAC) < (0-IAV)]
-        
-        icesTAF::msg(paste0(sum(((Yld1-lastTAC)/lastTAC) > (1+IAV)),"/",
-                            sum(((Yld1-lastTAC)/lastTAC) < (0-IAV)),
-                            " IAV capped increases/decreases set in year 1"))
+      if (!is.na(IAV)){
+        if (sum(abs((Yld1-lastTAC)/lastTAC) > IAV, na.rm=TRUE)>0) {
+          #increase
+          if (length(tgt[(Yld1/lastTAC) > (1+IAV)]) > 0){tgt[(Yld1/lastTAC) > (1+IAV)] <- (1+IAV)*lastTAC[(Yld1/lastTAC) > (1+IAV)]}
+          #decrease
+          if (length(tgt[(Yld1/lastTAC) < (1-IAV)]) > 0){tgt[(Yld1/lastTAC) < (1-IAV)] <- (1-IAV)*lastTAC[(Yld1/lastTAC) < (1-IAV)]}
+          
+          #message
+          icesTAF::msg(paste0(sum((Yld1/lastTAC) > (1+IAV)),"/",
+                              sum((Yld1/lastTAC) < (1-IAV)),
+                              " IAV capped increases/decreases set in year 1"))
+        }
       }
       
       if (sum(is.na(tgt)) < Nmod) {
@@ -425,7 +430,7 @@ eqsim_run <- function(fit,
       if (!is.na(Catch2)){
         
         tgt <- rep(Catch2,Nmod)
-        icesTAF::msg(paste0("\nCatch constraint applied in year 1\n"))
+        icesTAF::msg(paste0("Catch constraint applied in year 1"))
         
         #catch constraint
         Fmgmt[1,] <- fFindF(N = Ny[,1,,drop=FALSE], CW = Wy[,1,,drop=FALSE], 
@@ -475,10 +480,6 @@ eqsim_run <- function(fit,
     #AC - will need to reinstate above code if ssb_lag>0 but OK for now
     for (j in (2+ssb_lag):Nrun) {
       
-      #cat("Year",j)
-      
-      #if (i>1 & j>3) browser()
-      
       #roll population forward
       #recruits
       Ny[1,j,] <- 0
@@ -507,8 +508,6 @@ eqsim_run <- function(fit,
       #default F is the current Fscan value
       Fnext <- Fbar
 
-      #browser()
-      
       #apply the HCR
       Fmgmt[j,] <- do.call(fManagement, args=list(list("Fnext" = Fbar, "Btrigger" = Btrigger, "SSB" = ssby.obs, "Yr" = j, 
                                                        "M" = M[,rsam[j,]], "sel" = sel[,rsamsel[j,]], "N" = Ny[,j,], 
@@ -527,9 +526,7 @@ eqsim_run <- function(fit,
         
         minTAC <- fNAifEmpty(dfExplConstraints[dfExplConstraints$YearNum==j & toupper(dfExplConstraints$Type)=="MINTAC",]$Val)
         maxTAC <- fNAifEmpty(dfExplConstraints[dfExplConstraints$YearNum==j & toupper(dfExplConstraints$Type)=="MAXTAC",]$Val)
-      
-        #if (max(Yld1)>maxTAC & i>1 & j>3) {browser()}
-        
+
         tgt <- rep(NA,Nmod)
         
         if (!is.na(minTAC) & sum(Yld1 < minTAC) > 0){
@@ -561,21 +558,26 @@ eqsim_run <- function(fit,
         Yld2 <- Yld1
       }
       
+      #if (j==4){browser()}
+      
       #check for IAV
       if (nrow(dplyr::filter(dfExplConstraints,YearNum==j & toupper(Type) %in% c("IAV")))>0) {
         
         IAV <- fNAifEmpty(dfExplConstraints[dfExplConstraints$YearNum==j & toupper(dfExplConstraints$Type)=="IAV",]$Val)
-        
         tgt <- rep(NA,Nmod)
         
-        if (!is.na(IAV) & sum((abs(Yld1-TAC[j-1,])/TAC[j-1,]) > IAV)>0){
-          #increase
-          tgt[((Yld1-TAC[j-1,])/TAC[j-1,]) > (1+IAV)] <- (1+IAV)*TAC[j-1,((Yld1-TAC[j-1,])/TAC[j-1,]) > (1+IAV)]
-          #decrease
-          tgt[((Yld1-TAC[j-1,])/TAC[j-1,]) < (0-IAV)] <- (1-IAV)*TAC[j-1,((Yld1-TAC[j-1])/TAC[j-1,]) < (0-IAV)]
-          icesTAF::msg(paste0(sum(((Yld1-TAC[j-1,])/TAC[j-1,]) < (0-IAV)),"/",
-                              sum(((Yld1-TAC[j-1,])/TAC[j-1,]) > (1+IAV)),
-                              " IAV capped decreases/increases set in year ",j))
+        if (!is.na(IAV)){
+          if (sum(abs((Yld1-TAC[j-1,])/TAC[j-1,]) > IAV, na.rm=TRUE)>0) {
+            #capped increase
+            if (length(tgt[(Yld1/TAC[j-1,]) > (1+IAV)]) > 0){tgt[(Yld1/TAC[j-1,]) > (1+IAV)] <- (1+IAV)*TAC[j-1,(Yld1/TAC[j-1,]) > (1+IAV)]}
+            #capped decrease
+            if (length(tgt[(Yld1/TAC[j-1,]) < (1-IAV)]) > 0){tgt[(Yld1/TAC[j-1,]) < (1-IAV)] <- (1-IAV)*TAC[j-1,(Yld1/TAC[j-1,]) < (1-IAV)]}
+            
+            #message
+            icesTAF::msg(paste0(sum((Yld1/TAC[j-1,]) > (1+IAV)),"/",
+                                sum((Yld1/TAC[j-1,]) < (1-IAV)),
+                                " IAV capped increases/decreases set in year ",j))
+            }
         }
         
         if (sum(is.na(tgt)) < Nmod) {
@@ -596,7 +598,7 @@ eqsim_run <- function(fit,
       } else {
         Yld3 <- Yld2
       }
-      
+
       #check for specified catch/F
       if (nrow(dplyr::filter(dfExplConstraints,YearNum==j & toupper(Type) %in% c("CATCH","F")))>0) {
         
@@ -609,7 +611,7 @@ eqsim_run <- function(fit,
           
           tgt <- rep(Catch2,Nmod)
           
-          icesTAF::msg(paste0("\nCatch constraint applied in year ",j,"\n"))
+          icesTAF::msg(paste0("Catch constraint applied in year ",j))
 
           Fmgmt[j,] <- fFindF(N = Ny[,j,,drop=FALSE], CW = Wy[,j,,drop=FALSE], 
                               SW = WSy[,j,,drop=FALSE], Mat = Mat[,rsam[j,],drop=FALSE], 
@@ -688,10 +690,11 @@ eqsim_run <- function(fit,
     #simStks[[ac(Fscan[i])]][["L"]] <- Cy * Ry
     simStks[[ac(Fscan[i])]][["SSBdev"]] <- ssby.obs - ssby
     simStks[[ac(Fscan[i])]][["SSBratio"]] <- ssby.obs/ssby
+    simStks[[ac(Fscan[i])]][["SimYears"]] <- seq(range(fit$stk)["maxyear"],range(fit$stk)["maxyear"]+Nrun)
     #AC end
     
-    
     if (verbose) loader(i/NF)
+    cat("\n")
   }
 
   if (verbose) icesTAF::msg("Summarising simulations")

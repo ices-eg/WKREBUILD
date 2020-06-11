@@ -5,6 +5,7 @@ fPlotTraj <- function(sim, plot.dir, lStatPer){
   require(scales)
   require(officer)
   require(devEMF)
+  require(dplyr)
   
   cols <- rich.colors(10)
   
@@ -54,7 +55,7 @@ fPlotTraj <- function(sim, plot.dir, lStatPer){
         ylims <- c(0,ceiling(max(max(10*worms,na.rm=TRUE),max(10*stats["95%",],na.rm=TRUE)))/10)
       } else if (what %in% c("IAV")) {
         xlims <- range(simYear2LT)
-        ylims <- c(-200000,200000)
+        ylims <- c(0,0.3)
       } else if (what %in% c("SSBratio","Fratio")) {
         xlims <- range(simYear2LT)
         ylims <- c(0.5,2)
@@ -88,7 +89,8 @@ fPlotTraj <- function(sim, plot.dir, lStatPer){
           lines(simYear2LT,worms[,ac(simYear2LT),,,,2], lwd=1, col="black")
           points(simYear2LT,worms[,ac(simYear2LT),,,,2], pch=17, col="black")
         } else {
-          for (w in seq(1,nworms)) lines(simYears,worms[,ac(simYears),,,,w], lwd=1, col="grey")  
+          for (w in seq(1,nworms)) lines(dplyr::intersect(simYears,as.integer(dimnames(worms)$year)),
+                                         worms[,ac(dplyr::intersect(simYears,as.integer(dimnames(worms)$year))),,,,w], lwd=1, col="grey")  
         }
         
       }

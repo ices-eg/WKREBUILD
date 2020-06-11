@@ -78,18 +78,20 @@ sapply(list.files(path=file.path(Source.dir), pattern=".R", full.names=TRUE), so
 niters <- 1000
 nyr <- 50
 
-
-
 #OM <- OM2; MP <- MP2.0_10000
 #OM <- OM2; MP <- MP3.0
 
 #OM <- OM2.1   #WGWIDE 2019, const weights, selection
 OM <- OM2.2   #WGWIDE 2019, stochastic weights, selection
-MP <- MP1.0   #baseline, constant F harvest rule, no IAV control, no minimum TAC, no assessment/advice error
+#MP <- MP1.0   #baseline, constant F harvest rule, no IAV control, no minimum TAC, no assessment/advice error
 #MP <- MP1.1   #baseline, constant F harvest rule, no IAV control, 80kt minimum TAC, no assessment/advice error
 #MP <- MP1.2   #baseline, constant F harvest rule, no IAV control, 150kt maximum TAC, no assessment/advice error
 #MP <- MP1.3   #baseline, constant F harvest rule, no IAV control, 80kt min TAC, 150kt max TAC, no assessment/advice error
 #MP <- MP1.4   #baseline, constant F harvest rule, no IAV control, no min/max TAC, includes assessment/advice error
+#MP <- MP1.5   #20% IAV Test
+#MP <- MP1.6   #30% IAV Test
+MP <- MP1.7   #10% IAV Test
+#MP <- MP2.1
 
 runName <- paste(OM$code,MP$code,sep="_")
 
@@ -237,6 +239,18 @@ lStatPer2[['ST']] <- c(yStart+yConstraints+1,yStart+yConstraints+4)
 lStatPer[['MT']] <- lStatPer2[['MT']] <- c(yStart+yConstraints+5,yStart+yConstraints+9)
 lStatPer[['LT']] <- lStatPer2[['LT']] <- c(yStart+yConstraints+10,yStart+yConstraints+29)
 
+# set.seed(1)
+# sim <- eqsim_run(fit = SRR,
+#                  bio.years = OM$BioYrs, bio.const = OM$BioConst,
+#                  sel.years = OM$SelYrs, sel.const = OM$SelConst,
+#                  Fscan = c(0),
+#                  Fcv = MP$Obs$cvF, Fphi = MP$Obs$phiF,
+#                  SSBcv = MP$Obs$cvSSB, SSBphi = MP$Obs$phiSSB,
+#                  Nrun = nyr, calc.RPs = FALSE,
+#                  dfExplConstraints = dfExplConstraints,
+#                  Btrigger = NA,
+#                  HCRName = paste0("fHCR_",MP$HCRName))
+
 sim <- eqsim_run(fit = SRR, 
                  bio.years = OM$BioYrs, bio.const = OM$BioConst,
                  sel.years = OM$SelYrs, sel.const = OM$SelConst,
@@ -254,7 +268,7 @@ SimRuns <- sim$simStks
 #create a folder for the output
 dir.create(path = file.path(Res.dir,runName), showWarnings = TRUE, recursive = TRUE)
 #and write the output (necessary to save entire image?)
-save.image(file = file.path(Res.dir,runName,paste0(runName,"_eqSim_Workspace.Rdata")))
+save.image(file = file.path(Res.dir,runName,paste0(runName,"_Workspace.Rdata")))
 save(SimRuns,file = file.path(Res.dir,runName,paste0(runName,"_SimRuns.RData")))
   
 #Percentiles to report, number of worm lines for plots
@@ -358,16 +372,10 @@ for (ii in names(SimRuns)) {
   Stats[["TAC"]][["worm"]] <- FLCore::iter(tTAC,1:numWorm)
 
   #IAV
-  # IAV <- FLQuant(apply(SimRuns[[ii]]$TAC,MARGIN=2,FUN = function(x){(x-dplyr::lag(x))/x}),
-  #                 dim = c(1,yEnd-yStart+1,1,1,1,niters),
-  #                 dimnames = list(age="all",year=ac(seq(yStart,yEnd)),unit="unique",season="all",
-  #                                 area="unique",iter=ac(seq(1,niters))))
-
-  IAV <- FLQuant(apply(SimRuns[[ii]]$TAC,MARGIN=2,FUN = function(x){(x-dplyr::lag(x))}),
-                 dim = c(1,yEnd-yStart+1,1,1,1,niters),
-                 dimnames = list(age="all",year=ac(seq(yStart,yEnd)),unit="unique",season="all",
-                                 area="unique",iter=ac(seq(1,niters))))
-
+  IAV <- abs(1-Catch[,as.character(seq(yStart+1,yEnd))]/Catch[,as.character(seq(yStart,yEnd-1))])
+  #replace Inf with NA (NA results from comparing with zero catch)
+  IAV <- ifelse(is.finite(IAV),IAV,NA)
+  
   Stats[["IAV"]][["val"]] <- fStatPercs(IAV, lStatPer = lStatPer2)
   Stats[["IAV"]][["worm"]] <- FLCore::iter(IAV,1:numWorm)
 
@@ -386,29 +394,46 @@ for (ii in names(SimRuns)) {
 }
   
 ## Save data
-lOp <- list(stats = AllStats, runName = runName, lStatPer = lStatPer, OM = OM, MP = MP)
-#save(lOp,file = file.path(Res.dir,runName,paste0(runName,"_eqSim_Stats.Rdata")))
-save(lOp,file = file.path(getwd(),"Results",runName,paste0(runName,"_eqSim_Stats.Rdata")))
+lStats <- list(stats = AllStats, runName = runName, lStatPer = lStatPer, OM = OM, MP = MP)
+save(lStats,file = file.path(getwd(),"Results",runName,paste0(runName,"_Stats.Rdata")))
 
 #generate the stock/stat trajectories
-fPlotTraj(sim = lOp, plot.dir = file.path(Res.dir,runName), lStatPer = lStatPer)
-suppressWarnings(fPlotSummary(sim = lOp, plot.dir = Res.dir, lStatPer = lStatPer))
-fTabulateStats(sim = lOp, plot.dir = Res.dir)
+fPlotTraj(sim = lStats, plot.dir = file.path(Res.dir,runName), lStatPer = lStatPer)
+suppressWarnings(fPlotSummary(sim = lStats, plot.dir = Res.dir, lStatPer = lStatPer))
+fTabulateStats(sim = lStats, plot.dir = Res.dir)
 
 # #SSB vs Blim
 # fAnnSSBvsBlimDist(OM = OM2, MP = MP2.0, res.dir = Res.dir, plot.dir = Res.dir)
 # 
 
+##############Ensure all scanrios to be compared have been run & stats calculated###############
+#code below should be moved to another script really to allow this script to be monolithic######
+
+# runs2Compare <- c("OM2.2_MP1.0","OM2.2_MP2.1")
+# for (stat in c("SSB", "Risk3")){
+#   fCompare_runs(runs2Compare = runs2Compare, Res.dir = Res.dir, Plot.dir = Res.dir,
+#                 PerfStat = stat,
+#                 TargetFs = c(0, 0.05, 0.074, 0.1, 0.108, 0.2, 0.3),
+#                 lStatPer = lStatPer,
+#                 Blim = OM$refPts$Blim)}
+
 #comparison of stochastic/random weights & selection - min, max, min & max TAC
-#runs2Compare <- c("OM2.1_MP1.0","OM2.2_MP1.0","OM2.2_MP1.1","OM2.2_MP1.2","OM2.2_MP1.3")
-#for (stat in c("Catch","SSB","Risk3","Risk1")){
-#fCompare_runs(runs2Compare = runs2Compare, Res.dir = Res.dir, Plot.dir = Res.dir,
+# runs2Compare <- c("OM2.2_MP1.0","OM2.2_MP1.1","OM2.2_MP1.2","OM2.2_MP1.3")
+# for (stat in c("Catch","SSB","Risk3","Risk1")){
+# fCompare_runs(runs2Compare = runs2Compare, Res.dir = Res.dir, Plot.dir = Res.dir,
 #              PerfStat = stat, TargetFs = c(0,0.05,0.074,0.1,0.108,0.2),
-#              simYears = simYears, lStatPer = lStatPer, Blim = OM$refPts$Blim)}
+#              lStatPer = lStatPer, Blim = OM$refPts$Blim)}
 
 #inclusion of assessment and advice error (stochastoc weights/selection)
-runs2Compare <- c("OM2.2_MP1.0","OM2.2_MP1.4")
+# runs2Compare <- c("OM2.2_MP1.0","OM2.2_MP1.4")
+# for (stat in c("Catch","SSB","Risk3","Risk1")){
+#   fCompare_runs(runs2Compare = runs2Compare, Res.dir = Res.dir, Plot.dir = Res.dir,
+#                 PerfStat = stat, TargetFs = c(0,0.05,0.074,0.1,0.108,0.2),
+#                 lStatPer = lStatPer, Blim = OM$refPts$Blim)}
+
+#IAV
+runs2Compare <- c("OM2.2_MP1.0","OM2.2_MP1.5","OM2.2_MP1.6","OM2.2_MP1.7")
 for (stat in c("Catch","SSB","Risk3","Risk1")){
-  fCompare_runs(runs2Compare = runs2Compare, Res.dir = Res.dir, Plot.dir = Res.dir,
-                PerfStat = stat, TargetFs = c(0,0.05,0.074,0.1,0.108,0.2),
-                simYears = simYears, lStatPer = lStatPer, Blim = OM$refPts$Blim)}
+ fCompare_runs(runs2Compare = runs2Compare, Res.dir = Res.dir, Plot.dir = Res.dir,
+               PerfStat = stat, TargetFs = c(0,0.05,0.074,0.1,0.108,0.2),
+               lStatPer = lStatPer, Blim = OM$refPts$Blim)}

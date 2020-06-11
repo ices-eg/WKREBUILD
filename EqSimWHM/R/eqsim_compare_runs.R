@@ -1,6 +1,6 @@
 #eqsim_compare_runs
 
-fCompare_runs <- function(runs2Compare, Res.dir, Plot.dir, PerfStat, TargetFs, simYears, lStatPer, Blim){
+fCompare_runs <- function(runs2Compare, Res.dir, Plot.dir, PerfStat, TargetFs,lStatPer, Blim){
 
   #produces a grid (max 6)
   #comparing the supplied performance statistic for ST,MT and LT for each runName
@@ -14,15 +14,16 @@ fCompare_runs <- function(runs2Compare, Res.dir, Plot.dir, PerfStat, TargetFs, s
   #get the data
   for (r in runs2Compare){
     
-    fl <- file.path(Res.dir,r,paste0(r,"_SimRuns.RData"))
-    cat(fl,"\n")
-    load(fl)
+    #load the output of the simulation and the summary statistics
+    load(file = file.path(Res.dir,r,paste0(r,"_SimRuns.RData")))
+    load(file = file.path(Res.dir,r,paste0(r,"_eqSim_Stats.RData")))
     
     for (ftgt in TargetFs){
       
+      #simulation op
       t <- SimRuns[[ac(ftgt)]]
-      
-      #browser()
+      #simulation stats
+      t2 <- lStats$stats[[ac(ftgt)]]
       
       if (PerfStat=="Catch") {
         #catch numbers
@@ -31,7 +32,7 @@ fCompare_runs <- function(runs2Compare, Res.dir, Plot.dir, PerfStat, TargetFs, s
         Cwgt <- t[["catW"]]
         #catch weight (tons)
         CW <- apply(Cnum*Cwgt,2:3,sum)/1e3
-        dimnames(CW)$year <- simYears
+        dimnames(CW)$year <- t2$simYears
         ST = as.numeric(apply(CW[ac(seq(lStatPer$ST[1],lStatPer$ST[2])),],2,mean))
         MT = as.numeric(apply(CW[ac(seq(lStatPer$MT[1],lStatPer$MT[2])),],2,mean))
         LT = as.numeric(apply(CW[ac(seq(lStatPer$LT[1],lStatPer$LT[2])),],2,mean))
@@ -50,7 +51,7 @@ fCompare_runs <- function(runs2Compare, Res.dir, Plot.dir, PerfStat, TargetFs, s
 
         #SSB (Mt)
         SSB <- apply(Abd*SW*Mat,2:3,sum)/1e6
-        dimnames(SSB)$year <- simYears
+        dimnames(SSB)$year <- t2$simYears
         
         if (PerfStat == "SSB") {
           StatName = "SSB"
