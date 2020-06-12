@@ -10,9 +10,11 @@ fCompare_runs <- function(runs2Compare, Res.dir, Plot.dir, PerfStat, TargetFs,lS
   require(dplyr)
   
   dfAll <- data.frame(RunRef = c(), Label=c(), Ftgt = c(), PerfStat = c(), Period = c(), Val = c(), stringsAsFactors = FALSE)
-  
+
   #get the data
   for (r in runs2Compare){
+    
+    cat(r,"\n")
     
     #load the output of the simulation and the summary statistics
     load(file = file.path(Res.dir,r,paste0(r,"_SimRuns.RData")))
@@ -25,7 +27,8 @@ fCompare_runs <- function(runs2Compare, Res.dir, Plot.dir, PerfStat, TargetFs,lS
       #simulation stats
       t2 <- lStats$stats[[ac(ftgt)]]
       
-      if (PerfStat %in% c("Catch","IAV")) {
+      if (PerfStat %in% c("Catch","IAV","IAVUpDown")) {
+        
         #catch numbers
         Cnum <- t[["C"]]
         #catch weights
@@ -58,6 +61,32 @@ fCompare_runs <- function(runs2Compare, Res.dir, Plot.dir, PerfStat, TargetFs,lS
           StatUnit = ""
           
         }
+        
+        if (PerfStat=="IAVUpDown"){
+
+          IAVUp <- IAVDown <- IAVUpDown <- (CW[-1,]/CW[-nrow(CW),]) - 1
+          
+          IAVUp[!is.finite(IAVUp)]<-NA
+          IAVDown[!is.finite(IAVDown)]<-NA
+          
+          IAVUp[IAVUp<0] <- NA
+          IAVDown[IAVDown>0] <- NA
+          
+          ST = c(apply(IAVUp[as.character(seq(lStatPer$ST[1],lStatPer$ST[2])),],2,mean,na.rm=TRUE),
+                 apply(IAVDown[as.character(seq(lStatPer$ST[1],lStatPer$ST[2])),],2,mean,na.rm=TRUE))
+          MT = c(apply(IAVUp[as.character(seq(lStatPer$MT[1],lStatPer$MT[2])),],2,mean,na.rm=TRUE),
+                 apply(IAVDown[as.character(seq(lStatPer$MT[1],lStatPer$MT[2])),],2,mean,na.rm=TRUE))
+          LT = c(apply(IAVUp[as.character(seq(lStatPer$LT[1],lStatPer$LT[2])),],2,mean,na.rm=TRUE),
+                 apply(IAVDown[as.character(seq(lStatPer$LT[1],lStatPer$LT[2])),],2,mean,na.rm=TRUE))
+          
+          ST[!is.finite(ST)]<-NA
+          MT[!is.finite(MT)]<-NA
+          LT[!is.finite(LT)]<-NA
+          
+          StatName = c("IAVUp","IAVDown")
+          StatUnit = c("")
+          
+        }
           
       } else if (PerfStat %in% c("SSB","Risk3","Risk1")){
 
@@ -81,7 +110,6 @@ fCompare_runs <- function(runs2Compare, Res.dir, Plot.dir, PerfStat, TargetFs,lS
         } else if (PerfStat == "Risk3"){
           StatName = "Risk3"
           StatUnit = "p"
-          #browser()
           #maximum probability that SSB is below Blim, where the maximum (of the annual probabilities) is taken over the statistical period 
           ST = max(apply(SSB[ac(seq(lStatPer$ST[1],lStatPer$ST[2])),]<Blim/1e6,1,sum)/dim(SSB)[2])
           MT = max(apply(SSB[ac(seq(lStatPer$MT[1],lStatPer$MT[2])),]<Blim/1e6,1,sum)/dim(SSB)[2])
@@ -89,7 +117,6 @@ fCompare_runs <- function(runs2Compare, Res.dir, Plot.dir, PerfStat, TargetFs,lS
         } else if (PerfStat == "Risk1"){
           StatName = "Risk1"
           StatUnit = "p"
-          #browser()
           #average probability that SSB is below Blim over the statistical period 
           ST = mean(apply(SSB[ac(seq(lStatPer$ST[1],lStatPer$ST[2])),]<Blim/1e6,1,sum)/dim(SSB)[2])
           MT = mean(apply(SSB[ac(seq(lStatPer$MT[1],lStatPer$MT[2])),]<Blim/1e6,1,sum)/dim(SSB)[2])
@@ -97,44 +124,80 @@ fCompare_runs <- function(runs2Compare, Res.dir, Plot.dir, PerfStat, TargetFs,lS
         }
         
       }
-      
+
       dfAll <- dplyr::bind_rows(dfAll,
                                 data.frame(RunRef = rep(r,length(ST)),
                                            Label = rep(t2$MP$xlab,length(ST)),
                                            Ftgt = rep(ftgt,length(ST)),
-                                           PerfStat = rep(StatName,length(ST)),
-                                           Period = rep(c("ST","MT","LT"),each=length(ST)),
-                                           Val = c(ST,MT,LT),
+                                           PerfStat = rep(StatName,each=length(ST)/length(StatName)),
+                                           Period = rep("ST",each=length(ST)),
+                                           Val = ST,
+                                           stringsAsFactors = FALSE))
+      dfAll <- dplyr::bind_rows(dfAll,
+                                data.frame(RunRef = rep(r,length(MT)),
+                                           Label = rep(t2$MP$xlab,length(MT)),
+                                           Ftgt = rep(ftgt,length(MT)),
+                                           PerfStat = rep(StatName,each=length(MT)/length(StatName)),
+                                           Period = rep("MT",each=length(MT)),
+                                           Val = MT,
+                                           stringsAsFactors = FALSE))
+      dfAll <- dplyr::bind_rows(dfAll,
+                                data.frame(RunRef = rep(r,length(LT)),
+                                           Label = rep(t2$MP$xlab,length(LT)),
+                                           Ftgt = rep(ftgt,length(LT)),
+                                           PerfStat = rep(StatName,each=length(LT)/length(StatName)),
+                                           Period = rep("LT",each=length(LT)),
+                                           Val = LT,
                                            stringsAsFactors = FALSE))
       
     }
     
   }
-
-  #geom_col for risks, boxplots otherwise
-  #p <- ggplot(data = dfAll, aes(x=factor(RunRef), y=Val, fill=factor(Period, levels = c("ST","MT","LT"))))
-  p <- ggplot(data = dfAll, aes(x=factor(Label), y=Val, fill=factor(Period, levels = c("ST","MT","LT"))))
   
-  if (PerfStat %in% c("Risk1","Risk3")){
-    p <- p + geom_col(position="dodge") + geom_hline(yintercept = 0.05, col="black", linetype=2)
+  if (PerfStat == "IAVUpDown"){
+    for (s in c("IAVUp","IAVDown")) {
+      p <- ggplot(data = filter(dfAll,PerfStat==s), aes(x=factor(Label), y=Val, fill=factor(Period, levels = c("ST","MT","LT")))) +
+        geom_boxplot(outlier.size = 0.2) +
+        facet_wrap(vars(paste("Ftgt = ",Ftgt))) +
+        ggtitle(paste(s,StatUnit)) + 
+        theme(legend.position="none",
+              axis.title.y = element_blank(),
+              axis.title.x = element_blank(),
+              strip.text.x = element_text(size=12, face="bold"),
+              axis.text.x = element_text(size=8, face="bold"),
+              strip.background = element_rect(colour="red", fill="#CCCCFF"))
+      
+      png(filename = file.path(Plot.dir,paste0(s,"Comparison.png")),
+          type = 'cairo', units = 'in', width = 10,
+          height = 8, pointsize = 12, res = 96)
+      print(p)
+      dev.off()
+    }
   } else {
-    p <- p + geom_boxplot(outlier.size = 0.2)
-  }
   
-  p <- p +  
-    facet_wrap(vars(paste("Ftgt = ",Ftgt))) +
-    ggtitle(paste(StatName,StatUnit)) + 
-    theme(legend.position="none",
-          axis.title.y = element_blank(),
-          axis.title.x = element_blank(),
-          strip.text.x = element_text(size=12, face="bold"),
-          axis.text.x = element_text(size=8, face="bold"),
-          strip.background = element_rect(colour="red", fill="#CCCCFF"))
+    #geom_col for risks, boxplots otherwise
+    p <- ggplot(data = dfAll, aes(x=factor(Label), y=Val, fill=factor(Period, levels = c("ST","MT","LT"))))
     
-  png(filename = file.path(Plot.dir,paste0(StatName,"Comparison.png")),
-      type = 'cairo', units = 'in', width = 10,
-      height = 8, pointsize = 12, res = 96)
-  print(p)
-  dev.off()
-
+    if (PerfStat %in% c("Risk1","Risk3")){
+      p <- p + geom_col(position="dodge") + geom_hline(yintercept = 0.05, col="black", linetype=2)
+    } else {
+      p <- p + geom_boxplot(outlier.size = 0.2)
+    }
+    
+    p <- p +  
+      facet_wrap(vars(paste("Ftgt = ",Ftgt))) +
+      ggtitle(paste(StatName,StatUnit)) + 
+      theme(legend.position="none",
+            axis.title.y = element_blank(),
+            axis.title.x = element_blank(),
+            strip.text.x = element_text(size=12, face="bold"),
+            axis.text.x = element_text(size=8, face="bold"),
+            strip.background = element_rect(colour="red", fill="#CCCCFF"))
+      
+    png(filename = file.path(Plot.dir,paste0(StatName,"Comparison.png")),
+        type = 'cairo', units = 'in', width = 10,
+        height = 8, pointsize = 12, res = 96)
+    print(p)
+    dev.off()
+  }
 }

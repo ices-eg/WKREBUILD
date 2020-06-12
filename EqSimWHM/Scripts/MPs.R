@@ -72,7 +72,7 @@ MP1.5 <- list("code" = "MP1.5",
              "B_trigger" = NA,
              "minTAC" = NA,
              "maxTAC" = NA,
-             "TAC_IAV" = 0.2,
+             "TAC_IAV" = c(0.2,0.2),
              "Obs" = list("cvF" = 0, "phiF" = 0, "cvSSB" = 0, "phiSSB" = 0))
 
 #baseline, no harvest rule, 30% TAC change limitation, no min/max TAC, no assessment/advice error
@@ -84,7 +84,7 @@ MP1.6 <- list("code" = "MP1.6",
               "B_trigger" = NA,
               "minTAC" = NA,
               "maxTAC" = NA,
-              "TAC_IAV" = 0.3,
+              "TAC_IAV" = c(0.3,0.3),
               "Obs" = list("cvF" = 0, "phiF" = 0, "cvSSB" = 0, "phiSSB" = 0))
 
 #baseline, no harvest rule, 10% TAC change limitation, no min/max TAC, no assessment/advice error
@@ -96,7 +96,31 @@ MP1.7 <- list("code" = "MP1.7",
               "B_trigger" = NA,
               "minTAC" = NA,
               "maxTAC" = NA,
-              "TAC_IAV" = 0.1,
+              "TAC_IAV" = c(0.1,0.1),
+              "Obs" = list("cvF" = 0, "phiF" = 0, "cvSSB" = 0, "phiSSB" = 0))
+
+#baseline, no harvest rule, 10%/20% TAC change limitation, no min/max TAC, no assessment/advice error
+MP1.8 <- list("code" = "MP1.8", 
+              "desc" = "NoHCR_10_20PctIAVTest", 
+              "xlab" = "10_20 IAV",
+              "HCRName" = "None",
+              "F_target" = c(0,0.05,0.074,0.1,0.108,0.2,0.3),
+              "B_trigger" = NA,
+              "minTAC" = NA,
+              "maxTAC" = NA,
+              "TAC_IAV" = c(0.1,0.2),
+              "Obs" = list("cvF" = 0, "phiF" = 0, "cvSSB" = 0, "phiSSB" = 0))
+
+#baseline, no harvest rule, TAC change limitation - no limit on increase, 10% limit on decrease, no min/max TAC, no assessment/advice error
+MP1.9 <- list("code" = "MP1.9", 
+              "desc" = "NoHCR_100_10PctIAVTest", 
+              "xlab" = "100_10 IAV",
+              "HCRName" = "None",
+              "F_target" = c(0,0.05,0.074,0.1,0.108,0.2,0.3),
+              "B_trigger" = NA,
+              "minTAC" = NA,
+              "maxTAC" = NA,
+              "TAC_IAV" = c(1,0.1),   #increase/decrease limits
               "Obs" = list("cvF" = 0, "phiF" = 0, "cvSSB" = 0, "phiSSB" = 0))
 
 #ICES HCR, no IAV control, no minimum TAC, with assessment/advice error

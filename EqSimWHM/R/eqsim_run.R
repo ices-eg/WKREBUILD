@@ -380,25 +380,49 @@ eqsim_run <- function(fit,
     }
     
     #check for IAV
-    if (nrow(dplyr::filter(dfExplConstraints,YearNum==1 & toupper(Type) %in% c("IAV")))>0) {
-      
-      IAV <- fNAifEmpty(dfExplConstraints[dfExplConstraints$YearNum==1 & toupper(dfExplConstraints$Type)=="IAV",]$Val)
+    #if (nrow(dplyr::filter(dfExplConstraints,YearNum==1 & toupper(Type) %in% c("IAV")))>0) {
+    if (nrow(dplyr::filter(dfExplConstraints,YearNum==1 & toupper(Type) %in% c("IAVINC","IAVDEC")))>0) {
+        
+      #IAV <- fNAifEmpty(dfExplConstraints[dfExplConstraints$YearNum==1 & toupper(dfExplConstraints$Type)=="IAV",]$Val)
+      IAVInc <- fNAifEmpty(dfExplConstraints[dfExplConstraints$YearNum==1 & toupper(dfExplConstraints$Type)=="IAVINC",]$Val)
+      IAVDec <- fNAifEmpty(dfExplConstraints[dfExplConstraints$YearNum==1 & toupper(dfExplConstraints$Type)=="IAVDEC",]$Val)
 
       tgt <- rep(NA,Nmod)
+      incs <- decs <- 0
       
-      if (!is.na(IAV)){
-        if (sum(abs((Yld1-lastTAC)/lastTAC) > IAV, na.rm=TRUE)>0) {
-          #increase
-          if (length(tgt[(Yld1/lastTAC) > (1+IAV)]) > 0){tgt[(Yld1/lastTAC) > (1+IAV)] <- (1+IAV)*lastTAC[(Yld1/lastTAC) > (1+IAV)]}
-          #decrease
-          if (length(tgt[(Yld1/lastTAC) < (1-IAV)]) > 0){tgt[(Yld1/lastTAC) < (1-IAV)] <- (1-IAV)*lastTAC[(Yld1/lastTAC) < (1-IAV)]}
-          
-          #message
-          icesTAF::msg(paste0(sum((Yld1/lastTAC) > (1+IAV)),"/",
-                              sum((Yld1/lastTAC) < (1-IAV)),
-                              " IAV capped increases/decreases set in year 1"))
+      #increases
+      if (!is.na(IAVInc)){
+        if (sum((Yld1-lastTAC)/lastTAC > IAVInc, na.rm = TRUE)>0){
+          #adjust targets to limit increases
+          incs <- sum((Yld1/lastTAC) > (1+IAVInc), na.rm=TRUE)
+          tgt[(Yld1/lastTAC) > (1+IAVInc)] <- (1+IAVInc)*lastTAC[(Yld1/lastTAC) > (1+IAVInc)]
         }
       }
+      #decreases
+      if (!is.na(IAVDec)){
+        if (sum((Yld1-lastTAC)/lastTAC < -1*IAVDec, na.rm = TRUE)>0){
+          #adjust targets to limit decreases
+          decs <- sum((Yld1/lastTAC) < (1-IAVDec), na.rm=TRUE)
+          tgt[(Yld1/lastTAC) < (1-IAVDec)] <- (1-IAVDec)*lastTAC[(Yld1/lastTAC) < (1-IAVDec)]
+        }
+      }
+
+      #message
+      icesTAF::msg(paste0(incs,"/",decs," IAV capped increases/decreases set in year 1"))
+
+      # if (!is.na(IAV)){
+      #   if (sum(abs((Yld1-lastTAC)/lastTAC) > IAV, na.rm=TRUE)>0) {
+      #     #increase
+      #     if (length(tgt[(Yld1/lastTAC) > (1+IAV)]) > 0){tgt[(Yld1/lastTAC) > (1+IAV)] <- (1+IAV)*lastTAC[(Yld1/lastTAC) > (1+IAV)]}
+      #     #decrease
+      #     if (length(tgt[(Yld1/lastTAC) < (1-IAV)]) > 0){tgt[(Yld1/lastTAC) < (1-IAV)] <- (1-IAV)*lastTAC[(Yld1/lastTAC) < (1-IAV)]}
+      #     
+      #     #message
+      #     icesTAF::msg(paste0(sum((Yld1/lastTAC) > (1+IAV)),"/",
+      #                         sum((Yld1/lastTAC) < (1-IAV)),
+      #                         " IAV capped increases/decreases set in year 1"))
+      #   }
+      # }
       
       if (sum(is.na(tgt)) < Nmod) {
         
@@ -415,6 +439,7 @@ eqsim_run <- function(fit,
       } else {
         Yld3 <- Yld2
       }
+    
     } else {
       Yld3 <- Yld2
     }
@@ -558,28 +583,54 @@ eqsim_run <- function(fit,
         Yld2 <- Yld1
       }
       
-      #if (j==4){browser()}
-      
       #check for IAV
-      if (nrow(dplyr::filter(dfExplConstraints,YearNum==j & toupper(Type) %in% c("IAV")))>0) {
+      #if (nrow(dplyr::filter(dfExplConstraints,YearNum==j & toupper(Type) %in% c("IAV")))>0) {
+      #  
+      #  IAV <- fNAifEmpty(dfExplConstraints[dfExplConstraints$YearNum==j & toupper(dfExplConstraints$Type)=="IAV",]$Val)
+      #  tgt <- rep(NA,Nmod)
+      #  
+      #  if (!is.na(IAV)){
+      #    if (sum(abs((Yld1-TAC[j-1,])/TAC[j-1,]) > IAV, na.rm=TRUE)>0) {
+      #      #capped increase
+      #      if (length(tgt[(Yld1/TAC[j-1,]) > (1+IAV)]) > 0){tgt[(Yld1/TAC[j-1,]) > (1+IAV)] <- (1+IAV)*TAC[j-1,(Yld1/TAC[j-1,]) > (1+IAV)]}
+      #      #capped decrease
+      #      if (length(tgt[(Yld1/TAC[j-1,]) < (1-IAV)]) > 0){tgt[(Yld1/TAC[j-1,]) < (1-IAV)] <- (1-IAV)*TAC[j-1,(Yld1/TAC[j-1,]) < (1-IAV)]}
+      #      
+      #      #message
+      #      icesTAF::msg(paste0(sum((Yld1/TAC[j-1,]) > (1+IAV)),"/",
+      #                          sum((Yld1/TAC[j-1,]) < (1-IAV)),
+      #                          " IAV capped increases/decreases set in year ",j))
+      #      }
+      #  }
         
-        IAV <- fNAifEmpty(dfExplConstraints[dfExplConstraints$YearNum==j & toupper(dfExplConstraints$Type)=="IAV",]$Val)
+      if (nrow(dplyr::filter(dfExplConstraints,YearNum==j & toupper(Type) %in% c("IAVINC","IAVDEC")))>0) {
+        
+        IAVInc <- fNAifEmpty(dfExplConstraints[dfExplConstraints$YearNum==j & toupper(dfExplConstraints$Type)=="IAVINC",]$Val)
+        IAVDec <- fNAifEmpty(dfExplConstraints[dfExplConstraints$YearNum==j & toupper(dfExplConstraints$Type)=="IAVDEC",]$Val)
+          
         tgt <- rep(NA,Nmod)
-        
-        if (!is.na(IAV)){
-          if (sum(abs((Yld1-TAC[j-1,])/TAC[j-1,]) > IAV, na.rm=TRUE)>0) {
-            #capped increase
-            if (length(tgt[(Yld1/TAC[j-1,]) > (1+IAV)]) > 0){tgt[(Yld1/TAC[j-1,]) > (1+IAV)] <- (1+IAV)*TAC[j-1,(Yld1/TAC[j-1,]) > (1+IAV)]}
-            #capped decrease
-            if (length(tgt[(Yld1/TAC[j-1,]) < (1-IAV)]) > 0){tgt[(Yld1/TAC[j-1,]) < (1-IAV)] <- (1-IAV)*TAC[j-1,(Yld1/TAC[j-1,]) < (1-IAV)]}
-            
-            #message
-            icesTAF::msg(paste0(sum((Yld1/TAC[j-1,]) > (1+IAV)),"/",
-                                sum((Yld1/TAC[j-1,]) < (1-IAV)),
-                                " IAV capped increases/decreases set in year ",j))
-            }
+        incs <- decs <- 0
+          
+        #increases
+        if (!is.na(IAVInc)){
+          if (sum((Yld1-TAC[j-1,])/TAC[j-1,] > IAVInc, na.rm = TRUE)>0){
+            #adjust targets to limit increases
+            incs <- sum((Yld1/TAC[j-1,]) > (1+IAVInc), na.rm=TRUE)
+            tgt[(Yld1/TAC[j-1,]) > (1+IAVInc)] <- (1+IAVInc)*TAC[j-1,(Yld1/TAC[j-1,]) > (1+IAVInc)]
+          }
         }
-        
+        #decreases
+        if (!is.na(IAVDec)){
+          if (sum((Yld1-TAC[j-1,])/TAC[j-1,] < -1*IAVDec, na.rm = TRUE)>0){
+            #adjust targets to limit decreases
+            decs <- sum((Yld1/TAC[j-1,]) < (1-IAVDec), na.rm=TRUE)
+            tgt[(Yld1/TAC[j-1,]) < (1-IAVDec)] <- (1-IAVDec)*TAC[j-1,(Yld1/TAC[j-1,]) < (1-IAVDec)]
+          }
+        }
+          
+        #message
+        icesTAF::msg(paste0(incs,"/",decs," IAV capped increases/decreases set in year ",j))
+          
         if (sum(is.na(tgt)) < Nmod) {
           
           Fmgmt[j,!is.na(tgt)] <- fFindF(N = Ny[,j,!is.na(tgt),drop=FALSE], CW = Wy[,j,!is.na(tgt),drop=FALSE], 

@@ -90,7 +90,10 @@ OM <- OM2.2   #WGWIDE 2019, stochastic weights, selection
 #MP <- MP1.4   #baseline, constant F harvest rule, no IAV control, no min/max TAC, includes assessment/advice error
 #MP <- MP1.5   #20% IAV Test
 #MP <- MP1.6   #30% IAV Test
-MP <- MP1.7   #10% IAV Test
+#MP <- MP1.7   #10% IAV Test
+#MP <- MP1.8   #10%/20% asymmetric IAV Test
+MP <- MP1.9   #0%/10% asymmetric IAV Test
+
 #MP <- MP2.1
 
 runName <- paste(OM$code,MP$code,sep="_")
@@ -217,12 +220,27 @@ if (!is.na(MP$maxTAC)) {
 }
 
 #IAV
-if (!is.na(MP$TAC_IAV)) {
+if (!any(is.na(MP$TAC_IAV))) {
+  if (length(MP$TAC_IAV)==2){
+#  dfExplConstraints <- dplyr::bind_rows(dfExplConstraints,
+#                                        data.frame("Type" = "IAV",
+#                                                   "YearNum" = "all",
+#                                                   "Val" = MP$TAC_IAV,
+#                                                   stringsAsFactors = FALSE))
   dfExplConstraints <- dplyr::bind_rows(dfExplConstraints,
-                                        data.frame("Type" = "IAV",
-                                                   "YearNum" = "all",
-                                                   "Val" = MP$TAC_IAV,
+                                        data.frame("Type" = c("IAVInc","IAVDec"),
+                                                   "YearNum" = c("all","all"),
+                                                   "Val" = c(MP$TAC_IAV[1],MP$TAC_IAV[2]),
                                                    stringsAsFactors = FALSE))
+  } else {
+    stop("IAV needs to be vector of length 2 (limit on increase, limit on decrease)")
+    #assume same for both
+    dfExplConstraints <- dplyr::bind_rows(dfExplConstraints,
+                                          data.frame("Type" = c("IAVInc","IAVDec"),
+                                                     "YearNum" = c("all","all"),
+                                                     "Val" = c(MP$TAC_IAV[1],MP$TAC_IAV[1]),
+                                                     stringsAsFactors = FALSE))
+  }
 }
 
 #statistical periods for reporting
@@ -379,6 +397,15 @@ for (ii in names(SimRuns)) {
   Stats[["IAV"]][["val"]] <- fStatPercs(IAV, lStatPer = lStatPer2)
   Stats[["IAV"]][["worm"]] <- FLCore::iter(IAV,1:numWorm)
 
+  #IAV increases/decreases
+  IAVup <- IAVdown <- IAVupdown <- Catch[,as.character(seq(yStart+1,yEnd))]/Catch[,as.character(seq(yStart,yEnd-1))] - 1
+  IAVup[IAVup<0] <- NA
+  IAVdown[IAVdown>0] <- NA
+  
+  Stats[["IAVupdown"]][["worm"]] <- FLCore::iter(IAVupdown,1:numWorm)
+  Stats[["IAVup"]][["val"]] <- fStatPercs(IAVup, lStatPer = lStatPer2)
+  Stats[["IAVdown"]][["val"]] <- fStatPercs(IAVdown, lStatPer = lStatPer2)
+  
   #Recruitment
   Rec <- rec(Stocks[[ii]])
   Stats[["Rec"]][["val"]] <- fStatPercs(Rec, lStatPer=lStatPer)
@@ -432,10 +459,11 @@ fTabulateStats(sim = lStats, plot.dir = Res.dir)
 #                 lStatPer = lStatPer, Blim = OM$refPts$Blim)}
 
 #IAV
-runs2Compare <- c("OM2.2_MP1.0","OM2.2_MP1.5","OM2.2_MP1.6","OM2.2_MP1.7")
+runs2Compare <- c("OM2.2_MP1.0","OM2.2_MP1.5","OM2.2_MP1.6","OM2.2_MP1.7","OM2.2_MP1.8","OM2.2_MP1.9")
 #create folder
 dir.create(path = file.path(Res.dir,"Comparisons","IAV"), showWarnings = TRUE, recursive = TRUE)
-for (stat in c("Catch","SSB","Risk3","Risk1","IAV")){
+for (stat in c("Catch","SSB","Risk3","Risk1","IAV","IAVUpDown")){
  fCompare_runs(runs2Compare = runs2Compare, Res.dir = Res.dir, Plot.dir = file.path(Res.dir,"Comparisons","IAV"),
                PerfStat = stat, TargetFs = c(0,0.05,0.074,0.1,0.108,0.2),
                lStatPer = lStatPer, Blim = OM$refPts$Blim)}
+
