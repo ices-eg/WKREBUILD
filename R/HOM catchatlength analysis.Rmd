@@ -1,0 +1,219 @@
+---
+output: 
+  word_document:
+    reference_docx: ../PFA_report_template_v1.4.dotx
+---
+
+```{r setup, include=FALSE}
+
+################################################################################
+# HOM catch@length analysis
+#
+# 12/06/2020 First version for HOM FG 2019
+#
+################################################################################
+
+require("knitr")
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, crop = TRUE, comment = "")
+knitr::opts_chunk$set(fig.width=10) 
+
+rm(list=ls())
+
+# library(devtools)
+# install.packages("FLCore", repos="http://flr-project.org/R")
+
+# Open libraries
+# library(FLCore)
+library(tidyverse)
+library(readxl)
+library(lubridate)
+library(RColorBrewer)
+library(directlabels)
+library(cowplot)
+library(captioner)
+
+# library(devtools); install_github("einarhjorleifsson/ggmisc")
+library(ggmisc)
+
+# Settings for captioner
+fig_nums <- captioner::captioner(prefix = "Figure")
+tab_nums <- captioner::captioner(prefix = "Table")
+
+# Source the utils file
+source("../../mptools/R/my utils.r")
+
+# set dropboxdirs
+dropboxdir <- paste(get_dropbox(), "/HOM FG/05. Data", sep="")
+
+# set path
+path    <- dropboxdir
+# path    <- "D:/WGWIDE/2019/06. data/"
+# path    <- "//community.ices.dk@SSL/DavWWWRoot/ExpertGroups/WGWIDE/2019 Meeting docs/06. Data/_catch_by_rectangle"
+
+# set colour scheme
+PAIRED <- rep(brewer.pal(12, "Paired"), 100)
+
+
+# ============================================================================
+# load catch@length data
+# ============================================================================
+
+df <-  
+  read_excel(file.path(path, "length","all_lgths.xlsx"), 
+             col_names=TRUE, 
+             col_types="text") %>% 
+  lowcase() %>% 
+  mutate_at(c("lt"), list(as.integer) ) %>% 
+  mutate_at(c("q1","q2","q3","q4","all"), list(as.numeric) )
+
+
+
+# ============================================================================
+# load by length files: length sampled catches
+# ============================================================================
+
+# # generate file lists
+# bylengthfiles1  <- list.files(
+#   path       = paste(path,"hom.27.2a4a5b6a7a-ce-k8/data/catch/",sep=""),
+#   pattern    = "FRA",
+#   recursive  = F, 
+#   full.names = TRUE, 
+#   ignore.case= TRUE)
+# 
+# bylengthfiles2  <- list.files(
+#   path       = paste(path,"hom.27.3a4bc7d/data/catch/",sep=""),
+#   pattern    = "FRA",
+#   recursive  = F, 
+#   full.names = TRUE, 
+#   ignore.case= TRUE)
+# 
+# bylengthfiles <- c(bylengthfiles1, bylengthfiles2)
+# bylengthfiles <- bylengthfiles[!grepl("\\~",bylengthfiles)]
+# 
+# # read the data
+# i <- 1
+# for (i in 1:length(bylengthfiles)){
+# 
+#   # print(paste(i, byagefiles[i], sep=" "))
+#   tmp <-
+#     read_excel(bylengthfiles[i], col_names=TRUE, col_types="text", sheet = "SD") %>%
+#     lowcase()
+# 
+#   # print(names(tmp))
+# 
+#   if (i==1) bylength <- tmp else
+#             bylength <- bind_rows(bylength,tmp)
+# }
+# 
+# # set column types
+# bylength <-
+#   bylength %>%
+#   rename(length = agelength, area=fishingarea) %>%
+#   mutate_at(c("year","season","length",
+#               "sampledcatch",
+#               "numsampleslngt", "numlngtmeas",
+#               "numbercaught","meanweight"), list(as.numeric) ) %>%
+#   mutate(
+#          stock = ifelse(stock == "hom.27.3a4bc7d","hom-nsea",stock),
+#          stock = ifelse(stock == "hom.27.2a4a5b6a7a-ce-k8", "hom-west", stock),
+#          area  = gsub("^27\\." , "", area),
+#          area  = gsub("\\.nshm", "", area),
+#          area  = gsub("\\."    , "", area),
+#          area  = substr(area,1,2),
+#          length=length/10 ) %>%
+#   data.frame()
+
+# ============================================================================
+# optional: read southern horse mackerel data
+# ============================================================================
+
+# cn <- read_excel(file.path(path,"HOMS",  "hom-soth.xlsx"), 
+#                  sheet = "canum", col_names = TRUE, skip = 0) %>% 
+#   gather(key=age, value=canum, a0:a11) %>% 
+#   mutate(age = as.numeric(gsub("a","", age)),
+#          canum   = 1000 * canum, 
+#          stock   ="hom-soth",
+#          area    = "9a")
+
+# wc <- read_excel(file.path(path,"HOMS",  "hom-soth.xlsx"), 
+#                  sheet = "weca", col_names = TRUE, skip = 0) %>% 
+#   gather(key=age, value=weca, a0:a11) %>% 
+#   mutate(age = as.numeric(gsub("a","", age)),
+#          weca  = 1000*weca,
+#          stock   ="hom-soth",
+#          area    = "9a")
+
+# t <- cn %>%
+#   left_join(wc, by=c("stock","area","year","age")) %>% 
+#   data.frame()
+
+# ct <- read_excel(file.path(path,"HOMS",  "hom-soth.xlsx"), 
+#                  sheet = "caton", col_names = TRUE, skip = 0) %>% 
+#   mutate(caton    = 1000*as.numeric(caton), 
+#          stock   ="hom-soth",
+#          area    = "9a") %>% 
+#   data.frame()
+
+
+
+```
+
+*Working document for WGWIDE 2020*
+
+&nbsp;  
+
+&nbsp;  
+
+**Horse mackerel catch@length analysis for WGWIDE 2020**
+
+&nbsp;  
+
+Martin Pastoors, `r format(Sys.time(), '%d/%m/%Y')`
+
+&nbsp;  
+
+&nbsp;  
+
+**Abstract**
+
+*To be done *  
+
+
+<!--1. Introduction ------------------------------------------------------ -->
+
+# Introduction
+
+
+# Data and methods
+
+
+# Results
+
+
+## Length compositions in 2018  
+
+
+```{r echo=FALSE, fig.align="center", fig.asp=1.4, message=FALSE, warning=FALSE}
+
+fig_nums(name    = "lengthcomp", display = FALSE, 
+         caption = "Horse mackerel: length compositions in 2018" )
+
+df %>%
+  filter(lt < 50) %>% 
+  ggplot(aes(x=lt, y=all)) +
+  theme_publication() +
+  geom_line(aes(colour=country)) +
+  facet_grid(country~area)
+
+
+
+
+```
+
+*`r fig_nums("lengthcomp")`*
+
+
+##### page break
+
+# Discussion
+
