@@ -48,10 +48,11 @@ rt <- format(Sys.time(), "%d-%b-%Y %H.%M")
 
 
 #fs to scan
-Fscan <- seq(0.01,0.2,len=20) #low res
-#Fscan <- seq(0.01,0.2,len=40) #high res
+#Fscan <- seq(0.01,0.2,len=20) #low res
+Fscan <- seq(0.01,0.2,len=40) #high res
 
 #Base assessments
+ass <- c("WG18")
 ass <- c("WG18","WG19","WG19SAM")
 
 a <- "WG18"
@@ -176,8 +177,7 @@ for (a in ass) {
   Fp05 <- SIM2.Fmsy$Refs2["catF","F05"]
   
   #Final Fmsy
-  # if (Fmsy_final>Fp05) {Fmsy_final <- Fp05}  # THIS WAS AN ERROR IN THE CODE
-  if (Fmsy>Fp05) {Fmsy_final <- Fp05} else {Fmsy_final <- Fmsy}
+  if (Fmsy_final>Fp05) {Fmsy_final <- Fp05}
   
 
   cat("**********************************************\n")
@@ -199,13 +199,12 @@ for (a in ass) {
 
 } #loop over assessments
 
-dfResults$runName <- runName
-
 save(dfResults, file = file.path(RData.dir, "dfResults.RData"))
 
 # overview
+
 dfResults %>% 
-  filter(RP %in% c("Blim","MSYBtrigger", "FMSY","FMSY_final","FP05")) %>% 
+  filter(RP %in% c("Blim","MSYBtrigger","Flim","Fpa", "FMSY","FMSY_final","FP05")) %>% 
   dplyr::select(Assessment, RP, Val) %>% 
   pivot_wider(values_from = Val, names_from =Assessment) %>% 
   pander::pandoc.table()
