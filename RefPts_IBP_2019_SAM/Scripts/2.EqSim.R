@@ -2,29 +2,25 @@
 # 2. EqSim.R
 #
 # Run the EqSim scenario 5.3 that was selected in IBPHOM 2019
+# 
+# 18/06/2020 MP
 # ==================================================================================
 
 library(msy)
-library(ggplot2)
-#library(ggpubr)
-library(knitr)
-#library(icesAdvice)
-library(tidyverse)
-#library(r4ss)
-library(Cairo)
 library(FLCore)
-library(knitr)
-library(plyr)
+library(pander)
+library(tidyverse)
 
 ac <- function(str){as.character(str)}
 fmt <- function(RP,dgt=3,fmt="f"){ac(formatC(RP,digits=dgt,format=fmt,big.mark = ","))}
 roundUp <- function(x,to=1000) {to*(x%/%to + as.logical(x%%to))}
 
+root.dir <- "D:/GIT/wk_WKREBUILD"
 subfolder <- "RefPts_IBP_2019_SAM"
-RData.dir <- file.path(getwd(),subfolder, "RData")
-graphics.dir <- file.path(getwd(),subfolder, "Graphics")
-logs.dir <- file.path(getwd(),subfolder, "Logs")
-source.dir <- file.path(getwd(),subfolder, "Source")
+RData.dir <- file.path(root.dir,subfolder, "RData")
+graphics.dir <- file.path(root.dir,subfolder, "Graphics")
+logs.dir <- file.path(root.dir,subfolder, "Logs")
+source.dir <- file.path(root.dir,subfolder, "Source")
 
 #WGWIDE2018
 WG18 <- get(load(file=file.path(RData.dir,"WGWIDE2018.RData")))
@@ -33,7 +29,7 @@ WG18df <-
   as.data.frame(WG18) %>% 
   bind_rows(as.data.frame(fbar(WG18)) %>% mutate(slot="fbar")) %>% 
   bind_rows(as.data.frame(ssb(WG18)) %>% mutate(slot="ssb")) %>% 
-  mutate(run="WG18")
+  mutate(Assessment="WG18")
 
 #WGWIDE2019
 WG19 <- get(load(file=file.path(RData.dir,"WGWIDE2019.RData")))
@@ -42,7 +38,7 @@ WG19df <-
   as.data.frame(WG19) %>% 
   bind_rows(as.data.frame(fbar(WG19)) %>% mutate(slot="fbar")) %>% 
   bind_rows(as.data.frame(ssb(WG19)) %>% mutate(slot="ssb")) %>% 
-  mutate(run="WG19")
+  mutate(Assessment="WG19")
 
 #WGWIDE2019SAM
 
@@ -53,7 +49,7 @@ WG19SAMdf <-
   as.data.frame(WG19SAM) %>% 
   bind_rows(as.data.frame(fbar(WG19SAM)) %>% mutate(slot="fbar")) %>% 
   bind_rows(as.data.frame(ssb(WG19SAM)) %>% mutate(slot="ssb")) %>% 
-  mutate(run="WG19SAM")
+  mutate(Assessment="WG19SAM")
 
 
 #plot
@@ -248,12 +244,14 @@ for (a in ass) {
 
 } #loop over assessments
 
-# save(dfResults, file = file.path(RData.dir, "dfResults.RData"))
+save(dfResults, file = file.path(RData.dir, "dfResults.RData"))
+# load(file = file.path(RData.dir, "dfResults.RData"))
 
 # overview
 
-dfResults <- bind_rows(dfResults_wg18, dfResults)
+# dfResults <- bind_rows(dfResults_wg18, dfResults)
 
+# Table of results
 dfResults %>% 
   group_by(Assessment, RP) %>% 
   filter(row_number() == 1) %>% 
@@ -262,5 +260,35 @@ dfResults %>%
   pivot_wider(values_from = Val, names_from =Assessment) %>% 
   pander::pandoc.table()
 
+# temp restructuring of results; to wider
+t <-
+  dfResults %>% 
+  filter(RP %in% c("FMSY_final", "MSYBtrigger")) %>% 
+  dplyr::select(Assessment, RP, Val) %>% 
+  pivot_wider(values_from = Val, names_from =RP) 
+  
+# plot SSB and Fbar on relative scale (divided by reference points)
+bind_rows(WG18df, WG19df, WG19SAMdf) %>% 
+  filter(slot %in% c("ssb", "fbar")) %>% 
+  dplyr::select(slot, year, data, Assessment) %>% 
+  pivot_wider(values_from = data, names_from =slot)  %>% 
 
-# dfResults_wg18 <- dfResults
+  left_join(t, by="Assessment") %>% 
+  mutate(
+    f_fmsy = fbar / FMSY_final,
+    ssb_msybtrig  = ssb / MSYBtrigger
+  ) %>% 
+  
+  # group_by(Assessment) %>% 
+  # dplyr::summarise(fbar2=mean(fbar2, na.rm=TRUE))
+
+  dplyr::select(Assessment, year, f_fmsy, ssb_msybtrig) %>% 
+  pivot_longer(c(f_fmsy,ssb_msybtrig), names_to="var", values_to="data") %>% 
+
+  ggplot(aes(x=year, y=data, group=Assessment)) +
+  theme_bw() +
+  geom_line(aes(colour=Assessment)) +
+  facet_wrap(~var, scales="free_y")
+
+  
+unique(WG18df$slot)  
