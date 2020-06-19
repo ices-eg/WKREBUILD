@@ -40,11 +40,18 @@ WG19df <-
   bind_rows(as.data.frame(ssb(WG19)) %>% mutate(slot="ssb")) %>% 
   mutate(Assessment="WG19")
 
-#WGWIDE2019SAM
+#WGWIDE2018SAM
+WG18SAM <- get(load(file=file.path(RData.dir,"WGWIDE2018SAM.RData")))
+name(WG18SAM) <- "WGWIDE18SAM"
+WG18SAMdf <-
+  as.data.frame(WG18SAM) %>% 
+  bind_rows(as.data.frame(fbar(WG18SAM)) %>% mutate(slot="fbar")) %>% 
+  bind_rows(as.data.frame(ssb(WG18SAM)) %>% mutate(slot="ssb")) %>% 
+  mutate(Assessment="WG18SAM")
 
+#WGWIDE2019SAM
 WG19SAM <- get(load(file=file.path(RData.dir,"WGWIDE2019SAM.RData")))
 name(WG19SAM) <- "WGWIDE19SAM"
-
 WG19SAMdf <-
   as.data.frame(WG19SAM) %>% 
   bind_rows(as.data.frame(fbar(WG19SAM)) %>% mutate(slot="fbar")) %>% 
@@ -53,12 +60,12 @@ WG19SAMdf <-
 
 
 #plot
-# bind_rows(WG18df, WG19df, WG19SAMdf) %>% 
-#   filter(slot %in% c("ssb","fbar")) %>% 
-#   
+# bind_rows(WG18df, WG19df, WG18SAMdf, WG19SAMdf) %>%
+#   filter(slot %in% c("ssb","fbar")) %>%
+# 
 #   ggplot(aes(x=year,y=data)) +
 #   theme_bw() +
-#   geom_line(aes(colour=run)) +
+#   geom_line(aes(colour=Assessment), size=1) +
 #   facet_wrap(~slot, scales="free_y")
 
 # each scenario was run without the 1982 data point
@@ -94,9 +101,9 @@ dfResults <- data.frame("Assessment" = character(),
 Fscan <- seq(0.01,0.2,len=40) #high res
 
 #Base assessments
-ass <- c("WG18")
-ass <- c("WG19","WG19SAM")
-# ass <- c("WG18","WG19","WG19SAM")
+# ass <- c("WG18")
+# ass <- c("WG19","WG19SAM")
+ass <- c("WG18", "WG18SAM", "WG19", "WG19SAM")
 
 # a <- "WG18"
 
@@ -253,6 +260,7 @@ save(dfResults, file = file.path(RData.dir, "dfResults.RData"))
 
 # Table of results
 dfResults %>% 
+  mutate(Assessment = factor(Assessment, levels=c("WG18","WG19","WG18SAM","WG19SAM"))) %>% 
   group_by(Assessment, RP) %>% 
   filter(row_number() == 1) %>% 
   filter(RP %in% c("Blim","MSYBtrigger","Flim","Fpa", "FMSY","FMSY_final","FP05")) %>% 
@@ -290,5 +298,3 @@ bind_rows(WG18df, WG19df, WG19SAMdf) %>%
   geom_line(aes(colour=Assessment)) +
   facet_wrap(~var, scales="free_y")
 
-  
-unique(WG18df$slot)  
