@@ -1,20 +1,17 @@
 # ==================================================================================
-# 2. EqSim.R
+# 3. EqSim sensitivity.R
 #
 # Run the EqSim scenario 5.3 that was selected in IBPHOM 2019
-# 
+# Test sensitivity to different values of Fcv and Fphi
+#
 # 18/06/2020 MP
-# 20/06/2020 Updated with code from 3. EqSim sensitivity.R
+# 19/06/2020 MP
 # ==================================================================================
 
 library(msy)
 library(FLCore)
 library(pander)
 library(tidyverse)
-
-ac <- function(str){as.character(str)}
-fmt <- function(RP,dgt=3,fmt="f"){ac(formatC(RP,digits=dgt,format=fmt,big.mark = ","))}
-roundUp <- function(x,to=1000) {to*(x%/%to + as.logical(x%%to))}
 
 root.dir <- "D:/GIT/wk_WKREBUILD"
 subfolder <- "RefPts_IBP_2019_SAM"
@@ -33,31 +30,31 @@ WG18df <-
   mutate(Assessment="WG18")
 
 #WGWIDE2019
-WG19 <- get(load(file=file.path(RData.dir,"WGWIDE2019.RData")))
-name(WG19) <- "WGWIDE19"
-WG19df <-
-  as.data.frame(WG19) %>% 
-  bind_rows(as.data.frame(fbar(WG19)) %>% mutate(slot="fbar")) %>% 
-  bind_rows(as.data.frame(ssb(WG19)) %>% mutate(slot="ssb")) %>% 
-  mutate(Assessment="WG19")
+# WG19 <- get(load(file=file.path(RData.dir,"WGWIDE2019.RData")))
+# name(WG19) <- "WGWIDE19"
+# WG19df <-
+#   as.data.frame(WG19) %>% 
+#   bind_rows(as.data.frame(fbar(WG19)) %>% mutate(slot="fbar")) %>% 
+#   bind_rows(as.data.frame(ssb(WG19)) %>% mutate(slot="ssb")) %>% 
+#   mutate(Assessment="WG19")
 
 #WGWIDE2018SAM
-WG18SAM <- get(load(file=file.path(RData.dir,"WGWIDE2018SAM.RData")))
-name(WG18SAM) <- "WGWIDE18SAM"
-WG18SAMdf <-
-  as.data.frame(WG18SAM) %>% 
-  bind_rows(as.data.frame(fbar(WG18SAM)) %>% mutate(slot="fbar")) %>% 
-  bind_rows(as.data.frame(ssb(WG18SAM)) %>% mutate(slot="ssb")) %>% 
-  mutate(Assessment="WG18SAM")
+# WG18SAM <- get(load(file=file.path(RData.dir,"WGWIDE2018SAM.RData")))
+# name(WG18SAM) <- "WGWIDE18SAM"
+# WG18SAMdf <-
+#   as.data.frame(WG18SAM) %>% 
+#   bind_rows(as.data.frame(fbar(WG18SAM)) %>% mutate(slot="fbar")) %>% 
+#   bind_rows(as.data.frame(ssb(WG18SAM)) %>% mutate(slot="ssb")) %>% 
+#   mutate(Assessment="WG18SAM")
 
 #WGWIDE2019SAM
-WG19SAM <- get(load(file=file.path(RData.dir,"WGWIDE2019SAM.RData")))
-name(WG19SAM) <- "WGWIDE19SAM"
-WG19SAMdf <-
-  as.data.frame(WG19SAM) %>% 
-  bind_rows(as.data.frame(fbar(WG19SAM)) %>% mutate(slot="fbar")) %>% 
-  bind_rows(as.data.frame(ssb(WG19SAM)) %>% mutate(slot="ssb")) %>% 
-  mutate(Assessment="WG19SAM")
+# WG19SAM <- get(load(file=file.path(RData.dir,"WGWIDE2019SAM.RData")))
+# name(WG19SAM) <- "WGWIDE19SAM"
+# WG19SAMdf <-
+#   as.data.frame(WG19SAM) %>% 
+#   bind_rows(as.data.frame(fbar(WG19SAM)) %>% mutate(slot="fbar")) %>% 
+#   bind_rows(as.data.frame(ssb(WG19SAM)) %>% mutate(slot="ssb")) %>% 
+#   mutate(Assessment="WG19SAM")
 
 
 #plot
@@ -72,21 +69,8 @@ WG19SAMdf <-
 # each scenario was run without the 1982 data point
 # source(file=file.path(getwd(),"Scripts","0.Setup.R"))
 
-RPs <- c("Blim","Bpa","Flim","Fpa","MSYBtrigger","FMSY_init","FMSY_interim", "FP05","FMSY_final")
-nRPs <- length(RPs)
-
-SRR.models <- c("SegregBlim")
-rhologRec <- FALSE
-recruitment.trim = c(3, -3)
-Fcv <- 0.212; 
-Fphi <- 0.423
-nsim <- 1000
-
-SRR.desc <- paste0(SRR.models,collapse="_")
-
 dfResults <- data.frame("Assessment" = character(),
                         "Scenario" = character(),
-                        "Niters" = integer(),
                         "SRR" = character(),
                         "BioYrs" = character(),
                         "SelYrs" = character(),
@@ -98,14 +82,29 @@ dfResults <- data.frame("Assessment" = character(),
                         "RunTime" = character(),
                         stringsAsFactors = FALSE)
 
+RPs <- c("Blim","Bpa","Flim","Fpa","MSYBtrigger","FMSY_init","FMSY_interim", "FP05","FMSY_final")
+nRPs <- length(RPs)
+
+SRR.models <- c("SegregBlim")
+rhologRec <- FALSE
+recruitment.trim = c(3, -3)
+nsim <- 100
+
+SRR.desc <- paste0(SRR.models,collapse="_")
+
+
 #fs to scan
 #Fscan <- seq(0.01,0.2,len=20) #low res
 Fscan <- seq(0.01,0.2,len=40) #high res
+Fcvs  <- c(0.1, 0.2, 0.3, 0.4, 0.5)  
+Fphis <- c(0.1, 0.2, 0.3, 0.4, 0.5)
+# Fcvs  <- c(0.3)  
+# Fphis <- c(0.5)
 
 #Base assessments
-# ass <- c("WG18")
+ass <- c("WG18")
 # ass <- c("WG19","WG19SAM")
-ass <- c("WG18", "WG18SAM", "WG19", "WG19SAM")
+# ass <- c("WG18", "WG18SAM", "WG19", "WG19SAM")
 
 # a <- "WG18"
 
@@ -215,52 +214,57 @@ for (a in ass) {
   MSYBtrigger <- Bpa
   
   #Step 3 evaluate the ICES MSY rule and compare Fmsy with Fp05
-  cat("Precautionary check FP05...\n")
-  SIM2.Fmsy <- eqsim_run(SRR,
-                            bio.years = bio.years,
-                            bio.const = FALSE,
-                            sel.years = sel.years,
-                            sel.const = FALSE,
-                            Fscan = Fscan,
-                            Fcv = Fcv, Fphi = Fphi,
-                            rhologRec = rhologRec,
-                            Blim = Blim, Bpa = Bpa,
-                            recruitment.trim = recruitment.trim,
-                            Btrigger = MSYBtrigger,
-                            verbose = TRUE)
-  
-  # eqsim_plot(SIM2.Fmsy,catch=TRUE)
-  # eqsim_plot_range(SIM2.Fmsy, type="median")
-  
-  Fp05 <- SIM2.Fmsy$Refs2["catF","F05"]
-  
-  #Final Fmsy
-  if (Fmsy_interim>Fp05) {Fmsy_final <- Fp05} else {Fmsy_final <- Fmsy_interim}
-  
-  cat("Fp05= ",Fp05,", Fmsy_final= ",Fmsy_final, "\n")
-  
-  cat("**********************************************\n")
-  
-  dfResults <- dplyr::bind_rows(dfResults,
-                                data.frame("Assessment" = rep(a,nRPs),
-                                           "Scenario" = rep("5.3",nRPs),
-                                           "Niters" = nsim, 
-                                           "SRR" = rep(SRR.desc,nRPs),
-                                           "BioYrs" = rep(paste(bio.years,collapse=","),nRPs),
-                                           "SelYrs" = rep(paste(sel.years,collapse=","),nRPs),
-                                           "Fcv" = rep(Fcv,nRPs),
-                                           "Fphi" = rep(Fphi,nRPs),
-                                           "RP" = RPs,
-                                           "Type" = rep("Abs",nRPs),
-                                           "Val"  = c(Blim,Bpa,Flim,Fpa,MSYBtrigger,
-                                                      Fmsy_init,Fmsy_interim, Fp05,Fmsy_final),
-                                           "RunTime" = rep(as.character(rt),nRPs),
-                                           stringsAsFactors = FALSE))
+  for (Fphi in Fphis) {
+    for (Fcv in Fcvs) {
+      cat("Precautionary check FP05. Fcv=",Fcv,", Fphi=",Fphi,"\n")
+      SIM2.Fmsy <- eqsim_run(SRR,
+                             bio.years = bio.years,
+                             bio.const = FALSE,
+                             sel.years = sel.years,
+                             sel.const = FALSE,
+                             Fscan = Fscan,
+                             Fcv = Fcv, Fphi = Fphi,
+                             rhologRec = rhologRec,
+                             Blim = Blim, Bpa = Bpa,
+                             recruitment.trim = recruitment.trim,
+                             Btrigger = MSYBtrigger,
+                             verbose = TRUE)
+      
+      # eqsim_plot(SIM2.Fmsy,catch=TRUE)
+      # eqsim_plot_range(SIM2.Fmsy, type="median")
+      
+      Fp05 <- SIM2.Fmsy$Refs2["catF","F05"]
+      
+      #Final Fmsy
+      if (Fmsy_interim>Fp05) {Fmsy_final <- Fp05} else {Fmsy_final <- Fmsy_interim}
+      
+      cat("Fp05= ",Fp05,", Fmsy_final= ",Fmsy_final, "\n")
+      
+      cat("**********************************************\n")
+      
+      dfResults <- 
+        dplyr::bind_rows(dfResults,
+                        data.frame("Assessment" = rep(a,nRPs),
+                                   "Scenario" = rep("5.3",nRPs),
+                                   "SRR" = rep(SRR.desc,nRPs),
+                                   "BioYrs" = rep(paste(bio.years,collapse=","),nRPs),
+                                   "SelYrs" = rep(paste(sel.years,collapse=","),nRPs),
+                                   "Fcv" = rep(Fcv,nRPs),
+                                   "Fphi" = rep(Fphi,nRPs),
+                                   "RP" = RPs,
+                                   "Type" = rep("Abs",nRPs),
+                                   "Val"  = c(Blim,Bpa,Flim,Fpa,MSYBtrigger,
+                                              Fmsy_init,Fmsy_interim, Fp05,Fmsy_final),
+                                   "RunTime" = rep(as.character(rt),nRPs),
+                                   stringsAsFactors = FALSE))
+      
+    } # end of Fcvs
+  } # end of Fphi 
 
 
 } #loop over assessments
 
-save(dfResults, file = file.path(RData.dir, "dfResults.RData"))
+save(dfResults, file = file.path(RData.dir, "dfResults_sens.RData"))
 # load(file = file.path(RData.dir, "dfResults.RData"))
 
 # overview
@@ -268,43 +272,43 @@ save(dfResults, file = file.path(RData.dir, "dfResults.RData"))
 # dfResults <- bind_rows(dfResults_wg18, dfResults)
 
 # Table of results
+# dfResults %>% 
+#   group_by(Assessment, Fcv, Fphi, RP) %>% 
+#   filter(row_number() == 1) %>% 
+#   filter(RP %in% c("Blim","MSYBtrigger","FMSY","FMSY_final","FP05")) %>% 
+#   dplyr::select(Assessment, Fcv, Fphi, RP, Val) %>% 
+#   pivot_wider(values_from = Val, names_from =Assessment) %>% 
+#   pander::pandoc.table()
+
+Fpa <- dfResults %>% filter(RP=="Fpa") %>% distinct(Val) %>% as.numeric()
+
 dfResults %>% 
-  mutate(Assessment = factor(Assessment, levels=c("WG18","WG19","WG18SAM","WG19SAM"))) %>% 
-  group_by(Assessment, RP) %>% 
-  filter(row_number() == 1) %>% 
-  filter(RP %in% c("Blim","MSYBtrigger","Flim","Fpa", "FMSY_init",
-                   "FMSY_interim", "FMSY_final","FP05")) %>% 
-  dplyr::select(Assessment, RP, Val) %>% 
-  pivot_wider(values_from = Val, names_from =Assessment) %>% 
-  pander::pandoc.table()
-
-# temp restructuring of results; to wider
-t <-
-  dfResults %>% 
-  filter(RP %in% c("FMSY_final", "MSYBtrigger")) %>% 
-  dplyr::select(Assessment, RP, Val) %>% 
-  pivot_wider(values_from = Val, names_from =RP) 
-  
-# plot SSB and Fbar on relative scale (divided by reference points)
-bind_rows(WG18df, WG19df, WG18SAMdf, WG19SAMdf) %>% 
-  filter(slot %in% c("ssb", "fbar")) %>% 
-  dplyr::select(slot, year, data, Assessment) %>% 
-  pivot_wider(values_from = data, names_from =slot)  %>% 
-
-  left_join(t, by="Assessment") %>% 
-  mutate(
-    f_fmsy = fbar / FMSY_final,
-    ssb_msybtrig  = ssb / MSYBtrigger
-  ) %>% 
-  
-  # group_by(Assessment) %>% 
-  # dplyr::summarise(fbar2=mean(fbar2, na.rm=TRUE))
-
-  dplyr::select(Assessment, year, f_fmsy, ssb_msybtrig) %>% 
-  pivot_longer(c(f_fmsy,ssb_msybtrig), names_to="var", values_to="data") %>% 
-
-  ggplot(aes(x=year, y=data, group=Assessment)) +
+  filter(RP %in% c("FMSY_final","FMSY_init", "FMSY_interim",  "FP05","Fpa")) %>% 
+  mutate(RP = factor(RP, 
+                     levels=c("FMSY_init", "Fpa", "FMSY_interim",
+                              "FP05","FMSY_final"))) %>% 
+  ggplot(aes(x=Fcv, y=Val)) +
   theme_bw() +
-  geom_line(aes(colour=Assessment)) +
-  facet_wrap(~var, scales="free_y")
+  geom_line(aes(colour=as.character(Fphi))) +
+  geom_point(aes(colour=as.character(Fphi))) +
+  geom_hline(aes(yintercept=Fpa), linetype="dashed") +
+  facet_wrap(~RP, ncol=5)
+
+
+
+dfResults %>% 
+  filter(Fcv == 0.1, Fphi==0.5) %>% 
+  dplyr::select(Assessment, Fcv, Fphi, RP, Val) %>% 
+  pandoc.table()
+
+if (Fmsy_interim>Fp05) {Fmsy_final <- Fp05} else {Fmsy_final <- Fmsy_interim}
+Fmsy_init <- dfResults %>% filter(RP=="FMSY_init", Fcv == 0.1, Fphi==0.5) %>% 
+  distinct(Val) %>% as.numeric()
+Fmsy_interim <- dfResults %>% filter(RP=="FMSY_interim", Fcv == 0.1, Fphi==0.5) %>% 
+  distinct(Val) %>% as.numeric()
+Fp05 <- dfResults %>% filter(RP=="FP05", Fcv == 0.1, Fphi==0.5) %>% 
+  distinct(Val) %>% as.numeric()
+
+if (Fmsy_interim>Fp05) {Fmsy_final <- Fp05} else {Fmsy_final <- Fmsy_interim}
+
 
