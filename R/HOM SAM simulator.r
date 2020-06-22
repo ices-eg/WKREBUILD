@@ -2,18 +2,26 @@
 # HOM SAM simulator
 # ============================================================================
 
+rm(list=ls())
+gc()
+
 library(FLCore)
 library(FLSAM)
 library(stockassessment)
+# library(parallel)
 
 # source SAM2FLSAM
 source("../SAM2FLR/SAM2FLSAM.r")
 source("../SAM2FLR/SAM2FLSTOCK.r")
+# source("EqSimWHM/R//simulate.sam.r")
+# source("EqSimWHM/R//simstudy.r")
 
 sao.name <- "WHOM_2019"
 url      <- paste0("https://stockassessment.org/datadisk/stockassessment/userdirs/user3/",sao.name,"/")
 tempdir  <- file.path("D:/temp",sao.name) 
 fit      <- stockassessment::fitfromweb(sao.name, character.only=TRUE) 
+nsim     <- 100
+set.seed(123)
 
 dir.create(tempdir, showWarnings = FALSE)
 write.data.files(fit, dir = tempdir)
@@ -29,15 +37,27 @@ for (i in seq(inputs)) {
   fqs[[names(inputs[i])]] <- readVPAFile(file)
 }
 
-# set seed
-set.seed(123) # or whatever 
+samfit        <- sam.fit(fit$data, fit$conf, fit$obj$env$par)
+runs0001_0100 <- simstudy(samfit, nsim=nsim, ncores=1)
 
-sim_fit  <- list()
+# nsim   <- 90
+# set.seed(124)
+# samfit <- sam.fit(fit$data, fit$conf, fit$obj$env$par)
+# runs0011_0100 <- simstudy(samfit, nsim=nsim, ncores=1)
+
+# runs0001_0100 <- append(runs0001_0010, runs0011_0100)
+# attributes(runs0001_0100)
+# attr(runs0001_0100, "fit") <- fit
+# attr(runs0001_0100, "class") <- "samset"
+# str(runs0001_0100)
+# plot(runs0001_0100)
+
+
 flstocks <- list()
-
-for (i in 1:2) {
-  set.seed(123) # or whatever 
-  sim_fit[[i]] <- fit$obj$simulate(par=fit$obj$env$last.par.best, complete = TRUE)
+df       <- data.frame(NULL)
+i <- 1
+for (i in 1:100) {
+  sim_fit[[i]] <- fit$obj$simulate(par=fit$obj$env$last.par.best, complete = TRUE) # TRUE if you want all the generated data
   
   res                    <- new("FLSAM")
   res@n.states           <- as.integer(sim_fit[[i]]$noYears)
@@ -85,7 +105,7 @@ for (i in 1:2) {
                                      run.date       = Sys.time())
   res@info <- t(info)
   colnames(res@info) <- "_"
-  summary(res)
+  # summary(res)
   
   # CREATE FLStock, drop landings.fraction
   fls <- do.call("FLStock", fqs[-1])
@@ -106,19 +126,34 @@ for (i in 1:2) {
   # SET to standard units
   units(fls) <- standardUnits(fls)
   
-  # DEBUG GET fbar range
+  # GET fbar range
   fls@range["minfbar"] <- fit$conf$fbarRange[1]
   fls@range["maxfbar"] <- fit$conf$fbarRange[2]
   
   # SET name and desc
-  name(fls) <- sao.name
+  name(fls) <- paste(sao.name, i)
   desc(fls) <- paste("Loaded from", url)
   
   flstocks[[i]] <- fls
-
+  
+  if (nrow(df) == 0) {
+    df <- 
+      as.data.frame(ssb(flstocks[[i]])) %>% 
+      mutate(run=i)
+  } else {
+    df <- 
+      df %>% 
+      bind_rows(., (as.data.frame(ssb(flstocks[[i]])) %>% mutate(run=i)))
+  }
 }
+
+df %>% 
+  filter(run<=2) %>% 
+  ggplot(aes(x=year,y=data, group=run)) +
+  theme_bw() +
+  geom_line(colour="gray")
 
 # clean up data files; remove temp directory
 # unlink(tempdir, recursive=TRUE)
 
-ssb(flstocks[[2]])
+plot(flstocks[[3]])
