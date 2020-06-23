@@ -1,9 +1,15 @@
-#WHM example
+# ==============================================================================
+# WHM SAM EqSim simulation
+# 
+# 
+# ==============================================================================
 
 rm(list=ls())
+
 gc()
-try(dev.off(),silent=TRUE)
-try(sink(),silent=TRUE)
+
+# try(dev.off(),silent=TRUE)
+# try(sink(),silent=TRUE)
 
 library(FLCore)
 library(Cairo)    #plotting
@@ -14,6 +20,12 @@ library(gplots)   #rich.colors
 library(dplyr)
 library(tidyr)
 library(ggplot2)
+
+# lsdata <- function(fnam = '.Rdata') {
+#   x <- load(fnam, envir = environment())
+#   return(x)
+# }
+# lsdata(file.path(RData.dir,"MSE_WGWIDE19_FLStocks_SAM.RData"))
 
 sessionInfo()
 #R version 3.5.3 (2019-03-11)
@@ -78,10 +90,13 @@ sapply(list.files(path=file.path(Source.dir), pattern=".R", full.names=TRUE), so
 
 #basic simulation settings
 #niters <- 10000
-#niters <- 1000
 niters <- 100
+#niters <- 100
 #nyr <- 50
 nyr <- 20
+
+#base assessment
+base <- "sam"
 
 # simulation periods
 per1 <- 5
@@ -92,7 +107,8 @@ per2 <- 5
 #OM <- OM2; MP <- MP3.0
 
 #OM <- OM2.1   #WGWIDE 2019, const weights, selection
-OM <- OM2.2   #WGWIDE 2019, stochastic weights, selection
+#OM <- OM2.2   #WGWIDE 2019, stochastic weights, selection
+OM <- OM2.2sam   #WGWIDE 2019 SAM + ref points, stochastic weights, selection
 #MP <- MP1.0   #baseline, constant F harvest rule, no IAV control, no minimum TAC, no assessment/advice error
 #MP <- MP1.1   #baseline, constant F harvest rule, no IAV control, 80kt minimum TAC, no assessment/advice error
 #MP <- MP1.2   #baseline, constant F harvest rule, no IAV control, 150kt maximum TAC, no assessment/advice error
@@ -103,8 +119,9 @@ MP <- MP2.1   #ICES HCR, no IAV control, no minimum TAC, with assessment/advice 
 
 runName <- paste(OM$code,MP$code,sep="_")
 
-#assessment FLStock
-load(file = file.path(RData.dir,"WGWIDE19.RData"))
+#assessment FLStock from SS assessment
+WHOM.WGWIDE2019 <- get(load(file = file.path(RData.dir,"WGWIDE19_SAM.RData")))
+
 #reduce plus group to 15, to match available data for stock and catch weights
 WHOM.WGWIDE2019 <- FLCore::setPlusGroup(WHOM.WGWIDE2019,15)
 
@@ -112,7 +129,9 @@ WHOM.WGWIDE2019 <- FLCore::setPlusGroup(WHOM.WGWIDE2019,15)
 #The IBP in 2019 selected SSB in 2003 as a proxy for Bpa and derived Blim from this (Bpa/1.4)
 #given the lack of any clear SRR and sensitivity of the proportions of mixed models
 #to individual data points, a segmented regression with breakpoint at Blim is the default SRR
-Blimloss <- min(OM$refPts$Blim,min(ssb(WHOM.WGWIDE2019)))
+
+# Blimloss <- min(OM$refPts$Blim,min(ssb(WHOM.WGWIDE2019)))
+Blimloss <- 611814
 SegregBlim  <- function(ab, ssb) log(ifelse(ssb >= Blimloss, ab$a * Blimloss, ab$a * ssb))
 
 set.seed(1)
@@ -171,9 +190,11 @@ catch.wt(WHOM.WGWIDE2019) <- tCW
 
 #reassign FLStock object with updated weights into stk slot of SRR 
 SRR$stk <- WHOM.WGWIDE2019
+rm(flstocks, lWHM)
 
 #initial populations
-load(file=file.path(RData.dir,"MSE_WGWIDE19_FLStocks_15PG.RData"))
+lWHM <- get(load(file.path(RData.dir,"MSE_WGWIDE19_FLStocks_SAM.RData")))
+#load(file=file.path(RData.dir,"MSE_WGWIDE19_FLStocks_15PG.RData"))
 #load(file=file.path(RData.dir,"MSE_WGWIDE19_FLStocks_10k.RData"))
 
 #add required number of stochastic FLStocks to FIT object
@@ -266,7 +287,7 @@ save(SimRuns,file = file.path(MSE.dir,"Results",runName,paste0(runName,"_SimRuns
   
 #Percentiles to report, number of worm lines for plots
 percentiles = c(0.025,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.975)
-numWorm <- 100
+numWorm <- 20
   
 #Create list objects to store stocks, stats
 Stocks <- AllStats <- list()
@@ -391,7 +412,7 @@ for (ii in names(SimRuns)) {
   AllStats[[ac(ii)]] <- Stats
     
 }
-  
+
 ## Save data
 lOp <- list(stats = AllStats, runName = runName, lStatPer = lStatPer, OM = OM, MP = MP)
 save(lOp,file = file.path(Res.dir,runName,paste0(runName,"_eqSim_Stats.Rdata")))
@@ -421,17 +442,19 @@ fTabulateStats(sim = lOp, plot.dir = Res.dir)
 #                 simYears = simYears, lStatPer = lStatPer, Blim = OM$refPts$Blim)}
 
 #comparison of stochastic/random weights & selection - min, max, min & max TAC
-runs2Compare <- c("OM2.2_MP1.0","OM2.2_MP2.1")
+#runs2Compare <- c("OM2.2_sam_MP2.1","OM2.2_MP2.1")
 #debug("fCompare_runs")
 #for (stat in c("Catch","SSB","Risk3","Risk1")){
-for (stat in c("SSB", "Risk3")){
-    fCompare_runs(runs2Compare = runs2Compare, Res.dir = Res.dir, Plot.dir = Res.dir,
-             PerfStat = stat, 
-             TargetFs = c(0, 0.05, 0.074, 0.1, 0.108, 0.2, 0.3),
-             simYears = simYears, 
-             lStatPer = lStatPer, 
-             Blim = OM$refPts$Blim)}
+# for (stat in c("SSB", "Risk3")){
+#     fCompare_runs(runs2Compare = runs2Compare, 
+#                   Res.dir = Res.dir, 
+#                   Plot.dir = Res.dir,
+#                   PerfStat = stat, 
+#                   TargetFs = c(0, 0.05, 0.074, 0.1, 0.108, 0.2, 0.3),
+#                   # simYears = simYears, 
+#                   lStatPer = lStatPer, 
+#                   Blim = OM$refPts$Blim)}
 #undebug("fCompare_runs")
 
-# save.image(file = file.path(MSE.dir,"Results",runName,paste0(runName,"_eqSim_Workspace.Rdata")))
+save.image(file = file.path(MSE.dir,"Results",runName,paste0(runName,"_eqSim_Workspace.Rdata")))
 
