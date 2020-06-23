@@ -39,6 +39,10 @@ for (i in seq(inputs)) {
 
 samfit        <- sam.fit(fit$data, fit$conf, fit$obj$env$par)
 runs0001_0100 <- simstudy(samfit, nsim=nsim, ncores=1)
+getwd()
+
+load(file.path(getwd(),"EqSimWHM","RData","runs.RData"))
+plot(runs)
 
 # nsim   <- 90
 # set.seed(124)
