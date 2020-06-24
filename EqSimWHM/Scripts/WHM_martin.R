@@ -1,7 +1,16 @@
-#WHM example
+# ================================================================================================================
+# EqSim HCR simulator
+# 
+# Developed by David Miller and Colin Millar
+# Further enhanced by Andy Campbell and Martin Pastoors
+# June 2020 Applied to Western Horse mackerel
+#
+# 26/06/2020 generic option; code now independent of fish stock
+# ================================================================================================================
 
 rm(list=ls())
 gc()
+
 try(dev.off(),silent=TRUE)
 try(sink(),silent=TRUE)
 
@@ -17,7 +26,8 @@ library(ggplot2)
 #stop on warning
 #options(warn=2)
 
-sessionInfo()
+# sessionInfo()
+
 #R version 3.5.3 (2019-03-11)
 #Platform: x86_64-w64-mingw32/x64 (64-bit)
 #Running under: Windows 10 x64 (build 17763)
@@ -52,10 +62,12 @@ Base.dir <- file.path(Drive,"GIT")
 
 # FLStock file
 FLStockfile <- "WGWIDE19.RData"
+#FLStockfile <- "WGWIDE19_SAM.RData"
 
 # FLStock iteration file
 FLStockSimfile <- "MSE_WGWIDE19_FLStocks_15PG.RData"
 #FLStockSimfile <- "MSE_WGWIDE19_FLStocks_10k.RData"
+#FLStockSimfile <- "MSE_WGWIDE19_FLStocks_SAM.RData"
 
 #Basic MSE directory
 MSE.dir <- file.path(Base.dir,"wk_WKREBUILD","EqSimWHM")
@@ -88,8 +100,8 @@ dropbox.dir <- file.path(get_dropbox(), "HOM FG", "05. Data","RData")
 
 #basic simulation settings
 #niters <- 10000
-#niters <- 1000
-niters <- 100
+niters <- 1000
+#niters <- 100
 nyr <- 20
 
 # simulation periods
@@ -97,11 +109,12 @@ per1 <- 5
 per2 <- 5
 # per3 is simply the remainder
 
-#OM <- OM2; MP <- MP2.0_10000
-#OM <- OM2; MP <- MP3.0
-
+# Operating model
 #OM <- OM2.1   #WGWIDE 2019, const weights, selection
 OM <- OM2.2   #WGWIDE 2019, stochastic weights, selection
+#OM <- OM2.2sam   #WGWIDE 2019 SAM + ref points, stochastic weights, selection
+
+# Management plan
 #MP <- MP1.0   #baseline, constant F harvest rule, no IAV control, no minimum TAC, no assessment/advice error
 #MP <- MP1.1   #baseline, constant F harvest rule, no IAV control, 80kt minimum TAC, no assessment/advice error
 #MP <- MP1.2   #baseline, constant F harvest rule, no IAV control, 150kt maximum TAC, no assessment/advice error
@@ -112,8 +125,7 @@ OM <- OM2.2   #WGWIDE 2019, stochastic weights, selection
 #MP <- MP1.7   #10% IAV Test
 #MP <- MP1.8   #10%/20% asymmetric IAV Test
 #MP <- MP1.9   #0%/10% asymmetric IAV Test
-
-#MP <- MP2.1
+#MP <- MP2.0
 MP <- MP2.1   #ICES HCR, no IAV control, no minimum TAC, with assessment/advice error
 
 runName <- paste(OM$code,MP$code,niters,nyr,sep="_")
