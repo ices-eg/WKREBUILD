@@ -18,14 +18,14 @@ fCompare_runs <- function(runs2Compare, Res.dir, Plot.dir, PerfStat, TargetFs,lS
     
     #load the output of the simulation and the summary statistics
     load(file = file.path(Res.dir,r,paste0(r,"_SimRuns.RData")))
-    load(file = file.path(Res.dir,r,paste0(r,"_Stats.RData")))
+    load(file = file.path(Res.dir,r,paste0(r,"_eqSim_Stats.RData")))
 
     for (ftgt in TargetFs){
       
       #simulation op
       t <- SimRuns[[ac(ftgt)]]
       #simulation stats
-      t2 <- lStats$stats[[ac(ftgt)]]
+      t2 <- lOp$stats[[ac(ftgt)]]
       
       if (PerfStat %in% c("Catch","IAV","IAVUpDown")) {
         
