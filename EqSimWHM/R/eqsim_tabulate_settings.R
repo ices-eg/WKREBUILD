@@ -1,4 +1,9 @@
-fGetSettings <- function(dfStats, dfSimRuns){
+fGetSettings <- function(dfStats, dfSimRuns, flstockfile, flstocksimfile){
+  
+  # dfSimRuns <- SimRuns
+  # dfStats   <- lStats
+  # flstockfile <- FLStockfile
+  # flstocksimfile <- FLStockSimfile
   
   tData <- 
     # OM
@@ -17,10 +22,17 @@ fGetSettings <- function(dfStats, dfSimRuns){
     
     # Other
     bind_rows(
-      data.frame(desc=c("niters","nyr"),
-                 value=c(ac(dim(dfSimRuns[[1]][["N"]])[[3]]), ac(dim(dfSimRuns[[1]][["N"]])[[2]])),
+      data.frame(desc=c("niters","nyr","ST","MT","LT","flstock file","flstock sim file"),
+                 value=c(ac(dim(dfSimRuns[[1]][["N"]])[[3]]), 
+                         ac(dim(dfSimRuns[[1]][["N"]])[[2]]),
+                         paste(ac(dfStats[["lStatPer"]][["ST"]]), collapse="-"),
+                         paste(ac(dfStats[["lStatPer"]][["MT"]]), collapse="-"),
+                         paste(ac(dfStats[["lStatPer"]][["LT"]]), collapse="-"),
+                         flstockfile,
+                         flstocksimfile),
                  class="OTHER",
-                 stringsAsFactors = FALSE)) %>% 
+                 stringsAsFactors = FALSE)
+    ) %>% 
     
     dplyr::select(class, desc, value)
   
