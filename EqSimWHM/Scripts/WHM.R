@@ -44,16 +44,14 @@ sessionInfo()
 #[31] assertthat_0.2.1   colorspace_1.4-1   KernSmooth_2.23-16 munsell_0.5.0      crayon_1.3.4  
 
 
-#locations
-Drive <- "C:"
-Base.dir <- file.path(Drive,"Stocks","hom_27_2a4a5b6a7a-ce-k8")
-#historic assessments here (not required)
-Assessment.Dir <- file.path(Base.dir,"Assessment")
+#computer specific locations
+#Drive    <- "C:"
+#Base.dir <- file.path(Drive,"Stocks","hom_27_2a4a5b6a7a-ce-k8")
+Drive    <- "D:"
+Base.dir <- file.path(Drive,"GIT")
 
-#moved code to wk_WKREBUILD location 08/06/2020
-#MSE.dir <- file.path(Base.dir,"MP_MSE","MSE 2019","whm.MSE2019.WKREBUILD")
-MSE.dir <- file.path(Base.dir,"MP_MSE","wk_WKREBUILD","EqSimWHM")
-
+#Basic MSE directory
+MSE.dir <- file.path(Base.dir,"wk_WKREBUILD","EqSimWHM")
 #this is where the results of the 1000 assessment runs for initialisation of the MSE are saved
 Data.dir <- file.path(MSE.dir,"Data")              
 #any useful stuff contained in RData files
@@ -63,20 +61,34 @@ Log.dir <- file.path(MSE.dir,"Logs")
 #Simulation and statistical outputs
 Res.dir <- file.path(MSE.dir, "Results")
 
+# Source dir and Scripts dir
 Source.dir <- file.path(MSE.dir,"R")              #R functions
 Scripts.dir <- file.path(MSE.dir, "Scripts")      #R scripts
 
-#OMs, MPs
+# Load OMs, MPs
 source(file = file.path(Scripts.dir,"OMs.R"))
 source(file = file.path(Scripts.dir,"MPs.R"))
 
-#source functions
+#source all functions in source.dir
 sapply(list.files(path=file.path(Source.dir), pattern=".R", full.names=TRUE), source)
+
+# Get dropbox dir; for storing large RData files
+dropbox.dir <- file.path(get_dropbox(), "HOM FG", "05. Data","RData")
+
+# ==================================================================================
+
+#Note: niters and nyr could be included in the OM or MP definitions
 
 #basic simulation settings
 #niters <- 10000
-niters <- 1000
-nyr <- 50
+#niters <- 1000
+niters <- 100
+nyr <- 20
+
+# simulation periods
+per1 <- 5
+per2 <- 5
+# per3 is simply the remainder
 
 #OM <- OM2; MP <- MP2.0_10000
 #OM <- OM2; MP <- MP3.0
@@ -92,11 +104,14 @@ OM <- OM2.2   #WGWIDE 2019, stochastic weights, selection
 #MP <- MP1.6   #30% IAV Test
 #MP <- MP1.7   #10% IAV Test
 #MP <- MP1.8   #10%/20% asymmetric IAV Test
-MP <- MP1.9   #0%/10% asymmetric IAV Test
+#MP <- MP1.9   #0%/10% asymmetric IAV Test
 
 #MP <- MP2.1
+MP <- MP2.1   #ICES HCR, no IAV control, no minimum TAC, with assessment/advice error
 
-runName <- paste(OM$code,MP$code,sep="_")
+runName <- paste(OM$code,MP$code,niters,nyr,sep="_")
+
+# set up the OM =========================================================================================================
 
 #assessment FLStock
 load(file = file.path(RData.dir,"WGWIDE19.RData"))
@@ -107,10 +122,14 @@ WHOM.WGWIDE2019 <- FLCore::setPlusGroup(WHOM.WGWIDE2019,15)
 #The IBP in 2019 selected SSB in 2003 as a proxy for Bpa and derived Blim from this (Bpa/1.4)
 #given the lack of any clear SRR and sensitivity of the proportions of mixed models
 #to individual data points, a segmented regression with breakpoint at Blim is the default SRR
-Blimloss <- min(OM$refPts$Blim,min(ssb(WHOM.WGWIDE2019)))
+
+# MP 24/6/2020: this seems wrong; segmented regression should go through Blim, not through Bloss
+# Blimloss <- min(OM$refPts$Blim,min(ssb(WHOM.WGWIDE2019)))
+Blimloss <- OM$refPts$Blim
 SegregBlim  <- function(ab, ssb) log(ifelse(ssb >= Blimloss, ab$a * Blimloss, ab$a * ssb))
 
 set.seed(1)
+
 #segmented regression with breakpoint at Blim, from 1995 excluding terminal
 SRR <- eqsr_fit(window(WHOM.WGWIDE2019,1995,2018), remove.years = c(2018), nsamp=niters, models = c("SegregBlim"))
 
@@ -180,6 +199,8 @@ load(file=file.path(RData.dir,"MSE_WGWIDE19_FLStocks_15PG.RData"))
 #add required number of stochastic FLStocks to FIT object
 SRR$stks <- lWHM[as.character(seq(1,niters))]
 
+# Define MP ================================================================================================================
+
 #start,end,vectors of observation and simulation years
 #simulation starts in assessment terminal year
 minObsYear <- range(SRR$stk)["minyear"]
@@ -189,13 +210,8 @@ yStart <- as.numeric(maxObsYear)
 yEnd <- yStart + nyr - 1
 simYears <- ac(seq(yStart,yEnd))
 
-#exploration constraints
+#exploitation constraints
 #2018 catch known, 2019 as assumed during WGWIDE 2019, 2020 as advised
-#dfExplConstraints <- data.frame("Type" = c("Catch","Catch","Catch","MinTAC"), 
-#                                "YearNum" = c("1","2","3","all"),
-#                                "Val" = c(101682,110381,83954,50000), 
-#                                stringsAsFactors = FALSE)
-
 dfExplConstraints <- data.frame("Type" = c("Catch","Catch","Catch"), 
                                 "YearNum" = c("1","2","3"),
                                 "Val" = c(101682,110381,83954), 
@@ -252,43 +268,39 @@ for (y in seq(maxObsYear+1,yEnd)){lStatPer2[[ac(y)]]<-c(y,y)}
 
 #Short (first 5 after constraints), Medium (next 5) and Long Term (next 20)
 yConstraints <- 3
-lStatPer[['ST']] <- c(yStart+yConstraints,yStart+yConstraints+4)
-lStatPer2[['ST']] <- c(yStart+yConstraints+1,yStart+yConstraints+4)
-lStatPer[['MT']] <- lStatPer2[['MT']] <- c(yStart+yConstraints+5,yStart+yConstraints+9)
-lStatPer[['LT']] <- lStatPer2[['LT']] <- c(yStart+yConstraints+10,yStart+yConstraints+29)
+lStatPer[['ST']] <- c(yStart+yConstraints,yStart+yConstraints+(per1-1))
+lStatPer2[['ST']] <- c(yStart+yConstraints+1,yStart+yConstraints+(per1-1))
+lStatPer[['MT']] <- lStatPer2[['MT']] <- c(yStart+yConstraints+per1,yStart+yConstraints+(per1+per2-1))
+lStatPer[['LT']] <- lStatPer2[['LT']] <- c(yStart+yConstraints+per1+per2,yStart+nyr-1)
 
-# set.seed(1)
-# sim <- eqsim_run(fit = SRR,
-#                  bio.years = OM$BioYrs, bio.const = OM$BioConst,
-#                  sel.years = OM$SelYrs, sel.const = OM$SelConst,
-#                  Fscan = c(0),
-#                  Fcv = MP$Obs$cvF, Fphi = MP$Obs$phiF,
-#                  SSBcv = MP$Obs$cvSSB, SSBphi = MP$Obs$phiSSB,
-#                  Nrun = nyr, calc.RPs = FALSE,
-#                  dfExplConstraints = dfExplConstraints,
-#                  Btrigger = NA,
-#                  HCRName = paste0("fHCR_",MP$HCRName))
 
 sim <- eqsim_run(fit = SRR, 
-                 bio.years = OM$BioYrs, bio.const = OM$BioConst,
-                 sel.years = OM$SelYrs, sel.const = OM$SelConst,
+                 bio.years = OM$BioYrs, 
+                 bio.const = OM$BioConst,
+                 sel.years = OM$SelYrs, 
+                 sel.const = OM$SelConst,
                  Fscan = fGetValsScan(MP$F_target,OM$refPts), 
-                 Fcv = MP$Obs$cvF, Fphi = MP$Obs$phiF,
-                 SSBcv = MP$Obs$cvSSB, SSBphi = MP$Obs$phiSSB,
-                 Nrun = nyr, calc.RPs = FALSE,
+                 Fcv = MP$Obs$cvF, 
+                 Fphi = MP$Obs$phiF,
+                 SSBcv = MP$Obs$cvSSB, 
+                 SSBphi = MP$Obs$phiSSB,
+                 Nrun = nyr, 
+                 calc.RPs = FALSE,
                  dfExplConstraints = dfExplConstraints, 
                  Btrigger = fGetValsScan(MP$B_trigger,OM$refPts),
                  HCRName = paste0("fHCR_",MP$HCRName))
 
 SimRuns <- sim$simStks
-  
+
 #save ouptut
-#create a folder for the output
+
+#create a folder for the output and save simRuns data
 dir.create(path = file.path(Res.dir,runName), showWarnings = TRUE, recursive = TRUE)
-#and write the output (necessary to save entire image?)
-save.image(file = file.path(Res.dir,runName,paste0(runName,"_Workspace.Rdata")))
 save(SimRuns,file = file.path(Res.dir,runName,paste0(runName,"_SimRuns.RData")))
-  
+
+#Write the output to dropbox dir (necessary to save entire image?)
+save.image(file = file.path(dropbox.dir,paste0(runName,"_Workspace.Rdata")))
+
 #Percentiles to report, number of worm lines for plots
 percentiles = c(0.025,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.975)
 numWorm <- 100
@@ -422,7 +434,7 @@ for (ii in names(SimRuns)) {
   
 ## Save data
 lStats <- list(stats = AllStats, runName = runName, lStatPer = lStatPer, OM = OM, MP = MP)
-save(lStats,file = file.path(getwd(),"Results",runName,paste0(runName,"_Stats.Rdata")))
+save(lStats,file = file.path(Res.dir,runName,paste0(runName,"_eqSim_Stats.Rdata")))
 
 #generate the stock/stat trajectories
 fPlotTraj(sim = lStats, plot.dir = file.path(Res.dir,runName), lStatPer = lStatPer)
@@ -459,11 +471,11 @@ fTabulateStats(sim = lStats, plot.dir = Res.dir)
 #                 lStatPer = lStatPer, Blim = OM$refPts$Blim)}
 
 #IAV
-runs2Compare <- c("OM2.2_MP1.0","OM2.2_MP1.5","OM2.2_MP1.6","OM2.2_MP1.7","OM2.2_MP1.8","OM2.2_MP1.9")
-#create folder
-dir.create(path = file.path(Res.dir,"Comparisons","IAV"), showWarnings = TRUE, recursive = TRUE)
-for (stat in c("Catch","SSB","Risk3","Risk1","IAV","IAVUpDown")){
- fCompare_runs(runs2Compare = runs2Compare, Res.dir = Res.dir, Plot.dir = file.path(Res.dir,"Comparisons","IAV"),
-               PerfStat = stat, TargetFs = c(0,0.05,0.074,0.1,0.108,0.2),
-               lStatPer = lStatPer, Blim = OM$refPts$Blim)}
+# runs2Compare <- c("OM2.2_MP1.0","OM2.2_MP1.5","OM2.2_MP1.6","OM2.2_MP1.7","OM2.2_MP1.8","OM2.2_MP1.9")
+# create folder
+# dir.create(path = file.path(Res.dir,"Comparisons","IAV"), showWarnings = TRUE, recursive = TRUE)
+# for (stat in c("Catch","SSB","Risk3","Risk1","IAV","IAVUpDown")){
+#  fCompare_runs(runs2Compare = runs2Compare, Res.dir = Res.dir, Plot.dir = file.path(Res.dir,"Comparisons","IAV"),
+#                PerfStat = stat, TargetFs = c(0,0.05,0.074,0.1,0.108,0.2),
+#                lStatPer = lStatPer, Blim = OM$refPts$Blim)}
 
