@@ -77,8 +77,7 @@ fMakeTable <- function(dfStats,q,s,om,mp,Title="",LowLimit=NA,HighLimit=NA,divFa
   
 }
 
-
-fTabulateStats <- function(sim, plot.dir){
+fTabulateStats <- function(sim, setting, plot.dir){
   
   require(dplyr)
   require(flextable)
@@ -106,6 +105,13 @@ fTabulateStats <- function(sim, plot.dir){
 
   #add the SSB table
   my_doc <- my_doc %>%
+    
+    body_add_par(runName, style = "table title") %>%
+    body_add_par("", style = "Normal") %>% 
+    
+    body_add_par(paste0("Date: ", format(Sys.time(), "%d-%b-%Y %H.%M")), style = "Normal") %>%
+    body_add_par("", style = "Normal") %>% 
+    
     body_add_par("SSB (Mt)", style = "Normal") %>%
     body_add_par("", style = "Normal") %>% 
     body_add_flextable(value = fMakeTable(dfStats,"SSB","25%",sim$OM$code,sim$MP$code,"25%",LowLimit=1,divFactor=1e6,dp=2)) %>%
@@ -117,6 +123,7 @@ fTabulateStats <- function(sim, plot.dir){
     body_add_flextable(fMakeTable(dfStats,"Catch","25%",sim$OM$code,sim$MP$code,"25%",LowLimit=100,divFactor=1e3,dp=0)) %>%
     body_add_flextable(fMakeTable(dfStats,"Catch","50%",sim$OM$code,sim$MP$code,"Median",LowLimit=100,divFactor=1e3,dp=0)) %>%
     body_add_flextable(fMakeTable(dfStats,"Catch","75%",sim$OM$code,sim$MP$code,"75%",LowLimit=100,divFactor=1e3,dp=0)) %>%
+    
     body_add_break() %>%
     body_add_par("IAV (kt)", style = "Normal") %>%
     body_add_par("", style = "Normal") %>% 
@@ -129,6 +136,7 @@ fTabulateStats <- function(sim, plot.dir){
     body_add_flextable(fMakeTable(dfStats,"FBar","25%",sim$OM$code,sim$MP$code,"25%",HighLimit=0.5,divFactor=1,dp=3)) %>%
     body_add_flextable(fMakeTable(dfStats,"FBar","50%",sim$OM$code,sim$MP$code,"Median",HighLimit=0.5,divFactor=1,dp=3)) %>%
     body_add_flextable(fMakeTable(dfStats,"FBar","75%",sim$OM$code,sim$MP$code,"75%",HighLimit=0.5,divFactor=1,dp=3)) %>%
+    
     body_add_break() %>%
     body_add_par("Risk (Type3) to Blim (%)", style = "Normal") %>%
     body_add_par("", style = "Normal") %>% 
@@ -140,8 +148,11 @@ fTabulateStats <- function(sim, plot.dir){
     body_add_par("", style = "Normal") %>% 
     body_add_par("Extinction Risk (%)", style = "Normal") %>%
     body_add_par("", style = "Normal") %>% 
-    body_add_flextable(fMakeTable(dfStats,"pExt","mean",sim$OM$code,sim$MP$code,"mean",HighLimit=5,divFactor=0.01,dp=1))
+    body_add_flextable(fMakeTable(dfStats,"pExt","mean",sim$OM$code,sim$MP$code,"mean",HighLimit=5,divFactor=0.01,dp=1)) %>% 
     
+    body_add_break() %>%
+    body_add_par("Settings used", style = "Normal") %>%
+    body_add_flextable(fMakeSettingsTable(setting))
 
   #write the file
   print(my_doc, target = file.path(plot.dir,runName,paste0(runName,"_Stats_Tables.docx")))
