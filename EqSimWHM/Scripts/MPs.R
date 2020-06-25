@@ -152,14 +152,26 @@ MP2.1 <- list("code" = "MP2.1",
               "desc" = "ICESHCR",
               "xlab" = "ICES AR",
               "HCRName" = "ICES",
-              "F_target" = c(0,0.05,0.074,0.1,0.115,0.2,0.3),
+              "F_target" = c(0,0.05,0.074,0.1,0.108,0.2,0.3),
               "B_trigger" = "MSYBtrigger",
               "minTAC" = NA,
               "maxTAC" = NA,
               "TAC_IAV" = NA,
-              "Obs" = list("cvF" = 0.3, "phiF" = 0.3, "cvSSB" = 0, "phiSSB" = 0))
+              "Obs" = list("cvF" = 0.22, "phiF" = 0.03, "cvSSB" = 0.36, "phiSSB" = 0.51))
 
- 
+
+#ICES HCR, no IAV control, no minimum TAC, with assessment/advice error
+MP2.2 <- list("code" = "MP2.2",
+              "desc" = "Double BP HCR",
+              "xlab" = "Double BP",
+              "HCRName" = "DoubleBP",
+              "F_target" = c(0,0.05,0.074,0.1,0.108,0.2,0.3),
+              "B_trigger" = "MSYBtrigger",
+              "minTAC" = NA,
+              "maxTAC" = NA,
+              "TAC_IAV" = NA,
+              "Obs" = list("cvF" = 0.22, "phiF" = 0.03, "cvSSB" = 0.36, "phiSSB" = 0.51))
+
  
 # ==========================================================================================================================================
 

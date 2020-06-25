@@ -148,8 +148,7 @@ fTabulateStats <- function(sim, setting, plot.dir){
     body_add_par("", style = "Normal") %>% 
     body_add_par("Extinction Risk (%)", style = "Normal") %>%
     body_add_par("", style = "Normal") %>% 
-    body_add_flextable(fMakeTable(dfStats,"pExt","mean",sim$OM$code,sim$MP$code,"mean",HighLimit=5,divFactor=0.01,dp=1)) %>% 
-    
+    body_add_flextable(fMakeTable(dfStats,"pExt","mean",sim$OM$code,sim$MP$code,"mean",HighLimit=5,divFactor=0.01,dp=1)) %>%
     body_add_break() %>%
     body_add_par("Settings used", style = "Normal") %>%
     body_add_flextable(fMakeSettingsTable(setting))

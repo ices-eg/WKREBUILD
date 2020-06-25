@@ -333,7 +333,7 @@ eqsim_run <- function(fit,
     #Fmgmt[1,] <- do.call(fManagement, args=list(list("Fnext" = Fbar,"Btrigger" = Btrigger, "SSB" = ssby[1,])))
     Fmgmt[1,] <- do.call(fManagement, args=list(list("Fnext" = Fbar,"Btrigger" = Btrigger, "SSB" = ssby.obs, "Yr" = 1, 
                                                      "M" = M[,rsam[1,]], "sel" = sel[,rsamsel[1,]], "N" = Ny[,1,], 
-                                                     "SW" = west[,rsam[1,]], "Mat" = Mat[,rsam[1,]])))
+                                                     "SW" = west[,rsam[1,]], "Mat" = Mat[,rsam[1,]], "Blim" = Blim)))
     
     #apply error on the management F to get the realised F
     Fnext <- Fmgmt_err[1,] <- exp(Ferr[1,]) * Fmgmt[1,]
@@ -536,7 +536,7 @@ eqsim_run <- function(fit,
       #apply the HCR
       Fmgmt[j,] <- do.call(fManagement, args=list(list("Fnext" = Fbar, "Btrigger" = Btrigger, "SSB" = ssby.obs, "Yr" = j, 
                                                        "M" = M[,rsam[j,]], "sel" = sel[,rsamsel[j,]], "N" = Ny[,j,], 
-                                                       "SW" = west[,rsam[j,]], "Mat" = Mat[,rsam[j,]])))
+                                                       "SW" = west[,rsam[j,]], "Mat" = Mat[,rsam[j,]], "Blim" = Blim)))
       
       #apply F error to get realised F from management F
       Fnext <- Fmgmt_err[j,] <- Fmgmt[j,]*exp(Ferr[j,])

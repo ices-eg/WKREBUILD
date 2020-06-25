@@ -73,6 +73,53 @@ fHCR_ICES <- function(lIP){
   
 }
 
+#Double breakpoint, lower F is 1/5 of upper
+
+fHCR_DoubleBP <- function(lIP){
+  
+  #y,CW,SW,Mat,M,N,Sel,ssb,F,Btrigger,Fmin=0.01,ages,iters
+  
+  #implementation of BWtype rule
+  #if SSB>Btrigger then F=Ftarget, else a linear reduction to Ftgt/5 at lower breakpoint (Blim) 
+  
+  y <- lIP[["Yr"]]
+  ssb <- lIP[["SSB"]]
+  btrig <- lIP[["Btrigger"]]
+  fnext <- lIP[["Fnext"]]
+  blower <- lIP[["Blim"]]
+  flower <- fnext/5
+  M <- lIP[["M"]]
+  N <- lIP[["N"]]
+  sel <- lIP[["sel"]]
+  SW <- lIP[["SW"]]
+  Mat <- lIP[["Mat"]]
+  numAges <- dim(N)[1]
+  numIters <- dim(N)[2]
+  
+  rtn <- rep(fnext,numIters)
+  
+  #identify those iterations with observed SSB below the HCR biomass trigger
+  cond <- (ssb[y,] < btrig & ssb[y,] >= blower)
+  
+  if (sum(cond)>0) {
+    cat("Reducing on",sum(cond),"iterations between Blim and Btrigger \n")
+    rtn[cond] <- flower + ((ssb[y,cond]-blower)/(btrig-blower))*(fnext-flower)
+  }
+  
+  #those below blower
+  cond <- (ssb[y,] < blower)
+  
+  if (sum(cond)>0) {
+    cat("Reducing on",sum(cond),"iterations to 0.2*Ftgt \n")
+    rtn[cond] <- flower
+  }
+  
+  
+  rtn
+  
+}
+
+
 #suspend fishing
 fHCR_Suspend <- function(y,CW,SW,Mat,M,N,Sel,ssb,F,Btrigger,Fmin=0.01,ages,iters){
   

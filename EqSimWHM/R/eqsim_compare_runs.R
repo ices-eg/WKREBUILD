@@ -1,6 +1,6 @@
 #eqsim_compare_runs
 
-fCompare_runs <- function(runs2Compare, Res.dir, Plot.dir, PerfStat, TargetFs,lStatPer, Blim){
+fCompare_runs <- function(runs2Compare, Res.dir, Plot.dir, PerfStat, TargetFs, lStatPer, Blim){
 
   #produces a grid (max 6)
   #comparing the supplied performance statistic for ST,MT and LT for each runName
@@ -25,7 +25,8 @@ fCompare_runs <- function(runs2Compare, Res.dir, Plot.dir, PerfStat, TargetFs,lS
       #simulation op
       t <- SimRuns[[ac(ftgt)]]
       #simulation stats
-      t2 <- lOp$stats[[ac(ftgt)]]
+      #t2 <- lOp$stats[[ac(ftgt)]]
+      t2 <- lStats$stats[[ac(ftgt)]]
       
       if (PerfStat %in% c("Catch","IAV","IAVUpDown")) {
         
