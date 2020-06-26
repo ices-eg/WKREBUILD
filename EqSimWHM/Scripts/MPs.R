@@ -15,6 +15,18 @@ MP1.0 <- list("code" = "MP1.0",
               "TAC_IAV" = NA,
               "Obs" = list("cvF" = 0, "phiF" = 0, "cvSSB" = 0, "phiSSB" = 0))
 
+MP1.01 <- list("code" = "MP1.01",
+              "desc" = "NoHCR_Test",
+              "xlab" = "Base",
+              "HCRName" = "None",
+              "F_target" = c(seq(0.06,0.16,by=0.02)),
+              "B_trigger" = NA,
+              "minTAC" = NA,
+              "maxTAC" = NA,
+              "TAC_IAV" = NA,
+              "Obs" = list("cvF" = 0, "phiF" = 0, "cvSSB" = 0, "phiSSB" = 0))
+
+
 #minimum TAC test
 MP1.1 <- list("code" = "MP1.1",
               "desc" = "NoHCR_MinTACTest",

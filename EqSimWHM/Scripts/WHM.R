@@ -33,7 +33,9 @@ OM <- OM2.2   #WGWIDE 2019, stochastic weights, selection
 #MP <- MP1.9   #0%/10% asymmetric IAV Test
 
 #MP <- MP2.1    #ICES AR
-MP <- MP2.2    #Double BP
+#MP <- MP2.2    #Double BP
+
+MP <- MP1.01   #baseline for testing
 
 runName <- paste(OM$code,MP$code,niters,nyr,sep="_")
 
@@ -284,7 +286,13 @@ for (ii in names(SimRuns)) {
   SSB.true <- ssb(Stocks[[ii]])
   Stats[["SSB"]][["val"]] <- fStatPercs(SSB.true, lStatPer=lStatPer)
   Stats[["SSB"]][["worm"]] <- FLCore::iter(SSB.true,1:numWorm)
-
+  
+  #time to recovery 
+  #above Blim
+  Stats[["recBlim"]][["val"]] <- fStatRecovery(SSB.true,Blim)
+  #above Bpa
+  Stats[["recBpa"]][["val"]] <- fStatRecovery(SSB.true,Blim)
+  
   #SSB error
   tSSB <- FLQuant(SimRuns[[ii]]$SSBratio[1:(yEnd-yStart+1),],
                   dim = c(1,yEnd-yStart+1,1,1,1,niters),
@@ -329,7 +337,7 @@ for (ii in names(SimRuns)) {
   Stats[["TAC"]][["val"]] <- fStatPercs(tTAC, lStatPer = lStatPer)
   Stats[["TAC"]][["worm"]] <- FLCore::iter(tTAC,1:numWorm)
 
-  #IAV
+  #IAV - multiplied by 100 this stat is the absolute percentage change (no indication of up or down)
   IAV <- abs(1-Catch[,as.character(seq(yStart+1,yEnd))]/Catch[,as.character(seq(yStart,yEnd-1))])
   #replace Inf with NA (NA results from comparing with zero catch)
   IAV <- ifelse(is.finite(IAV),IAV,NA)
@@ -370,6 +378,6 @@ save(settings,file = file.path(Res.dir,runName,paste0(runName,"_eqSim_Settings.R
 
 #generate the stock/stat trajectories
 fPlotTraj(sim = lStats, plot.dir = file.path(Res.dir,runName), lStatPer = lStatPer)
-suppressWarnings(fPlotSummary(sim = lStats, plot.dir = Res.dir, lStatPer = lStatPer))
+suppressWarnings(fPlotSummary(sim = lStats, plot.dir = Res.dir, lStatPer = lStatPer, FtoPlot=fGetValsScan(MP$F_target,OM$refPts)))
 fTabulateStats(sim = lStats, setting= settings, plot.dir = Res.dir)
 
