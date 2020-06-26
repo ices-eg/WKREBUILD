@@ -2,7 +2,7 @@
 
 # runs2Compare <- c("OM2.2_MP2.1_1000_20","OM2.2_MP2.2_1000_20")
 # PerfStat = c("Catch","SSB","Risk3","IAVUpDown")
-# TargetFs = c(0,0.05,0.074,0.1,0.2)
+# TargetFs = c(0,0.05,0.075,0.1,0.2)
 # lStatPer = lStatPer
 # Blim <- OM$refPts$Blim
   
@@ -27,18 +27,23 @@ fsummary_df <- function(runs2Compare,
     #load the output of the simulation and the summary statistics
     load(file = file.path(Res.dir,r,paste0(r,"_SimRuns.RData")))
     load(file = file.path(Res.dir,r,paste0(r,"_eqSim_Stats.RData")))
-
-    # ftgt <- 0.0
-    for (ftgt in TargetFs){
+    
+    
+    
+    # ftgt <- 0.1
+    for (ftgt in an(names(SimRuns))){
       
       cat("F ", ftgt,"\n")
       
       #simulation op
       t <- SimRuns[[ac(ftgt)]]
+      
       #simulation stats
       # t2 <- lOp$stats[[ac(ftgt)]]
       t2 <- lStats$stats[[ac(ftgt)]]
 
+      # p <- "SSB"
+      
       for (p in PerfStat){
         
         # cat("PerfStat: ",p, "\n")
@@ -165,6 +170,7 @@ fsummary_df <- function(runs2Compare,
                                              PerfStat = rep(StatName,each=length(ST)/length(StatName)),
                                              Period = rep("ST",each=length(ST)),
                                              Period2 = paste(lStatPer$ST, collapse="-"),
+                                             Iter = seq(1:length(ST)),
                                              Val = ST,
                                              stringsAsFactors = FALSE))
         dfAll <- dplyr::bind_rows(dfAll,
@@ -174,6 +180,7 @@ fsummary_df <- function(runs2Compare,
                                              PerfStat = rep(StatName,each=length(MT)/length(StatName)),
                                              Period = rep("MT",each=length(MT)),
                                              Period2 = paste(lStatPer$MT, collapse="-"),
+                                             Iter = seq(1:length(ST)),
                                              Val = MT,
                                              stringsAsFactors = FALSE))
         dfAll <- dplyr::bind_rows(dfAll,
@@ -183,6 +190,7 @@ fsummary_df <- function(runs2Compare,
                                              PerfStat = rep(StatName,each=length(LT)/length(StatName)),
                                              Period = rep("LT",each=length(LT)),
                                              Period2 = paste(lStatPer$LT, collapse="-"),
+                                             Iter = seq(1:length(ST)),
                                              Val = LT,
                                              stringsAsFactors = FALSE))
         
