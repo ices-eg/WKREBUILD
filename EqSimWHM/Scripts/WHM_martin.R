@@ -294,8 +294,9 @@ lStatPer <- lStatPer2 <- list()
 for (y in seq(minObsYear,yEnd)){lStatPer[[ac(y)]]<-c(y,y)}
 for (y in seq(maxObsYear+1,yEnd)){lStatPer2[[ac(y)]]<-c(y,y)}
 
-#Short (first 5 after constraints), Medium (next 5) and Long Term (next 20)
+#Current (yConstraint years), Short (first 5 after constraints), Medium (next 5) and Long Term (next 20)
 yConstraints <- 3
+lStatPer[['CU']] <- lStatPer2[['CU']] <- c(yStart, yStart+yConstraints-1)
 lStatPer[['ST']] <- c(yStart+yConstraints,yStart+yConstraints+(per1-1))
 lStatPer2[['ST']] <- c(yStart+yConstraints+1,yStart+yConstraints+(per1-1))
 lStatPer[['MT']] <- lStatPer2[['MT']] <- c(yStart+yConstraints+per1,yStart+yConstraints+(per1+per2-1))
@@ -328,7 +329,7 @@ dir.create(path = file.path(Res.dir,runName), showWarnings = TRUE, recursive = T
 save(SimRuns,file = file.path(Res.dir,runName,paste0(runName,"_SimRuns.RData")))
 
 #Write the output to dropbox dir (necessary to save entire image?)
-save.image(file = file.path(dropbox.dir,paste0(runName,"_Workspace.Rdata")))
+#save.image(file = file.path(dropbox.dir,paste0(runName,"_Workspace.Rdata")))
 
 #Percentiles to report, number of worm lines for plots
 percentiles = c(0.025,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.975)
@@ -469,10 +470,15 @@ save(lStats,file = file.path(Res.dir,runName,paste0(runName,"_eqSim_Stats.Rdata"
 settings <- fGetSettings(lStats, SimRuns, FLStockfile, FLStockSimfile)
 save(settings,file = file.path(Res.dir,runName,paste0(runName,"_eqSim_Settings.Rdata")))
 
+# Save results df
+df <- fsummary_df(run=runName, Res.dir = Res.dir, Plot.dir = Plot.dir,lStatPer = lStatPer,
+                  Blim = OM$refPts$Blim, Fbarrange=c(1,10)) 
+save(df,file = file.path(Res.dir,runName,paste0(runName,"_eqSim_df.Rdata")))
+
 #generate the stock/stat trajectories
-fPlotTraj(sim = lStats, plot.dir = file.path(Res.dir,runName), lStatPer = lStatPer)
-suppressWarnings(fPlotSummary(sim = lStats, plot.dir = Res.dir, lStatPer = lStatPer))
-fTabulateStats(sim = lStats, setting=settings, plot.dir = Res.dir)
+# fPlotTraj(sim = lStats, plot.dir = file.path(Res.dir,runName), lStatPer = lStatPer)
+# suppressWarnings(fPlotSummary(sim = lStats, plot.dir = Res.dir, lStatPer = lStatPer))
+# fTabulateStats(sim = lStats, setting=settings, plot.dir = Res.dir)
 
 # #SSB vs Blim
 # fAnnSSBvsBlimDist(OM = OM2, MP = MP2.0, res.dir = Res.dir, plot.dir = Res.dir)
@@ -512,28 +518,8 @@ fTabulateStats(sim = lStats, setting=settings, plot.dir = Res.dir)
 #                PerfStat = stat, TargetFs = c(0,0.05,0.074,0.1,0.108,0.2),
 #                lStatPer = lStatPer, Blim = OM$refPts$Blim)}
 
-t <- fsummary_df(
-        runs2Compare <- c("OM2.2_MP2.1_1000_20","OM2.2_MP2.2_1000_20"),
-        Res.dir = Res.dir, 
-        Plot.dir = Plot.dir,
-        PerfStat = c("Catch","SSB","Risk3","IAVUpDown"),
-        TargetFs = MP$F_target, 
-        lStatPer = lStatPer,
-        Blim <- OM$refPts$Blim) 
-
-var <- "SSB"
-
-t %>%
-  filter(PerfStat == var) %>%
-  mutate(Ftgt = as.numeric(Ftgt)) %>%
-  mutate(Period = factor(Period, levels=c("ST","MT","LT"))) %>%
-  ggplot(aes(x=Ftgt, y=Val, group=Period)) +
-  theme_bw() +
-  geom_bar(stat="identity") +
-  facet_grid(Label ~ Period)
-
-t %>%
-  filter(PerfStat == var) %>%
+df %>%
+  filter(PerfStat == "SSB") %>%
   mutate(Ftgt = as.numeric(Ftgt)) %>%
   # mutate(Period = factor(Period, levels=c("ST","MT","LT"))) %>%
   ggplot(aes(x=Ftgt, y=Val, group=Period2)) +
@@ -541,16 +527,21 @@ t %>%
   geom_bar(stat="identity") +
   facet_grid(Label ~ Period2)
 
-t %>% distinct(Label) %>% print()
+# plot by variable
+df %>%
+  group_by(RunRef, Label, Ftgt, PerfStat, Period, Period2) %>% 
+  summarize(Val = mean(Val, na.rm=TRUE)) %>% 
+  ungroup() %>% 
+  mutate(flag = ifelse(Period == "CU", TRUE, FALSE)) %>% 
 
-# plot by scenario
-t %>%
-  filter(Label=="ICES AR with IAV") %>% 
   # filter(Label=="ICES AR") %>% 
   mutate(Ftgt = as.numeric(Ftgt)) %>%
   ggplot(aes(x=Period2, y=Val, group=Ftgt)) +
   theme_bw() +
-  theme(axis.text.x = element_text(angle = 90)) +
-  geom_bar(stat="identity") +
+  theme(axis.text.x = element_text(angle = 90, vjust=0.5)) +
+  theme(legend.position = "none") +
+  geom_bar(aes(fill=flag), stat="identity") +
+  scale_fill_manual(values = c('#595959', 'red')) +
+  labs(x="", y="value") +
   facet_grid(PerfStat ~ Ftgt, scales="free_y")
 
