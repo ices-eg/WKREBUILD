@@ -14,6 +14,8 @@ fStatPercs <- function(stat, lStatPer, percs=c(0.01,0.025,0.05,0.10,0.25,0.5,0.7
   
   #x <- FLQuant(NA, dimnames=list(age=c("min",paste(100*percs,"%",sep=""),"max","mean","sd","var"), year=YRS))
   
+  #browser()
+  
   #all iterations
   ITS <- 1:length(stat[1,1])
   
@@ -69,6 +71,7 @@ fStatPercs <- function(stat, lStatPer, percs=c(0.01,0.025,0.05,0.10,0.25,0.5,0.7
           if (any(!is.na(stat[,y1,,,,ITS]@.Data))){x["max",names(lStatPer)[p]] <- max(stat[,y1,,,,ITS]@.Data, na.rm=T)}else{x["max",names(lStatPer)[p]]<-NA}
           x[2:(length(percs)+1),names(lStatPer)[p]]   <- quantile(stat[,y1,,,,ITS]@.Data,probs=percs,na.rm=T)
         } else {
+          #browser()
           #x["var",names(lStatPer)[p]]  <- var(stat[,y12,,,,ITS]@.Data, na.rm=T)
           #x["sd",names(lStatPer)[p]]   <- sd(stat[,y12,,,,ITS]@.Data, na.rm=T)
           #x["mean",names(lStatPer)[p]] <- mean(stat[,y12,,,,ITS]@.Data, na.rm=T)
@@ -200,6 +203,10 @@ fStatExtinct <- function(SSB, depletion=0.01, firstYear) {
 #   
 # }
 
+fStatRecovery <- function(SSB,RP){
+  #time taken for (first) recovery above the biomass given by RP
+  return(1)
+}
 
 
 

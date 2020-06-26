@@ -105,7 +105,7 @@ fPlotSummary <- function(sim, plot.dir, fileFormat="png", wth=7, hght=7, lStatPe
     SSB = "SSB (Mt)",
     Catch = "Yield (kt)",
     FBar = "FBar",
-    IAV = "IAV (kt)",
+    IAV = "IAV",
     pBlim = "Blim Risk (%)"
   )
   

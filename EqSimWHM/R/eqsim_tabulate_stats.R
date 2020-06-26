@@ -125,7 +125,7 @@ fTabulateStats <- function(sim, setting, plot.dir){
     body_add_flextable(fMakeTable(dfStats,"Catch","75%",sim$OM$code,sim$MP$code,"75%",LowLimit=100,divFactor=1e3,dp=0)) %>%
     
     body_add_break() %>%
-    body_add_par("IAV (kt)", style = "Normal") %>%
+    body_add_par("IAV", style = "Normal") %>%
     body_add_par("", style = "Normal") %>% 
     body_add_flextable(fMakeTable(dfStats,"IAV","25%",sim$OM$code,sim$MP$code,"25%",HighLimit=50,divFactor=1,dp=2)) %>%
     body_add_flextable(fMakeTable(dfStats,"IAV","50%",sim$OM$code,sim$MP$code,"Median",HighLimit=50,divFactor=1,dp=2)) %>%
