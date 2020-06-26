@@ -1,4 +1,4 @@
-fPlotSummary <- function(sim, plot.dir, fileFormat="png", wth=7, hght=7, lStatPer) {
+fPlotSummary <- function(sim, plot.dir, fileFormat="png", wth=7, hght=7, lStatPer, FtoPlot=c(0,0.05,0.074,0.1)) {
   
   require(ggplot2)
   
@@ -109,7 +109,7 @@ fPlotSummary <- function(sim, plot.dir, fileFormat="png", wth=7, hght=7, lStatPe
     pBlim = "Blim Risk (%)"
   )
   
-  p <- ggplot(subset(dfSummary,Ftgt %in% c(0,0.05,0.074,0.1)), aes(Year,p50))
+  p <- ggplot(subset(dfSummary,Ftgt %in% FtoPlot), aes(Year,p50))
   p <- p + geom_ribbon(aes(ymin = p1, ymax = p99), fill = "grey90")
   p <- p + geom_ribbon(aes(ymin = p5, ymax = p95), fill = "grey80")
   p <- p + geom_ribbon(aes(ymin = p25, ymax = p75), fill = "grey70")

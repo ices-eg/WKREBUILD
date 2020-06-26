@@ -35,7 +35,7 @@ OM <- OM2.2   #WGWIDE 2019, stochastic weights, selection
 #MP <- MP2.1    #ICES AR
 #MP <- MP2.2    #Double BP
 
-MP <- MP1.01   #baseline, F=0.1, nothing fancy!
+MP <- MP1.01   #baseline for testing
 
 runName <- paste(OM$code,MP$code,niters,nyr,sep="_")
 
@@ -378,6 +378,6 @@ save(settings,file = file.path(Res.dir,runName,paste0(runName,"_eqSim_Settings.R
 
 #generate the stock/stat trajectories
 fPlotTraj(sim = lStats, plot.dir = file.path(Res.dir,runName), lStatPer = lStatPer)
-suppressWarnings(fPlotSummary(sim = lStats, plot.dir = Res.dir, lStatPer = lStatPer))
+suppressWarnings(fPlotSummary(sim = lStats, plot.dir = Res.dir, lStatPer = lStatPer, FtoPlot=fGetValsScan(MP$F_target,OM$refPts)))
 fTabulateStats(sim = lStats, setting= settings, plot.dir = Res.dir)
 
