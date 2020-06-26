@@ -312,6 +312,7 @@ sim <- eqsim_run(fit = SRR,
                  Fphi = MP$Obs$phiF,
                  SSBcv = MP$Obs$cvSSB, 
                  SSBphi = MP$Obs$phiSSB,
+                 Blim = OM$refPts$Blim,
                  Nrun = nyr, 
                  calc.RPs = FALSE,
                  dfExplConstraints = dfExplConstraints, 
@@ -520,8 +521,6 @@ t <- fsummary_df(
         lStatPer = lStatPer,
         Blim <- OM$refPts$Blim) 
 
-distinct(t, PerfStat)
-
 var <- "SSB"
 
 t %>%
@@ -542,20 +541,16 @@ t %>%
   geom_bar(stat="identity") +
   facet_grid(Label ~ Period2)
 
+t %>% distinct(Label) %>% print()
+
 # plot by scenario
 t %>%
-  filter(Label=="ICES AR") %>% 
+  filter(Label=="ICES AR with IAV") %>% 
+  # filter(Label=="ICES AR") %>% 
   mutate(Ftgt = as.numeric(Ftgt)) %>%
   ggplot(aes(x=Period2, y=Val, group=Ftgt)) +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 90)) +
-  geom_bar(plyr::subset=.(PerfStat %in% c("Catch","SSB")), stat="identity") +
-  geom_line(plyr::subset=.(PerfStat %in% c("Risk3","IAVUp","IAVDown"))) +
+  geom_bar(stat="identity") +
   facet_grid(PerfStat ~ Ftgt, scales="free_y")
 
-f1 <- ggplot(dat2, aes(x=Date,y=value,ymin=0,ymax=value))+facet_grid(variable~., scales='free')
-f2 <- f1+geom_step(plyr::subset=.(variable=='Total.Members'))
-f3 <- f2+geom_step(plyr::subset=.(variable=='Active.Members'))
-f4 <- f3+geom_linerange(subset=.(variable=='Member.Joins'))
-f5 <- f4+geom_linerange(subset=.(variable=='RSVPs'))
-f5+geom_vline(xintercept=meetup$Dates, color='red',alpha=.3)+ylab('')
