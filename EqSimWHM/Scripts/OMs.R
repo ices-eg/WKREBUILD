@@ -46,7 +46,7 @@ OM2.2 <- list("code" = "OM2.2",
             "pBlim" = 0.05)
 
 #WGWIDE2019 SAM assessment, IBPWHM method for reference points, stochastic bio and selection
-OM2.2sam <- list("code" = "OM2.2_sam",
+OM2.3 <- list("code" = "OM2.3",
               "desc" = "WGWIDE19_sam",
               "IM" = NA,
               "SRR" = "SRR.WG19.SegReg_Blim.exterm", "RecAR" = TRUE, maxRecRes = c(3,-3),

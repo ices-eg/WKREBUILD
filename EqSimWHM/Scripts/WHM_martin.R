@@ -7,6 +7,7 @@
 #
 # 24/06/2020 generic option; code now independent of fish stock
 # 25/06/2020 tested on mackerel stock
+# 27/06/2020 tested on 1000 iters of SAM assessment
 # ================================================================================================================
 
 rm(list=ls())
@@ -61,20 +62,25 @@ library(ggplot2)
 Drive    <- "D:"
 Base.dir <- file.path(Drive,"GIT")
 
-# source("../SAM2FLR/SAM2FLSTOCK.r")
-# sao.name <- "MackWGWIDE2019v02"
-# neaMacWGWIDE2019 <- SAM2FLSTOCK(sao.name, temp="D:\\temp")
 
-# FLStock file
-FLStockfile <- "WGWIDE19.RData"
-#FLStockfile <- "WGWIDE19_SAM.RData"
-#FLStockfile <- "neaMacWGWIDE2019.RData"
-
-# FLStock iteration file
-FLStockSimfile <- "MSE_WGWIDE19_FLStocks_15PG.RData"
+# WHOM SS
+#stock          <- "WHOM"
+#assess         <- "SS"
+#FLStockfile    <- "WGWIDE19.RData"
+#FLStockSimfile <- "MSE_WGWIDE19_FLStocks_15PG.RData"
 #FLStockSimfile <- "MSE_WGWIDE19_FLStocks_10k.RData"
+
+# WHOM SAM
+stock          <- "WHOM"
+assess         <- "SAM"
+FLStockfile    <- "WGWIDE19_SAM.RData"
+FLStockSimfile <- "MSE_WGWIDE19_FLStocks_SAM1000.RData"
 #FLStockSimfile <- "MSE_WGWIDE19_FLStocks_SAM.RData"
+
+# MAC SAM
+#FLStockfile    <- "neaMacWGWIDE2019.RData"
 #FLStockSimfile <- "neaMacWGWIDE20191000iters.RData"
+
 
 #Basic MSE directory
 MSE.dir <- file.path(Base.dir,"wk_WKREBUILD","EqSimWHM")
@@ -118,8 +124,8 @@ per2 <- 5
 
 # Operating model
 #OM <- OM2.1   #WGWIDE 2019, const weights, selection
-OM <- OM2.2   #WGWIDE 2019, stochastic weights, selection
-#OM <- OM2.2sam   #WGWIDE 2019 SAM + ref points, stochastic weights, selection
+#OM <- OM2.2   #WGWIDE 2019, stochastic weights, selection
+OM <- OM2.3   #WGWIDE 2019 SAM + ref points, stochastic weights, selection
 #OM <- OM2.2mac   #WGWIDE 2019 SAM + ref points, stochastic weights, selection
 
 
@@ -138,7 +144,7 @@ OM <- OM2.2   #WGWIDE 2019, stochastic weights, selection
 #MP <- MP2.1   #ICES HCR, no IAV control, no minimum TAC, with assessment/advice error
 MP <- MP2.2   #ICES HCR, IAV control 20/25%, no minimum TAC, with assessment/advice error
 
-runName <- paste(OM$code,MP$code,niters,nyr,sep="_")
+runName <- paste(stock,assess,OM$code,MP$code,niters,nyr,sep="_")
 
 # set up the OM =========================================================================================================
 
@@ -518,30 +524,71 @@ save(df,file = file.path(Res.dir,runName,paste0(runName,"_eqSim_df.Rdata")))
 #                PerfStat = stat, TargetFs = c(0,0.05,0.074,0.1,0.108,0.2),
 #                lStatPer = lStatPer, Blim = OM$refPts$Blim)}
 
-df %>%
-  filter(PerfStat == "SSB") %>%
-  mutate(Ftgt = as.numeric(Ftgt)) %>%
-  # mutate(Period = factor(Period, levels=c("ST","MT","LT"))) %>%
-  ggplot(aes(x=Ftgt, y=Val, group=Period2)) +
-  theme_bw() +
-  geom_bar(stat="identity") +
-  facet_grid(Label ~ Period2)
+# df %>%
+#   filter(PerfStat == "SSB") %>%
+#   mutate(Ftgt = as.numeric(Ftgt)) %>%
+#   # mutate(Period = factor(Period, levels=c("ST","MT","LT"))) %>%
+#   ggplot(aes(x=Ftgt, y=Val, group=Period2)) +
+#   theme_bw() +
+#   geom_bar(stat="identity") +
+#   facet_grid(Label ~ Period2)
 
 # plot by variable
-df %>%
-  group_by(RunRef, Label, Ftgt, PerfStat, Period, Period2) %>% 
-  summarize(Val = mean(Val, na.rm=TRUE)) %>% 
-  ungroup() %>% 
-  mutate(flag = ifelse(Period == "CU", TRUE, FALSE)) %>% 
+# df %>%
+#   group_by(RunRef, Label, Ftgt, PerfStat, Period, Period2) %>% 
+#   summarize(Val = mean(Val, na.rm=TRUE)) %>% 
+#   ungroup() %>% 
+#   mutate(flag = ifelse(Period == "CU", TRUE, FALSE)) %>% 
+# 
+#   # filter(Label=="ICES AR") %>% 
+#   mutate(Ftgt = as.numeric(Ftgt)) %>%
+#   ggplot(aes(x=Period2, y=Val, group=Ftgt)) +
+#   theme_bw() +
+#   theme(axis.text.x = element_text(angle = 90, vjust=0.5)) +
+#   theme(legend.position = "none") +
+#   geom_bar(aes(fill=flag), stat="identity") +
+#   scale_fill_manual(values = c('#595959', 'red')) +
+#   labs(x="", y="value") +
+#   facet_grid(PerfStat ~ Ftgt, scales="free_y")
 
-  # filter(Label=="ICES AR") %>% 
-  mutate(Ftgt = as.numeric(Ftgt)) %>%
-  ggplot(aes(x=Period2, y=Val, group=Ftgt)) +
+# df <- loadRData(file.path(Res.dir,
+#                           "WHOM_SS_OM2.2_MP2.2_1000_20", 
+#                           "WHOM_SS_OM2.2_MP2.2_1000_20_eqSim_df.RData")) %>% 
+#   mutate(RunRef = paste0("WHOM_SS_", RunRef))
+# save(df,file = file.path(Res.dir,
+#                          "WHOM_SS_OM2.2_MP2.2_1000_20", 
+#                          "WHOM_SS_OM2.2_MP2.2_1000_20_eqSim_df.RData"))
+
+
+t <- bind_rows(
+  loadRData(file.path(Res.dir,
+                      "WHOM_SS_OM2.2_MP2.2_1000_20", 
+                      "WHOM_SS_OM2.2_MP2.2_1000_20_eqSim_df.RData")),
+  loadRData(file.path(Res.dir,
+                      "WHOM_SAM_OM2.2_MP2.2_1000_20", 
+                      "WHOM_SAM_OM2.2_MP2.2_1000_20_eqSim_df.RData")) ) %>% 
+  
+  separate(RunRef, into=c("stock","assess", "OM","MP","niters","nyrs"), sep="_") %>% 
+  
+  group_by(stock, assess, OM, MP, niters, nyrs, Label, Ftgt, PerfStat, Period, Period2) %>%
+  summarize(Val = mean(Val, na.rm=TRUE)) %>%
+  ungroup() %>%
+  
+  mutate(flag = ifelse(Period == "CU", TRUE, FALSE)) %>%
+  mutate(niters=factor(niters, levels=c("1000"))) %>% 
+  mutate(Ftgt = as.numeric(Ftgt)) 
+
+t %>%
+  # filter(PerfStat == "SSB") %>% 
+  filter(PerfStat %in% c("SSB", "Yield","Risk3","F", "IAV")) %>% 
+  ggplot(aes(x=Period2, y=Val, group=assess)) +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 90, vjust=0.5)) +
-  theme(legend.position = "none") +
-  geom_bar(aes(fill=flag), stat="identity") +
-  scale_fill_manual(values = c('#595959', 'red')) +
+  # theme(legend.position = "none") +
+  geom_line(aes(colour=assess), size=0.8) +
+  geom_point(aes(colour=assess), size=0.8) +
+  # scale_fill_manual(values = c('#595959', 'red')) +
   labs(x="", y="value") +
   facet_grid(PerfStat ~ Ftgt, scales="free_y")
 
+  

@@ -11,12 +11,17 @@ library(stockassessment)
 library(tidyverse)
 
 source("../SAM2FLR/SAM2FLSTOCK.r")
+source("EqSimWHM/R/get_dropbox.R")
+source("EqSimWHM/R/utilities.R")
 
 sao.name <- "WHOM_2019"
 url      <- paste0("https://stockassessment.org/datadisk/stockassessment/userdirs/user3/",sao.name,"/")
 tempdir  <- file.path("D:/temp",sao.name) 
 fit      <- stockassessment::fitfromweb(sao.name, character.only=TRUE) 
 fls0     <- SAM2FLSTOCK(sao.name, temp="D:\\temp")
+
+# Get dropbox dir; for storing large RData files
+dropbox.dir <- file.path(get_dropbox(), "HOM FG", "05. Data","RData")
 
 dir.create(tempdir, showWarnings = FALSE)
 write.data.files(fit, dir = tempdir)
@@ -31,19 +36,33 @@ for (i in seq(inputs)) {
   file <- file.path("D:/temp",sao.name,inputs[i])
   fqs[[names(inputs[i])]] <- readVPAFile(file)
 }
+t <-  loadRData(file.path(dropbox.dir,"WGWIDE19_samset0001_0100.RData"))
 
-runs <- get(load(file.path(getwd(),"EqSimWHM","RData","WGWIDE19_samset001_100.RData")))
+runs <- 
+  loadRData(file.path(dropbox.dir,"WGWIDE19_samset0001_0100.RData")) %>% 
+  append(loadRData(file.path(dropbox.dir,"WGWIDE19_samset0101_0200.RData"))) %>% 
+  append(loadRData(file.path(dropbox.dir,"WGWIDE19_samset0201_0400.RData"))) %>% 
+  append(loadRData(file.path(dropbox.dir,"WGWIDE19_samset0401_0600.RData"))) %>% 
+  append(loadRData(file.path(dropbox.dir,"WGWIDE19_samset0601_0800.RData"))) %>% 
+  append(loadRData(file.path(dropbox.dir,"WGWIDE19_samset0801_0900.RData"))) %>% 
+  append(loadRData(file.path(dropbox.dir,"WGWIDE19_samset0901_0990.RData"))) %>% 
+  append(loadRData(file.path(dropbox.dir,"WGWIDE19_samset0990_1000.RData"))) 
+
+attr(runs, "fit") <- fit
+attr(runs, "class") <- "samset"
+# plot(runs)
+
 # plot(runs)
 
 # get names
-t  <- runs[[1]]
-df <- data.frame(stringsAsFactors = FALSE)
-for (i in names(t)) {
-  for (j in names(t[[i]])) {
-    df <- bind_rows(df, data.frame(list=i, var=j, stringsAsFactors = FALSE))
-    cat(i,j,"\n")
-  }
-}
+# t  <- runs[[1]]
+# df <- data.frame(stringsAsFactors = FALSE)
+# for (i in names(t)) {
+#   for (j in names(t[[i]])) {
+#     df <- bind_rows(df, data.frame(list=i, var=j, stringsAsFactors = FALSE))
+#     cat(i,j,"\n")
+#   }
+# }
 # df %>% filter(grepl("logn", tolower(var))) 
 
 flstocks <- list()
@@ -154,7 +173,7 @@ for (i in 1:length(runs)) {
 }
 
 # add names to list
-names(flstocks) <- c("ass",as.character(1:100))
+names(flstocks) <- c("ass",as.character(1:length(runs)))
 
 # test plot of data frame
 df %>% 
@@ -167,4 +186,4 @@ df %>%
 save(fls0,     file=file.path(getwd(), "EqSimWHM","RData",
                               "WGWIDE19_SAM.RData"))
 save(flstocks, file=file.path(getwd(), "EqSimWHM","RData",
-                              "MSE_WGWIDE19_FLStocks_SAM.RData"))
+                              "MSE_WGWIDE19_FLStocks_SAM1000.RData"))
