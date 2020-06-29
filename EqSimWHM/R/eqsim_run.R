@@ -635,6 +635,7 @@ eqsim_run <- function(fit,
         IAVInc <- fNAifEmpty(dfExplConstraints[dfExplConstraints$YearNum==j & toupper(dfExplConstraints$Type)=="IAVINC",]$Val)
         IAVDec <- fNAifEmpty(dfExplConstraints[dfExplConstraints$YearNum==j & toupper(dfExplConstraints$Type)=="IAVDEC",]$Val)
         
+        #new target when restrictions are included
         tgt <- rep(NA,Nmod)
         incs <- decs <- 0
         
@@ -646,12 +647,23 @@ eqsim_run <- function(fit,
           #   incs <- sum((Yld1/TAC[j-1,]) > (1+IAVInc), na.rm=TRUE)
           #   tgt[(Yld1/TAC[j-1,]) > (1+IAVInc)] <- (1+IAVInc)*TAC[j-1,(Yld1/TAC[j-1,]) > (1+IAVInc)]
           # }
-          if (sum((Yld2-TAC[j-1,])/TAC[j-1,] > IAVInc, na.rm = TRUE)>0){
+          
+          
+          #if (sum((Yld2-TAC[j-1,])/TAC[j-1,] > IAVInc, na.rm = TRUE)>0){
+          #  #adjust targets to limit increases
+          #  incs <- sum((Yld2/TAC[j-1,]) > (1+IAVInc), na.rm=TRUE)
+          #  tgt[(Yld2/TAC[j-1,]) > (1+IAVInc)] <- (1+IAVInc)*TAC[j-1,(Yld2/TAC[j-1,]) > (1+IAVInc)]
+          #}
+
+          #limit to above Btrigger only
+          if (sum((Yld2[ssby.obs[j,]>Btrigger]-TAC[j-1,ssby.obs[j,]>Btrigger])/TAC[j-1,ssby.obs[j,]>Btrigger] > IAVInc, na.rm = TRUE)>0){
             #adjust targets to limit increases
-            incs <- sum((Yld2/TAC[j-1,]) > (1+IAVInc), na.rm=TRUE)
-            tgt[(Yld2/TAC[j-1,]) > (1+IAVInc)] <- (1+IAVInc)*TAC[j-1,(Yld2/TAC[j-1,]) > (1+IAVInc)]
+            incs1 <- sum((Yld2/TAC[j-1,]) > (1+IAVInc), na.rm=TRUE)
+            incs <- sum((Yld2[ssby.obs[j,]>Btrigger]/TAC[j-1,ssby.obs[j,]>Btrigger]) > (1+IAVInc), na.rm=TRUE)
+            tgt[((Yld2/TAC[j-1,]) > (1+IAVInc)) & (ssby.obs[j,]>Btrigger)] <- (1+IAVInc)*TAC[j-1,((Yld2/TAC[j-1,]) > (1+IAVInc)) & (ssby.obs[j,]>Btrigger)]
           }
           
+                    
         }
         #decreases
         if (!is.na(IAVDec)){
@@ -660,14 +672,25 @@ eqsim_run <- function(fit,
           #   decs <- sum((Yld1/TAC[j-1,]) < (1-IAVDec), na.rm=TRUE)
           #   tgt[(Yld1/TAC[j-1,]) < (1-IAVDec)] <- (1-IAVDec)*TAC[j-1,(Yld1/TAC[j-1,]) < (1-IAVDec)]
           # }
-          if (sum((Yld2-TAC[j-1,])/TAC[j-1,] < -1*IAVDec, na.rm = TRUE)>0){
+          
+          # if (sum((Yld2-TAC[j-1,])/TAC[j-1,] < -1*IAVDec, na.rm = TRUE)>0){
+          #   #adjust targets to limit decreases
+          #   decs <- sum((Yld2/TAC[j-1,]) < (1-IAVDec), na.rm=TRUE)
+          #   tgt[(Yld2/TAC[j-1,]) < (1-IAVDec)] <- (1-IAVDec)*TAC[j-1,(Yld2/TAC[j-1,]) < (1-IAVDec)]
+          # }
+          
+          #limit to above Btrigger only
+          if (sum((Yld2[ssby.obs[j,]>Btrigger]-TAC[j-1,ssby.obs[j,]>Btrigger])/TAC[j-1,ssby.obs[j,]>Btrigger] < -1*IAVDec, na.rm = TRUE)>0){
             #adjust targets to limit decreases
-            decs <- sum((Yld2/TAC[j-1,]) < (1-IAVDec), na.rm=TRUE)
-            tgt[(Yld2/TAC[j-1,]) < (1-IAVDec)] <- (1-IAVDec)*TAC[j-1,(Yld2/TAC[j-1,]) < (1-IAVDec)]
+            decs1 <- sum((Yld2/TAC[j-1,]) < (1-IAVDec), na.rm=TRUE)
+            decs <- sum((Yld2[ssby.obs[j,]>Btrigger]/TAC[j-1,ssby.obs[j,]>Btrigger]) < (1-IAVDec), na.rm=TRUE)
+            tgt[((Yld2/TAC[j-1,]) < (1-IAVDec)) & (ssby.obs[j,]>Btrigger)] <- (1-IAVDec)*TAC[j-1,((Yld2/TAC[j-1,]) < (1-IAVDec)) & (ssby.obs[j,]>Btrigger)]
           }
+          
         }
         
         #message
+        icesTAF::msg(paste0(incs1,"/",decs1," IAV capped increases/decreases all SSB ",j))
         icesTAF::msg(paste0(incs,"/",decs," IAV capped increases/decreases set in year ",j))
         
         if (sum(is.na(tgt)) < Nmod) {

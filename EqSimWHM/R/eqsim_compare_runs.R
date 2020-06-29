@@ -154,7 +154,7 @@ fCompare_runs <- function(runs2Compare, Res.dir, Plot.dir, PerfStat, TargetFs, l
     }
     
   }
-  
+
   if (PerfStat == "IAVUpDown"){
     for (s in c("IAVUp","IAVDown")) {
       p <- ggplot(data = filter(dfAll,PerfStat==s), aes(x=factor(Label), y=Val, fill=factor(Period, levels = c("ST","MT","LT")))) +
@@ -167,6 +167,8 @@ fCompare_runs <- function(runs2Compare, Res.dir, Plot.dir, PerfStat, TargetFs, l
               strip.text.x = element_text(size=12, face="bold"),
               axis.text.x = element_text(size=8, face="bold"),
               strip.background = element_rect(colour="red", fill="#CCCCFF"))
+      if (s=="IAVUp") p <- p + ylim(0,1)
+      if (s=="IAVDown") p <- p + ylim(-1,0)
       
       png(filename = file.path(Plot.dir,paste0(s,"Comparison.png")),
           type = 'cairo', units = 'in', width = 10,
@@ -195,6 +197,8 @@ fCompare_runs <- function(runs2Compare, Res.dir, Plot.dir, PerfStat, TargetFs, l
             axis.text.x = element_text(size=8, face="bold"),
             strip.background = element_rect(colour="red", fill="#CCCCFF"))
       
+    if (PerfStat=="IAV"){p <- p + ylim(0,1)}
+    
     png(filename = file.path(Plot.dir,paste0(StatName,"Comparison.png")),
         type = 'cairo', units = 'in', width = 10,
         height = 8, pointsize = 12, res = 96)

@@ -62,6 +62,8 @@ RData.dir <- file.path(MSE.dir,"RData")
 Log.dir <- file.path(MSE.dir,"Logs")              
 #Simulation and statistical outputs
 Res.dir <- file.path(MSE.dir, "Results")
+#Plot dir
+Plot.dir <- file.path(MSE.dir, "Plots")
 
 # Source dir and Scripts dir
 Source.dir <- file.path(MSE.dir,"R")              #R functions
