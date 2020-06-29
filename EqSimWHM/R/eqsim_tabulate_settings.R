@@ -1,4 +1,5 @@
-fGetSettings <- function(dfStats, dfSimRuns, flstockfile, flstocksimfile){
+fGetSettings <- function(lStatPer, SimRuns, FLStockfile, FLStockSimfile,
+                         OM, MP, niters, nyr){
   
   # dfSimRuns <- SimRuns
   # dfStats   <- lStats
@@ -7,14 +8,14 @@ fGetSettings <- function(dfStats, dfSimRuns, flstockfile, flstocksimfile){
   
   tData <- 
     # OM
-    data.frame(unlist(dfStats[[1]][[1]][["OM"]], use.names=TRUE), stringsAsFactors = FALSE) %>% 
+    data.frame(unlist(OM, use.names=TRUE), stringsAsFactors = FALSE) %>% 
     tibble::rownames_to_column() %>% 
     setNames(c("desc","value")) %>%
     mutate(class="OM") %>% 
     
     # MP
     bind_rows(
-      data.frame(unlist(dfStats[[1]][[1]][["MP"]], use.names=TRUE), stringsAsFactors = FALSE) %>% 
+      data.frame(unlist(MP, use.names=TRUE), stringsAsFactors = FALSE) %>% 
         tibble::rownames_to_column() %>% 
         setNames(c("desc","value")) %>% 
         mutate(class="MP")
@@ -22,14 +23,15 @@ fGetSettings <- function(dfStats, dfSimRuns, flstockfile, flstocksimfile){
     
     # Other
     bind_rows(
-      data.frame(desc=c("niters","nyr","ST","MT","LT","flstock file","flstock sim file"),
-                 value=c(ac(dim(dfSimRuns[[1]][["N"]])[[3]]), 
-                         ac(dim(dfSimRuns[[1]][["N"]])[[2]]),
-                         paste(ac(dfStats[["lStatPer"]][["ST"]]), collapse="-"),
-                         paste(ac(dfStats[["lStatPer"]][["MT"]]), collapse="-"),
-                         paste(ac(dfStats[["lStatPer"]][["LT"]]), collapse="-"),
-                         flstockfile,
-                         flstocksimfile),
+      data.frame(desc=c("niters","nyr","CU","ST","MT","LT","flstock","flstock_sim"),
+                 value=c(ac(niters), 
+                         ac(nyr),
+                         paste(ac(lStatPer[["CU"]]), collapse="-"),
+                         paste(ac(lStatPer[["ST"]]), collapse="-"),
+                         paste(ac(lStatPer[["MT"]]), collapse="-"),
+                         paste(ac(lStatPer[["LT"]]), collapse="-"),
+                         FLStockfile,
+                         FLStockSimfile),
                  class="OTHER",
                  stringsAsFactors = FALSE)
     ) %>% 

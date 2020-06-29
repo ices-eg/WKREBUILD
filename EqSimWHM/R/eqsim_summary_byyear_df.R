@@ -6,9 +6,10 @@
 # Blim <- OM$refPts$Blim
 # Fbarrange=c(1,10)
 
-fsummary_byyear_df <- function(run, 
+fsummary_byyear_df <- function(run, ftgt, simRuns,
                         Res.dir, Plot.dir, 
                         lStatPer, Blim, 
+                        simYears, xlab, 
                         Fbarrange=c(1,10)){
 
   #produces a dataframe
@@ -21,11 +22,11 @@ fsummary_byyear_df <- function(run,
 
   #get the data
   # run <- "OM2.2_MP2.1_1000_20"
-  cat(run,"\n")
+  # cat(run,"\n")
   
   #load the output of the simulation and the summary statistics
-  load(file = file.path(Res.dir,run,paste0(run,"_SimRuns.RData")))
-  load(file = file.path(Res.dir,run,paste0(run,"_eqSim_Stats.RData")))
+  # load(file = file.path(Res.dir,run,paste0(run,"_SimRuns.RData")))
+  # load(file = file.path(Res.dir,run,paste0(run,"_eqSim_Stats.RData")))
   
   years <-
     data.frame(period="CU", year=seq(an(lStatPer$CU[1]),
@@ -49,19 +50,19 @@ fsummary_byyear_df <- function(run,
   )
   
   # ftgt <- 0.1
-  for (ftgt in an(names(SimRuns))){
+  # for (ftgt in an(names(SimRuns))){
     
-    cat("Ftgt: ", ftgt, "\n")
+    # cat("Ftgt: ", ftgt, "\n")
     
     #simulation op
     t <- SimRuns[[ac(ftgt)]]
 
     #simulation stats
     # t2 <- lOp$stats[[ac(ftgt)]]
-    t2 <- lStats$stats[[ac(ftgt)]]
+    # t2 <- lStats$stats[[ac(ftgt)]]
     
     # TAC
-    dimnames(t$TAC)$year <- t2$simYears
+    dimnames(t$TAC)$year <- simYears
     
     #catch numbers
     Cnum <- t[["C"]]
@@ -69,15 +70,15 @@ fsummary_byyear_df <- function(run,
     Cwgt <- t[["catW"]]
     #catch weight (tons)
     CW <- apply(Cnum*Cwgt,2:3,sum)/1e3
-    dimnames(CW)$year <- t2$simYears
+    dimnames(CW)$year <- simYears
     t$CW <- CW
 
     #F management
-    dimnames(t$Fmgmt)$year <- t2$simYears
+    dimnames(t$Fmgmt)$year <- simYears
     
     #harvest
     Harvest <- t[["F"]]
-    dimnames(Harvest)$year <- t2$simYears
+    dimnames(Harvest)$year <- simYears
     Harvest <- apply(Harvest[ac(Fbarrange[1]:Fbarrange[2]),,],2:3, mean)
     t$Harvest <- Harvest
     # dimnames(Harvest)
@@ -91,19 +92,19 @@ fsummary_byyear_df <- function(run,
     
     #recruitment
     Rec <- t[["N"]][1,,]
-    dimnames(Rec)$year <- t2$simYears
+    dimnames(Rec)$year <- simYears
     t$Rec <- Rec
     
     #SSB (Mt)
     SSB <- apply(Abd*SW*Mat,2:3,sum)/1e3
-    dimnames(SSB)$year <- t2$simYears
+    dimnames(SSB)$year <- simYears
     t$SSB <- SSB
     
 
     # item <- "TAC"
     for (item in c("TAC","SSB","CW", "Harvest", "Fmgmt","Rec")) {
       
-      cat(item, "\n")
+      # cat(item, "\n")
       
       x <- 
         as.data.frame(t(t[[(item)]])) %>% 
@@ -115,7 +116,7 @@ fsummary_byyear_df <- function(run,
           PerfStat = item,
           year     = an(year),
           RunRef = run,
-          Label = t2$MP$xlab,
+          Label = xlab,
           Ftgt = ftgt) %>% 
         left_join(years, by="year") %>% 
         left_join(units, by="PerfStat") 
@@ -125,7 +126,7 @@ fsummary_byyear_df <- function(run,
       
     } # end of for loop (item)
 
-  } # end of for loop: ftgt
+  # } # end of for loop: ftgt
     
   dfAll <-
     dfAll %>% 
