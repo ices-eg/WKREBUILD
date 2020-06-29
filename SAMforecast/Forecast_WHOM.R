@@ -95,13 +95,13 @@ FC[[length(FC)+1]] <- forecast2(fit, fscale=c(1, rep(NA,ny-1)),
 )   
 
 
-# Run the forecast with HCR2 with dSr but high catch to decrease SSB -----
+# Run the forecast with HCR2 with SR but high catch to decrease SSB -----
 RW = FALSE  # random walk on recruitment
 SR=TRUE # for SR relationship for rec coming from SRpar
 
 set.seed(seed) # same seed to repeat output
 FC[[length(FC)+1]] <- forecast2(fit, fscale=c(1, rep(NA,ny-1)), 
-                                catchval=c(NA, TAC2018*2, TAC2019*2, TAC2020*2, rep(NA,ny-4)),
+                                catchval=c(NA, TAC2018*5, TAC2019*5, TAC2020*5, rep(NA,ny-4)),
                                 fval=,rep(NA, ny),
                                 rec.years=Ry, 
                                 ave.years=Ay,
