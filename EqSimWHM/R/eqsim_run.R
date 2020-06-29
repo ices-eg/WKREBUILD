@@ -531,7 +531,7 @@ eqsim_run <- function(fit,
       Ny[1,j,] <- allrecs[select]
       
       #kill recruitment to 10% in each of years 11-15
-      if (j<=15 & j>10) Ny[1,j,]<-Ny[1,j,]/10
+      #if (j<=15 & j>10) Ny[1,j,]<-Ny[1,j,]/10
       
       #default F is the current Fscan value
       Fnext <- Fbar
