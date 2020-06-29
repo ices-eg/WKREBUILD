@@ -214,3 +214,135 @@ MP2.2 <- list("code" = "MP2.2",
 #               "maxTAC" = NA,
 #               "TAC_IAV" = 0.2,
 #               "Obs" = list("cvF" = 0, "phiF" = 0, "cvSSB" = 0, "phiSSB" = 0))
+
+
+#Constant F, no IAV control, no minimum TAC, with assessment/advice error
+MP5.0 <- list("code" = "MP5.0",
+              "desc" = "ConstF",
+              "xlab" = "Const F",
+              "HCRName" = "None",
+              "F_target" = c(0.05,0.075,0.1,0.125,0.15,0.175,0.2),
+              "B_trigger" = NA,
+              "minTAC" = NA,
+              "maxTAC" = NA,
+              "TAC_IAV" = NA,
+              "Obs" = list("cvF" = 0.22, "phiF" = 0.03, "cvSSB" = 0.36, "phiSSB" = 0.51))
+
+#as 5.0 but with 50kt min TAC
+MP5.01 <- list("code" = "MP5.01",
+               "desc" = "ConstF",
+               "xlab" = "Const F",
+               "HCRName" = "None",
+               "F_target" = c(0.05,0.075,0.1,0.125,0.15,0.175,0.2),
+               "B_trigger" = NA,
+               "minTAC" = 50000,
+               "maxTAC" = NA,
+               "TAC_IAV" = NA,
+               "Obs" = list("cvF" = 0.22, "phiF" = 0.03, "cvSSB" = 0.36, "phiSSB" = 0.51))
+
+#as 5.0 but with 20% IAV limit
+MP5.02 <- list("code" = "MP5.02",
+               "desc" = "ConstF",
+               "xlab" = "Const F",
+               "HCRName" = "None",
+               "F_target" = c(0.05,0.075,0.1,0.125,0.15,0.175,0.2),
+               "B_trigger" = NA,
+               "minTAC" = NA,
+               "maxTAC" = NA,
+               "TAC_IAV" = c(0.2,0.2),
+               "Obs" = list("cvF" = 0.22, "phiF" = 0.03, "cvSSB" = 0.36, "phiSSB" = 0.51))
+
+#ICES HCR, no IAV control, no minimum TAC, with assessment/advice error
+MP5.1 <- list("code" = "MP5.1",
+              "desc" = "ICESHCR",
+              "xlab" = "ICES AR",
+              "HCRName" = "ICES",
+              "F_target" = c(0.05,0.075,0.1,0.125,0.15,0.175,0.2),
+              "B_trigger" = "MSYBtrigger",
+              "minTAC" = NA,
+              "maxTAC" = NA,
+              "TAC_IAV" = NA,
+              "Obs" = list("cvF" = 0.22, "phiF" = 0.03, "cvSSB" = 0.36, "phiSSB" = 0.51))
+
+#as MP2.1 but min TAC=50kt
+MP5.11 <- list("code" = "MP5.11",
+               "desc" = "ICESHCR",
+               "xlab" = "ICES AR",
+               "HCRName" = "ICES",
+               "F_target" = c(0.05,0.075,0.1,0.125,0.15,0.175,0.2),
+               "B_trigger" = "MSYBtrigger",
+               "minTAC" = 50000,
+               "maxTAC" = NA,
+               "TAC_IAV" = NA,
+               "Obs" = list("cvF" = 0.22, "phiF" = 0.03, "cvSSB" = 0.36, "phiSSB" = 0.51))
+
+#as MP5.1 IAV of 20%
+MP5.12 <- list("code" = "MP5.12",
+               "desc" = "ICESHCR",
+               "xlab" = "ICES AR",
+               "HCRName" = "ICES",
+               "F_target" = c(0.05,0.075,0.1,0.125,0.15,0.175,0.2),
+               "B_trigger" = "MSYBtrigger",
+               "minTAC" = NA,
+               "maxTAC" = NA,
+               "TAC_IAV" = c(0.2,0.2),
+               "Obs" = list("cvF" = 0.22, "phiF" = 0.03, "cvSSB" = 0.36, "phiSSB" = 0.51))
+
+#ICES HCR, no IAV control, no minimum TAC, with assessment/advice error
+MP5.2 <- list("code" = "MP5.2",
+              "desc" = "Double BP HCR",
+              "xlab" = "Double BP",
+              "HCRName" = "DoubleBP",
+              "F_target" = c(0.05,0.075,0.1,0.125,0.15,0.175,0.2),
+              "B_trigger" = "MSYBtrigger",
+              "minTAC" = NA,
+              "maxTAC" = NA,
+              "TAC_IAV" = NA,
+              "Obs" = list("cvF" = 0.22, "phiF" = 0.03, "cvSSB" = 0.36, "phiSSB" = 0.51))
+
+#as 5.2 but with min TAC=50kt
+MP5.21 <- list("code" = "MP5.21",
+               "desc" = "Double BP HCR",
+               "xlab" = "Double BP",
+               "HCRName" = "DoubleBP",
+               "F_target" = c(0.05,0.075,0.1,0.125,0.15,0.175,0.2),
+               "B_trigger" = "MSYBtrigger",
+               "minTAC" = 50000,
+               "maxTAC" = NA,
+               "TAC_IAV" = NA,
+               "Obs" = list("cvF" = 0.22, "phiF" = 0.03, "cvSSB" = 0.36, "phiSSB" = 0.51))
+
+#as 5.2 but with min TAC=50kt
+MP5.22 <- list("code" = "MP5.22",
+               "desc" = "Double BP HCR",
+               "xlab" = "Double BP",
+               "HCRName" = "DoubleBP",
+               "F_target" = c(0.05,0.075,0.1,0.125,0.15,0.175,0.2),
+               "B_trigger" = "MSYBtrigger",
+               "minTAC" = NA,
+               "maxTAC" = NA,
+               "TAC_IAV" = c(0.2,0.2),
+               "Obs" = list("cvF" = 0.22, "phiF" = 0.03, "cvSSB" = 0.36, "phiSSB" = 0.51))
+
+#Basic Test
+MP99 <- list("code" = "MP99",
+             "desc" = "Test",
+             "xlab" = "Test",
+             "HCRName" = "None",
+             "F_target" = c(0.075),
+             "B_trigger" = NA,
+             "minTAC" = NA,
+             "maxTAC" = NA,
+             "TAC_IAV" = NA,
+             "Obs" = list("cvF" = 0, "phiF" = 0, "cvSSB" = 0, "phiSSB" = 0))
+
+MP98 <- list("code" = "MP98",
+             "desc" = "ICESHCR",
+             "xlab" = "ICES AR",
+             "HCRName" = "ICES",
+             "F_target" = c(0.1),
+             "B_trigger" = "MSYBtrigger",
+             "minTAC" = NA,
+             "maxTAC" = NA,
+             "TAC_IAV" = c(0.2,0.2),
+             "Obs" = list("cvF" = 0.22, "phiF" = 0.03, "cvSSB" = 0.36, "phiSSB" = 0.51))

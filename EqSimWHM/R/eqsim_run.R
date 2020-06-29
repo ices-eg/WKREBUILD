@@ -148,9 +148,9 @@ eqsim_run <- function(fit,
   if (diff(recruitment.trim) > 0) stop("recruitment truncation must be given as c(high, low)")
   # commented out as above line is a better check
   # if ((recruitment.trim[1] + recruitment.trim[2]) > 0) stop("recruitment truncation must be between a high - low range")
-
+  
   if (verbose) icesTAF::msg("Setting up...")
-
+  
   #browser()
   
   btyr1 <- bio.years[1]
@@ -160,15 +160,15 @@ eqsim_run <- function(fit,
   # Keep at most 50 simulation years (which will be the last 50 of the Nrun
   #  forward simulated years)
   keep <- min(Nrun, 50)
-
+  
   SR <- fit $ sr.sto
   data <- fit $ rby[,c("rec","ssb","year")]
   stk <- fit $ stk
-
+  
   # forecast settings (mean wt etc)
   stk.win <- FLCore::window(stk, start = btyr1, end = btyr2)
   stk.winsel <- FLCore::window(stk, start = slyr1  , end = slyr2)
-
+  
   littleHelper <- function(x,i) {
     x2 <- x
     x2[i] <- NA
@@ -176,7 +176,7 @@ eqsim_run <- function(fit,
     x[i] <- x2[i]
     return(x)
   }
-
+  
   west <- matrix(FLCore::stock.wt(stk.win), ncol = btyr2 - btyr1 + 1)
   i <- west == 0
   if(any(i)) west <- littleHelper(west,i)
@@ -185,23 +185,23 @@ eqsim_run <- function(fit,
   if(any(i)) weca <- littleHelper(weca,i)
   wela <- matrix(FLCore::landings.wt(stk.win), ncol = btyr2 - btyr1 + 1)
   if(any(i)) wela <- littleHelper(wela,i)
-
+  
   Mat <- matrix(FLCore::mat(stk.win), ncol = btyr2 - btyr1 + 1)
   M <- matrix(FLCore::m(stk.win), ncol = btyr2 - btyr1 + 1)
   landings <- matrix(FLCore::landings.n(stk.winsel), ncol = slyr2 - slyr1 + 1)
   # if zero, use 0.10 of minimum value
-
+  
   catch <- matrix(FLCore::catch.n(stk.winsel), ncol = slyr2 - slyr1 + 1)
   sel <- matrix(FLCore::harvest(stk.winsel), ncol = slyr2 - slyr1 + 1)
   Fbar <- matrix(FLCore::fbar(stk.winsel), ncol = slyr2 - slyr1  + 1)
   sel <- sweep(sel, 2, Fbar, "/")
-
+  
   if (sel.const == TRUE) { # take means of selection
     sel[] <- apply(sel, 1, mean)
     landings[]  <- apply(landings, 1, mean)
     catch[]  <- apply(catch, 1, mean)
   }
-
+  
   # 22.2.2014 Added weight of landings per comment from Carmen
   if (bio.const==TRUE){ # take means of wts Mat and M and ratio of landings to catch
     west[] <- apply(west, 1, mean)
@@ -212,20 +212,20 @@ eqsim_run <- function(fit,
   }
   
   land.cat= landings / catch  # ratio of number of landings to catch
-
+  
   # TODO: Check if this is sensible
   i <- is.na(land.cat)
   if(any(i)) land.cat[i] <- 1
-
+  
   Fprop <- apply(FLCore::harvest.spwn(stk.winsel), 1, mean)[drop=TRUE] # vmean(harvest.spwn(stk.win))
   Mprop <- apply(FLCore::m.spwn(stk.win), 1, mean)[drop=TRUE] # mean(m.spwn(stk.win))
-
+  
   # get ready for the simulations
   Nmod <- nrow(SR)
   NF <- length(Fscan)
   ages <- FLCore::dims(stk)$age
   ssb_lag <- fit$rby$ssb_lag[1]
-
+  
   ssby <- ssby.obs <- array(NA, c(Nrun,Nmod),dimnames=list(year=1:Nrun,iter=1:Nmod))
   Ferr <- SSBerr <- Fmgmt <- Fmgmt_err <- TAC <- array(0, c(Nrun,Nmod),dimnames=list(year=1:Nrun,iter=1:Nmod))
   Ny <- Ny2 <- Fy <- WSy <- Maty <- WCy <- Cy <- Wy <- Wl <- Ry <-
@@ -243,7 +243,7 @@ eqsim_run <- function(fit,
   Ferr[1,] <- stats::rnorm(n=Nmod, mean=0, sd=1)*Fcv/sqrt(1-Fphi^2)
   for(j in 2:Nrun)
     Ferr[j,] <- Fphi * Ferr[j-1,] + Fcv * stats::rnorm(n = Nmod, mean = 0, sd = 1)
-
+  
   #2014-03-12: Changed per note form Carmen/John
   #Errors in SSB: this is used when the ICES MSY HCR is applied for F
   #SSBerr <- matrix(stats::rnorm(n = Nrun * Nmod, mean = 0, sd = 1), ncol = Nmod) * SSBcv
@@ -261,19 +261,19 @@ eqsim_run <- function(fit,
   Maty[] <- c(Mat[ ,c(rsam)])
   Wl[] <- c(wela[, c(rsam)])
   Ry[]  <- c(land.cat[, c(rsamsel)])
-
+  
   # initial recruitment
   R <- R.initial
   ssbs <- cats <- lans <- recs <- array(0, c(7, NF))
-
+  
   ferr <- ssbsa <- catsa <- lansa <- recsa <- array(0, c(NF, keep, Nmod))
   begin <- Nrun - keep + 1
-
+  
   # New from Simmonds' 29.1.2014
   #   Residuals of SR fits (1 value per SR fit and per simulation year
   #     but the same residual value for all Fscan values):
   resids= array(stats::rnorm(Nmod*(Nrun+1), 0, SR$cv),c(Nmod, Nrun+1))
-
+  
   # 2014-03-12: Changed per note form Carmen/John
   #  Autocorrelation in Recruitment Residuals:
   if(rhologRec==TRUE){
@@ -287,14 +287,14 @@ eqsim_run <- function(fit,
     # Draw residuals according to AR(1) process:
     for(j in 2:(Nrun+1)){ resids[,j] <- rhologRec * resids[,j-1] + resids[,j]*sqrt(1 - rhologRec^2) }
   }
-
-
+  
+  
   # Limit how extreme the Rec residuals can get:
   lims = t(array(SR$cv,c(Nmod,2))) * recruitment.trim
   for (k in 1:Nmod) { resids[k,resids[k,]>lims[1,k]]=lims[1,k]}
   for (k in 1:Nmod) { resids[k,resids[k,]<lims[2,k]]=lims[2,k]}
   # end New from Simmonds 29.1.2014
-
+  
   if (verbose) icesTAF::msg("Running forward simulations.")
   if (verbose) loader(0)
   cat("\n")
@@ -317,7 +317,7 @@ eqsim_run <- function(fit,
     
     #The default F value to implement
     Fbar <- Fscan[i]
-
+    
     ############################################################################
     #Population in simulation year 1 (Jan1)
     Ny[,1,] <- unlist(lapply(lapply(fit$stks,FUN=FLCore::stock.n),'[',,ac(range(fit$stk)["maxyear"])))
@@ -328,7 +328,7 @@ eqsim_run <- function(fit,
     
     #last catch (for IAV constraint)
     lastTAC <- rep(an(FLCore::catch(fit$stk)[,ac(range(fit$stk)["maxyear"]-1),,,,]),Nmod)
-
+    
     #apply the HCR - for the y-1 ssb use the y values (any action will be overridden by the catch constraint in year 1 anyway)
     #Fmgmt[1,] <- do.call(fManagement, args=list(list("Fnext" = Fbar,"Btrigger" = Btrigger, "SSB" = ssby[1,])))
     Fmgmt[1,] <- do.call(fManagement, args=list(list("Fnext" = Fbar,"Btrigger" = Btrigger, "SSB" = ssby.obs, "Yr" = 1, 
@@ -337,12 +337,12 @@ eqsim_run <- function(fit,
     
     #apply error on the management F to get the realised F
     Fnext <- Fmgmt_err[1,] <- exp(Ferr[1,]) * Fmgmt[1,]
-
+    
     Fy[,1,] <- rep(Fnext, each = ages) * sel[,rsamsel[1,]]
     Cy[,1,] <- Ny[,1,] * Fy[,1,] / (Fy[,1,] + M[,rsam[1,]]) * (1 - exp(-Fy[,1,] - M[,rsam[1,]]))
     TAC[1,] <- Yld1 <- apply(Cy[,1,]*Wy[,1,], MARGIN=2, FUN="sum")
     Yld2 <- Yld3 <- Yld4 <- rep(NA,Nmod)
-        
+    
     #check for minTAC/maxTAC constraints
     if (nrow(dplyr::filter(dfExplConstraints,YearNum==1 & toupper(Type) %in% c("MINTAC","MAXTAC")))>0) {
       
@@ -362,12 +362,18 @@ eqsim_run <- function(fit,
       
       if (sum(is.na(tgt)) < Nmod) {
         
-        Fmgmt[1,!is.na(tgt)] <- fFindF(N = Ny[,1,!is.na(tgt),drop=FALSE], CW = Wy[,1,!is.na(tgt),drop=FALSE], 
-                            SW = WSy[,1,!is.na(tgt),drop=FALSE], Mat = Mat[,rsam[1,!is.na(tgt)],drop=FALSE],
-                            M = M[,rsam[1,!is.na(tgt)],drop=FALSE], Sel = sel[,rsamsel[1,!is.na(tgt)],drop=FALSE], 
-                            tgt = tgt[!is.na(tgt)], type = 1, ages = ages, iters = sum(!is.na(tgt)))
-        Fnext <- Fmgmt_err[1,] <- Fmgmt[1,]
+        # Fmgmt[1,!is.na(tgt)] <- fFindF(N = Ny[,1,!is.na(tgt),drop=FALSE], CW = Wy[,1,!is.na(tgt),drop=FALSE], 
+        #                                SW = WSy[,1,!is.na(tgt),drop=FALSE], Mat = Mat[,rsam[1,!is.na(tgt)],drop=FALSE],
+        #                                M = M[,rsam[1,!is.na(tgt)],drop=FALSE], Sel = sel[,rsamsel[1,!is.na(tgt)],drop=FALSE], 
+        #                                tgt = tgt[!is.na(tgt)], type = 1, ages = ages, iters = sum(!is.na(tgt)))
         
+        Fmgmt_err[1,!is.na(tgt)] <- fFindF(N = Ny[,1,!is.na(tgt),drop=FALSE], CW = Wy[,1,!is.na(tgt),drop=FALSE], 
+                                       SW = WSy[,1,!is.na(tgt),drop=FALSE], Mat = Mat[,rsam[1,!is.na(tgt)],drop=FALSE],
+                                       M = M[,rsam[1,!is.na(tgt)],drop=FALSE], Sel = sel[,rsamsel[1,!is.na(tgt)],drop=FALSE], 
+                                       tgt = tgt[!is.na(tgt)], type = 1, ages = ages, iters = sum(!is.na(tgt)))
+        
+        #Fnext <- Fmgmt_err[1,] <- Fmgmt[1,]
+        Fnext <- Fmgmt_err[1,]
         Fy[,1,] <- rep(Fnext, each = ages) * sel[,rsamsel[1,]]
         Cy[,1,] <- Ny[,1,] * Fy[,1,] / (Fy[,1,] + M[,rsam[1,]]) * (1 - exp(-Fy[,1,] - M[,rsam[1,]]))
         Yld2 <- apply(Cy[,1,]*Wy[,1,], MARGIN=2, FUN="sum") 
@@ -382,34 +388,47 @@ eqsim_run <- function(fit,
     #check for IAV
     #if (nrow(dplyr::filter(dfExplConstraints,YearNum==1 & toupper(Type) %in% c("IAV")))>0) {
     if (nrow(dplyr::filter(dfExplConstraints,YearNum==1 & toupper(Type) %in% c("IAVINC","IAVDEC")))>0) {
-        
+      
       #IAV <- fNAifEmpty(dfExplConstraints[dfExplConstraints$YearNum==1 & toupper(dfExplConstraints$Type)=="IAV",]$Val)
       IAVInc <- fNAifEmpty(dfExplConstraints[dfExplConstraints$YearNum==1 & toupper(dfExplConstraints$Type)=="IAVINC",]$Val)
       IAVDec <- fNAifEmpty(dfExplConstraints[dfExplConstraints$YearNum==1 & toupper(dfExplConstraints$Type)=="IAVDEC",]$Val)
-
+      
       tgt <- rep(NA,Nmod)
       incs <- decs <- 0
       
       #increases
       if (!is.na(IAVInc)){
-        if (sum((Yld1-lastTAC)/lastTAC > IAVInc, na.rm = TRUE)>0){
+        # if (sum((Yld1-lastTAC)/lastTAC > IAVInc, na.rm = TRUE)>0){
+        #   #adjust targets to limit increases
+        #   incs <- sum((Yld1/lastTAC) > (1+IAVInc), na.rm=TRUE)
+        #   tgt[(Yld1/lastTAC) > (1+IAVInc)] <- (1+IAVInc)*lastTAC[(Yld1/lastTAC) > (1+IAVInc)]
+        # }
+        if (sum((Yld2-lastTAC)/lastTAC > IAVInc, na.rm = TRUE)>0){
           #adjust targets to limit increases
-          incs <- sum((Yld1/lastTAC) > (1+IAVInc), na.rm=TRUE)
-          tgt[(Yld1/lastTAC) > (1+IAVInc)] <- (1+IAVInc)*lastTAC[(Yld1/lastTAC) > (1+IAVInc)]
+          incs <- sum((Yld2/lastTAC) > (1+IAVInc), na.rm=TRUE)
+          tgt[(Yld2/lastTAC) > (1+IAVInc)] <- (1+IAVInc)*lastTAC[(Yld2/lastTAC) > (1+IAVInc)]
         }
+        
       }
       #decreases
       if (!is.na(IAVDec)){
-        if (sum((Yld1-lastTAC)/lastTAC < -1*IAVDec, na.rm = TRUE)>0){
+        # if (sum((Yld1-lastTAC)/lastTAC < -1*IAVDec, na.rm = TRUE)>0){
+        #   #adjust targets to limit decreases
+        #   decs <- sum((Yld1/lastTAC) < (1-IAVDec), na.rm=TRUE)
+        #   tgt[(Yld1/lastTAC) < (1-IAVDec)] <- (1-IAVDec)*lastTAC[(Yld1/lastTAC) < (1-IAVDec)]
+        # }
+        
+        if (sum((Yld2-lastTAC)/lastTAC < -1*IAVDec, na.rm = TRUE)>0){
           #adjust targets to limit decreases
-          decs <- sum((Yld1/lastTAC) < (1-IAVDec), na.rm=TRUE)
-          tgt[(Yld1/lastTAC) < (1-IAVDec)] <- (1-IAVDec)*lastTAC[(Yld1/lastTAC) < (1-IAVDec)]
+          decs <- sum((Yld2/lastTAC) < (1-IAVDec), na.rm=TRUE)
+          tgt[(Yld2/lastTAC) < (1-IAVDec)] <- (1-IAVDec)*lastTAC[(Yld2/lastTAC) < (1-IAVDec)]
         }
+        
       }
-
+      
       #message
       icesTAF::msg(paste0(incs,"/",decs," IAV capped increases/decreases set in year 1"))
-
+      
       # if (!is.na(IAV)){
       #   if (sum(abs((Yld1-lastTAC)/lastTAC) > IAV, na.rm=TRUE)>0) {
       #     #increase
@@ -426,20 +445,29 @@ eqsim_run <- function(fit,
       
       if (sum(is.na(tgt)) < Nmod) {
         
-        Fmgmt[1,!is.na(tgt)] <- fFindF(N = Ny[,1,!is.na(tgt),drop=FALSE], CW = Wy[,1,!is.na(tgt),drop=FALSE], 
+        # Fmgmt[1,!is.na(tgt)] <- fFindF(N = Ny[,1,!is.na(tgt),drop=FALSE], CW = Wy[,1,!is.na(tgt),drop=FALSE], 
+        #                                SW = WSy[,1,!is.na(tgt),drop=FALSE], Mat = Mat[,rsam[1,!is.na(tgt)],drop=FALSE],
+        #                                M = M[,rsam[1,!is.na(tgt)],drop=FALSE], Sel = sel[,rsamsel[1,!is.na(tgt)],drop=FALSE], 
+        #                                tgt = tgt[!is.na(tgt)], type = 1, ages = ages, iters = sum(!is.na(tgt)))
+
+        Fmgmt_err[1,!is.na(tgt)] <- fFindF(N = Ny[,1,!is.na(tgt),drop=FALSE], CW = Wy[,1,!is.na(tgt),drop=FALSE], 
                                        SW = WSy[,1,!is.na(tgt),drop=FALSE], Mat = Mat[,rsam[1,!is.na(tgt)],drop=FALSE],
                                        M = M[,rsam[1,!is.na(tgt)],drop=FALSE], Sel = sel[,rsamsel[1,!is.na(tgt)],drop=FALSE], 
                                        tgt = tgt[!is.na(tgt)], type = 1, ages = ages, iters = sum(!is.na(tgt)))
-        Fnext <- Fmgmt_err[1,] <- Fmgmt[1,]
+        
+        #Fnext <- Fmgmt_err[1,] <- Fmgmt[1,]
+        Fnext <- Fmgmt_err[1,]
         
         Fy[,1,] <- rep(Fnext, each = ages) * sel[,rsamsel[1,]]
         Cy[,1,] <- Ny[,1,] * Fy[,1,] / (Fy[,1,] + M[,rsam[1,]]) * (1 - exp(-Fy[,1,] - M[,rsam[1,]]))
-        Yld3 <- apply(Cy[,1,]*Wy[,1,], MARGIN=2, FUN="sum") 
+        Yld2 <- Yld2
+        Yld3[!is.na(tgt)] <- apply(Cy[,1,!is.na(tgt)]*Wy[,1,!is.na(tgt)], MARGIN=2, FUN="sum") 
         TAC[1,!is.na(tgt)] <- tgt[!is.na(tgt)]
+
       } else {
         Yld3 <- Yld2
       }
-    
+      
     } else {
       Yld3 <- Yld2
     }
@@ -449,7 +477,7 @@ eqsim_run <- function(fit,
       
       Catch2 <- fNAifEmpty(dfExplConstraints[dfExplConstraints$YearNum==1 & toupper(dfExplConstraints$Type)=="CATCH",]$Val)
       F2 <- fNAifEmpty(dfExplConstraints[dfExplConstraints$YearNum==1 & toupper(dfExplConstraints$Type)=="F",]$Val)
-
+      
       #check that only a catch or F constraint is provided - not permitted both
       
       if (!is.na(Catch2)){
@@ -458,13 +486,18 @@ eqsim_run <- function(fit,
         icesTAF::msg(paste0("Catch constraint applied in year 1"))
         
         #catch constraint
-        Fmgmt[1,] <- fFindF(N = Ny[,1,,drop=FALSE], CW = Wy[,1,,drop=FALSE], 
+        # Fmgmt[1,] <- fFindF(N = Ny[,1,,drop=FALSE], CW = Wy[,1,,drop=FALSE], 
+        #                     SW = WSy[,1,,drop=FALSE], Mat = Mat[,rsam[1,],drop=FALSE], 
+        #                     M = M[,rsam[1,],drop=FALSE], Sel = sel[,rsamsel[1,],drop=FALSE], 
+        #                     tgt = tgt, type = 1, ages = ages, iters = sum(!is.na(tgt)))
+
+        Fmgmt_err[1,] <- fFindF(N = Ny[,1,,drop=FALSE], CW = Wy[,1,,drop=FALSE], 
                             SW = WSy[,1,,drop=FALSE], Mat = Mat[,rsam[1,],drop=FALSE], 
                             M = M[,rsam[1,],drop=FALSE], Sel = sel[,rsamsel[1,],drop=FALSE], 
                             tgt = tgt, type = 1, ages = ages, iters = sum(!is.na(tgt)))
-
-        Fnext <- Fmgmt_err[1,] <- Fmgmt[1,]
         
+        #Fnext <- Fmgmt_err[1,] <- Fmgmt[1,]
+        Fnext <- Fmgmt_err[1,]
         Fy[,1,] <- rep(Fnext, each = ages) * sel[,rsamsel[1,]]
         Cy[,1,] <- Ny[,1,] * Fy[,1,] / (Fy[,1,] + M[,rsam[1,]]) * (1 - exp(-Fy[,1,] - M[,rsam[1,]]))
         Yld4 <- apply(Cy[,1,]*Wy[,1,], MARGIN=2, FUN="sum")
@@ -473,7 +506,7 @@ eqsim_run <- function(fit,
       } else {
         Yld4 <- Yld3
       } 
-
+      
       #TO DO........  
       #if (!is.na(F2)){
       #  tgt <- rep(F2,Nmod)
@@ -486,7 +519,7 @@ eqsim_run <- function(fit,
     } else {
       Yld4 <- Yld3
     }
-  
+    
     #population numbers at year end
     Ny2[,1,] <- Ny[,1, ] * exp(-Fy[,1,] - M[,rsam[1,]])
     
@@ -500,7 +533,7 @@ eqsim_run <- function(fit,
     #  Ny[,j,] <- rbind(N1[1:(ages-1),], colSums(N1[ages:50,]))
     #  ssby[j,] <- colSums(Mat[,rsam[j-1,]] * Ny[,1,] * west[,rsam[j-1,]] / exp(Zpre))
     #}
-
+    
     # Years (2 + ssb_lag) to Nrun:
     #AC - will need to reinstate above code if ssb_lag>0 but OK for now
     for (j in (2+ssb_lag):Nrun) {
@@ -512,7 +545,7 @@ eqsim_run <- function(fit,
       Ny[2:(ages-1),j,] <- Ny2[1:(ages-2),j-1,]
       #PG
       Ny[ages,j,] <- Ny2[ages-1,j-1,] + Ny2[ages,j-1,]
-        
+      
       #SSB J1
       ssby[j,] <- apply(array(Mat[,rsam[j,]] * Ny[,j,] * west[,rsam[j,]], c(ages, Nmod)), 2, sum)
       #add observation error.
@@ -530,12 +563,12 @@ eqsim_run <- function(fit,
       select <- cbind(seq(Nmod), as.numeric(factor(SR$mod, levels = unique(SR$mod))))
       Ny[1,j,] <- allrecs[select]
       
-      #kill recruitment to 10% in each of years 11-15
-      #if (j<=15 & j>10) Ny[1,j,]<-Ny[1,j,]/10
+      #after year 10, kill recruitment to 1/3 of normal
+      #if (j<=10) {Ny[1,j,]<- Ny[1,j,]/3}
       
       #default F is the current Fscan value
       Fnext <- Fbar
-
+      
       #apply the HCR
       Fmgmt[j,] <- do.call(fManagement, args=list(list("Fnext" = Fbar, "Btrigger" = Btrigger, "SSB" = ssby.obs, "Yr" = j, 
                                                        "M" = M[,rsam[j,]], "sel" = sel[,rsamsel[j,]], "N" = Ny[,j,], 
@@ -543,6 +576,7 @@ eqsim_run <- function(fit,
       
       #apply F error to get realised F from management F
       Fnext <- Fmgmt_err[j,] <- Fmgmt[j,]*exp(Ferr[j,])
+      
       Fy[,j,] <- rep(Fnext, each = ages) * sel[,rsamsel[j,]]
       Cy[,j,] <- Ny[,j,] * Fy[,j,] / (Fy[,j,] + M[,rsam[j,]]) * (1 - exp(-Fy[,j,] - M[,rsam[j,]]))
       Yld1 <- apply(Cy[,j,]*Wy[,j,], MARGIN=2, FUN="sum")
@@ -554,7 +588,7 @@ eqsim_run <- function(fit,
         
         minTAC <- fNAifEmpty(dfExplConstraints[dfExplConstraints$YearNum==j & toupper(dfExplConstraints$Type)=="MINTAC",]$Val)
         maxTAC <- fNAifEmpty(dfExplConstraints[dfExplConstraints$YearNum==j & toupper(dfExplConstraints$Type)=="MAXTAC",]$Val)
-
+        
         tgt <- rep(NA,Nmod)
         
         if (!is.na(minTAC) & sum(Yld1 < minTAC) > 0){
@@ -568,17 +602,26 @@ eqsim_run <- function(fit,
         
         if (sum(is.na(tgt)) < Nmod) {
           
-          Fmgmt[j,!is.na(tgt)] <- fFindF(N = Ny[,j,!is.na(tgt),drop=FALSE], CW = Wy[,j,!is.na(tgt),drop=FALSE], 
-                                         SW = WSy[,j,!is.na(tgt),drop=FALSE], Mat = Mat[,rsam[j,!is.na(tgt)],drop=FALSE],
-                                         M = M[,rsam[j,!is.na(tgt)],drop=FALSE], Sel = sel[,rsamsel[j,!is.na(tgt)],drop=FALSE],
-                                         tgt = tgt[!is.na(tgt)], type = 1, ages = ages, iters = sum(!is.na(tgt)))
+          #calculate new F for those to be updated
+          # Fmgmt[j,!is.na(tgt)] <- fFindF(N = Ny[,j,!is.na(tgt),drop=FALSE], CW = Wy[,j,!is.na(tgt),drop=FALSE], 
+          #                                SW = WSy[,j,!is.na(tgt),drop=FALSE], Mat = Mat[,rsam[j,!is.na(tgt)],drop=FALSE],
+          #                                M = M[,rsam[j,!is.na(tgt)],drop=FALSE], Sel = sel[,rsamsel[j,!is.na(tgt)],drop=FALSE],
+          #                                tgt = tgt[!is.na(tgt)], type = 1, ages = ages, iters = sum(!is.na(tgt)))
+          # Fmgmt[j,is.na(tgt)] <- Fmgmt_err[j,is.na(tgt)]
           
-          Fnext <- Fmgmt_err[j,] <- Fmgmt[j,]
+          Fmgmt_err[j,!is.na(tgt)] <- fFindF(N = Ny[,j,!is.na(tgt),drop=FALSE], CW = Wy[,j,!is.na(tgt),drop=FALSE], 
+                                             SW = WSy[,j,!is.na(tgt),drop=FALSE], Mat = Mat[,rsam[j,!is.na(tgt)],drop=FALSE],
+                                             M = M[,rsam[j,!is.na(tgt)],drop=FALSE], Sel = sel[,rsamsel[j,!is.na(tgt)],drop=FALSE],
+                                             tgt = tgt[!is.na(tgt)], type = 1, ages = ages, iters = sum(!is.na(tgt)))
+          
+          
+          #Fnext <- Fmgmt_err[j,] <- Fmgmt[j,]
+          Fnext <- Fmgmt_err[j,]
           Fy[,j,] <- rep(Fnext, each = ages) * sel[,rsamsel[j,]]
           Cy[,j,] <- Ny[,j,] * Fy[,j,] / (Fy[,j,] + M[,rsam[j,]]) * (1 - exp(-Fy[,j,] - M[,rsam[j,]]))
           Yld2 <- apply(Cy[,j,]*Wy[,j,], MARGIN=2, FUN="sum")
           TAC[j,!is.na(tgt)] <- tgt[!is.na(tgt)]
-
+          
         } else {
           Yld2 <- Yld1
         }
@@ -586,73 +629,76 @@ eqsim_run <- function(fit,
         Yld2 <- Yld1
       }
       
-      #check for IAV
-      #if (nrow(dplyr::filter(dfExplConstraints,YearNum==j & toupper(Type) %in% c("IAV")))>0) {
-      #  
-      #  IAV <- fNAifEmpty(dfExplConstraints[dfExplConstraints$YearNum==j & toupper(dfExplConstraints$Type)=="IAV",]$Val)
-      #  tgt <- rep(NA,Nmod)
-      #  
-      #  if (!is.na(IAV)){
-      #    if (sum(abs((Yld1-TAC[j-1,])/TAC[j-1,]) > IAV, na.rm=TRUE)>0) {
-      #      #capped increase
-      #      if (length(tgt[(Yld1/TAC[j-1,]) > (1+IAV)]) > 0){tgt[(Yld1/TAC[j-1,]) > (1+IAV)] <- (1+IAV)*TAC[j-1,(Yld1/TAC[j-1,]) > (1+IAV)]}
-      #      #capped decrease
-      #      if (length(tgt[(Yld1/TAC[j-1,]) < (1-IAV)]) > 0){tgt[(Yld1/TAC[j-1,]) < (1-IAV)] <- (1-IAV)*TAC[j-1,(Yld1/TAC[j-1,]) < (1-IAV)]}
-      #      
-      #      #message
-      #      icesTAF::msg(paste0(sum((Yld1/TAC[j-1,]) > (1+IAV)),"/",
-      #                          sum((Yld1/TAC[j-1,]) < (1-IAV)),
-      #                          " IAV capped increases/decreases set in year ",j))
-      #      }
-      #  }
-        
+      #IAV
       if (nrow(dplyr::filter(dfExplConstraints,YearNum==j & toupper(Type) %in% c("IAVINC","IAVDEC")))>0) {
         
         IAVInc <- fNAifEmpty(dfExplConstraints[dfExplConstraints$YearNum==j & toupper(dfExplConstraints$Type)=="IAVINC",]$Val)
         IAVDec <- fNAifEmpty(dfExplConstraints[dfExplConstraints$YearNum==j & toupper(dfExplConstraints$Type)=="IAVDEC",]$Val)
-          
+        
         tgt <- rep(NA,Nmod)
         incs <- decs <- 0
-          
+        
         #increases
         if (!is.na(IAVInc)){
-          if (sum((Yld1-TAC[j-1,])/TAC[j-1,] > IAVInc, na.rm = TRUE)>0){
+          
+          # if (sum((Yld1-TAC[j-1,])/TAC[j-1,] > IAVInc, na.rm = TRUE)>0){
+          #   #adjust targets to limit increases
+          #   incs <- sum((Yld1/TAC[j-1,]) > (1+IAVInc), na.rm=TRUE)
+          #   tgt[(Yld1/TAC[j-1,]) > (1+IAVInc)] <- (1+IAVInc)*TAC[j-1,(Yld1/TAC[j-1,]) > (1+IAVInc)]
+          # }
+          if (sum((Yld2-TAC[j-1,])/TAC[j-1,] > IAVInc, na.rm = TRUE)>0){
             #adjust targets to limit increases
-            incs <- sum((Yld1/TAC[j-1,]) > (1+IAVInc), na.rm=TRUE)
-            tgt[(Yld1/TAC[j-1,]) > (1+IAVInc)] <- (1+IAVInc)*TAC[j-1,(Yld1/TAC[j-1,]) > (1+IAVInc)]
+            incs <- sum((Yld2/TAC[j-1,]) > (1+IAVInc), na.rm=TRUE)
+            tgt[(Yld2/TAC[j-1,]) > (1+IAVInc)] <- (1+IAVInc)*TAC[j-1,(Yld2/TAC[j-1,]) > (1+IAVInc)]
           }
+          
         }
         #decreases
         if (!is.na(IAVDec)){
-          if (sum((Yld1-TAC[j-1,])/TAC[j-1,] < -1*IAVDec, na.rm = TRUE)>0){
+          # if (sum((Yld1-TAC[j-1,])/TAC[j-1,] < -1*IAVDec, na.rm = TRUE)>0){
+          #   #adjust targets to limit decreases
+          #   decs <- sum((Yld1/TAC[j-1,]) < (1-IAVDec), na.rm=TRUE)
+          #   tgt[(Yld1/TAC[j-1,]) < (1-IAVDec)] <- (1-IAVDec)*TAC[j-1,(Yld1/TAC[j-1,]) < (1-IAVDec)]
+          # }
+          if (sum((Yld2-TAC[j-1,])/TAC[j-1,] < -1*IAVDec, na.rm = TRUE)>0){
             #adjust targets to limit decreases
-            decs <- sum((Yld1/TAC[j-1,]) < (1-IAVDec), na.rm=TRUE)
-            tgt[(Yld1/TAC[j-1,]) < (1-IAVDec)] <- (1-IAVDec)*TAC[j-1,(Yld1/TAC[j-1,]) < (1-IAVDec)]
+            decs <- sum((Yld2/TAC[j-1,]) < (1-IAVDec), na.rm=TRUE)
+            tgt[(Yld2/TAC[j-1,]) < (1-IAVDec)] <- (1-IAVDec)*TAC[j-1,(Yld2/TAC[j-1,]) < (1-IAVDec)]
           }
         }
-          
+        
         #message
         icesTAF::msg(paste0(incs,"/",decs," IAV capped increases/decreases set in year ",j))
-          
+        
         if (sum(is.na(tgt)) < Nmod) {
           
-          Fmgmt[j,!is.na(tgt)] <- fFindF(N = Ny[,j,!is.na(tgt),drop=FALSE], CW = Wy[,j,!is.na(tgt),drop=FALSE], 
-                                         SW = WSy[,j,!is.na(tgt),drop=FALSE], Mat = Mat[,rsam[j,!is.na(tgt)],drop=FALSE],
-                                         M = M[,rsam[j,!is.na(tgt)],drop=FALSE], Sel = sel[,rsamsel[j,!is.na(tgt)],drop=FALSE], 
-                                         tgt = tgt[!is.na(tgt)], type = 1, ages = ages, iters = sum(!is.na(tgt)))
-          Fnext <- Fmgmt_err[j,] <- Fmgmt[j,]
+          #find the new F for those targets to be adjusted
+          # Fmgmt[j,!is.na(tgt)] <- fFindF(N = Ny[,j,!is.na(tgt),drop=FALSE], CW = Wy[,j,!is.na(tgt),drop=FALSE], 
+          #                                SW = WSy[,j,!is.na(tgt),drop=FALSE], Mat = Mat[,rsam[j,!is.na(tgt)],drop=FALSE],
+          #                                M = M[,rsam[j,!is.na(tgt)],drop=FALSE], Sel = sel[,rsamsel[j,!is.na(tgt)],drop=FALSE], 
+          #                                tgt = tgt[!is.na(tgt)], type = 1, ages = ages, iters = sum(!is.na(tgt)))
+          # Fmgmt[j,is.na(tgt)] <- Fmgmt_err[j,is.na(tgt)]
           
+          Fmgmt_err[j,!is.na(tgt)] <- fFindF(N = Ny[,j,!is.na(tgt),drop=FALSE], CW = Wy[,j,!is.na(tgt),drop=FALSE], 
+                                             SW = WSy[,j,!is.na(tgt),drop=FALSE], Mat = Mat[,rsam[j,!is.na(tgt)],drop=FALSE],
+                                             M = M[,rsam[j,!is.na(tgt)],drop=FALSE], Sel = sel[,rsamsel[j,!is.na(tgt)],drop=FALSE], 
+                                             tgt = tgt[!is.na(tgt)], type = 1, ages = ages, iters = sum(!is.na(tgt)))
+          
+          #Fnext <- Fmgmt_err[j,] <- Fmgmt[j,]
+          Fnext <- Fmgmt_err[j,]
           Fy[,j,] <- rep(Fnext, each = ages) * sel[,rsamsel[j,]]
           Cy[,j,] <- Ny[,j,] * Fy[,j,] / (Fy[,j,] + M[,rsam[j,]]) * (1 - exp(-Fy[,j,] - M[,rsam[j,]]))
-          Yld3 <- apply(Cy[,j,]*Wy[,j,], MARGIN=2, FUN="sum") 
+          Yld3 <- Yld2
+          Yld3[!is.na(tgt)] <- apply(Cy[,j,!is.na(tgt)]*Wy[,j,!is.na(tgt)], MARGIN=2, FUN="sum")
           TAC[j,!is.na(tgt)] <- tgt[!is.na(tgt)]
+          
         } else {
           Yld3 <- Yld2
         }
       } else {
         Yld3 <- Yld2
       }
-
+      
       #check for specified catch/F
       if (nrow(dplyr::filter(dfExplConstraints,YearNum==j & toupper(Type) %in% c("CATCH","F")))>0) {
         
@@ -666,13 +712,19 @@ eqsim_run <- function(fit,
           tgt <- rep(Catch2,Nmod)
           
           icesTAF::msg(paste0("Catch constraint applied in year ",j))
-
-          Fmgmt[j,] <- fFindF(N = Ny[,j,,drop=FALSE], CW = Wy[,j,,drop=FALSE], 
-                              SW = WSy[,j,,drop=FALSE], Mat = Mat[,rsam[j,],drop=FALSE], 
-                              M = M[,rsam[j,],drop=FALSE], Sel = sel[,rsamsel[j,],drop=FALSE], 
-                              tgt = tgt, type = 1, ages = ages, iters = sum(!is.na(tgt)))
-
-          Fnext <- Fmgmt_err[j,] <- Fmgmt[j,]
+          
+          # Fmgmt[j,] <- fFindF(N = Ny[,j,,drop=FALSE], CW = Wy[,j,,drop=FALSE], 
+          #                     SW = WSy[,j,,drop=FALSE], Mat = Mat[,rsam[j,],drop=FALSE], 
+          #                     M = M[,rsam[j,],drop=FALSE], Sel = sel[,rsamsel[j,],drop=FALSE], 
+          #                     tgt = tgt, type = 1, ages = ages, iters = sum(!is.na(tgt)))
+          
+          Fmgmt_err[j,] <- fFindF(N = Ny[,j,,drop=FALSE], CW = Wy[,j,,drop=FALSE], 
+                                  SW = WSy[,j,,drop=FALSE], Mat = Mat[,rsam[j,],drop=FALSE], 
+                                  M = M[,rsam[j,],drop=FALSE], Sel = sel[,rsamsel[j,],drop=FALSE], 
+                                  tgt = tgt, type = 1, ages = ages, iters = sum(!is.na(tgt)))
+          
+          #Fnext <- Fmgmt_err[j,] <- Fmgmt[j,]
+          Fnext <- Fmgmt_err[j,]
           Fy[,j,] <- rep(Fnext, each = ages) * sel[,rsamsel[j,]]
           Cy[,j,] <- Ny[,j,] * Fy[,j,] / (Fy[,j,] + M[,rsam[j,]]) * (1 - exp(-Fy[,j,] - M[,rsam[j,]]))
           Yld4 <- apply(Cy[,j,]*Wy[,j,], MARGIN=2, FUN="sum")
@@ -696,15 +748,15 @@ eqsim_run <- function(fit,
       
       #population numbers at year end
       Ny2[,j,] <- Ny[,j, ] * exp(-Fy[,j,] - M[,rsam[j,]])
-
+      
     }
-
+    
     # convert to catch weight
     Cw <- Cy * Wy   # catch Numbers *catch wts
     land <- Cy * Ry * Wl # catch Numbers * Fraction (in number) landed and landed wts
     Lan <- apply(land, 2:3, sum)
     Cat <- apply(Cw, 2:3, sum)
-
+    
     # summarise everything and spit out!
     quants <- c(0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975)
     ssbs[, i] <- stats::quantile(ssby[begin:Nrun, ], quants)
@@ -716,7 +768,7 @@ eqsim_run <- function(fit,
     catsa[i, , ] <- Cat[begin:Nrun, ]
     lansa[i, , ] <- Lan[begin:Nrun, ]
     recsa[i, , ] <- Ny[1, begin:Nrun, ]
-
+    
     #AC info to save
     simStks[[ac(Fscan[i])]] <- list()
     #abundance @ Jan 1 (also ST)
@@ -750,14 +802,14 @@ eqsim_run <- function(fit,
     if (verbose) loader(i/NF)
     cat("\n")
   }
-
+  
   if (verbose) icesTAF::msg("Summarising simulations")
-
+  
   dimnames(ssbs) <- dimnames(cats) <-
     dimnames(lans) <- dimnames(recs) <-
     list(quants=c("p025","p05","p25","p50","p75","p95","p975"),
          fmort=Fscan)
-
+  
   rbp2dataframe <- function(x,variable) {
     x <- data.frame(t(x))
     x$variable <- variable
@@ -770,23 +822,23 @@ eqsim_run <- function(fit,
                rbp2dataframe(cats,"Catch"),
                rbp2dataframe(lans,"Landings"))
   rbp <- rbp[,c(9,8,1:7)]
-
+  
   #defaults
   Refs <- refs_interval <- pProfile <- Blim <- Bpa <- NA
   
   if (calc.RPs) { #AC
     
     # STOCK REFERENCE POINTS
-  
+    
     FCrash05 <- Fscan[which.max(cats[2,]):NF][ which(cats[2, which.max(cats[2,]):NF] < 0.05*max(cats[2,]) )[1] ]
     FCrash50 <- Fscan[which.max(cats[4,]):NF][ which(cats[4, which.max(cats[4,]):NF] < 0.05*max(cats[4,]) )[1] ]
-  
+    
     # Einar amended 30.1.2014
     if(missing(extreme.trim)) {
       catm <- apply(catsa, 1, mean)
       lanm <- apply(lansa, 1, mean)
     } else {
-  
+      
       # 2014-03-12 Outcommented per note from Carmen/John - see below
       #x <- catsa
       #i <- x > quantile(x,extreme.trim[2]) |
@@ -799,46 +851,46 @@ eqsim_run <- function(fit,
       #  x < quantile(x,extreme.trim[1])
       #x[i] <- NA
       #lanm <- apply(x, 1, mean, na.rm=TRUE)
-  
+      
       # 2014-03-12: Above replaced with the following per note from Carmen/John
       #  If we want to remove whole SR models, we could use the following code. But it is too extreme, it ends up getting rid of most models:
       # auxi2 <- array( apply(catsa, 1, function(x){auxi<-rep(TRUE,Nmod); auxi[x > quantile(x, extreme.trim[2]) | x < quantile(x, extreme.trim[1])] <- FALSE; x <- auxi } ), dim=c(keep,Nmod,NF))
       # auxi2 <- (1:Nmod)[apply(auxi2, 2, function(x){length(unique(as.vector(x)))})==1]
       # apply(catsa[,,auxi2],1,mean)
-  
+      
       # So I think the alternative is not to get rid of whole SR models, but of different SR models depending on the value of F:
       catm <- apply(catsa, 1, function(x){mean(x[x <= stats::quantile(x, extreme.trim[2]) & x >= stats::quantile(x, extreme.trim[1])])})
       lanm <- apply(lansa, 1, function(x){mean(x[x <= stats::quantile(x, extreme.trim[2]) & x >= stats::quantile(x, extreme.trim[1])])})
     }
-  
+    
     # end Einar amended 30.1.2014
-  
+    
     maxcatm <- which.max(catm)
     maxlanm <- which.max(lanm)
-  
+    
     # Einar added 29.1.2014
     rbp$Mean <- NA
     rbp$Mean[rbp$variable == "Catch"] <- catm
     rbp$Mean[rbp$variable == "Landings"] <- lanm
     # end Einar added 29.1.2014
-  
+    
     catsam <- apply(catsa, c(1,3), mean)
     lansam <- apply(lansa, c(1,3), mean)
     maxpf <- apply(catsam, 2, which.max)
     maxpfl <- apply(lansam, 2, which.max)
-  
+    
     FmsyLan <- Fscan[maxpfl]
     msymLan <- mean(FmsyLan)
     vcumLan <- stats::median(FmsyLan)
     fmsy.densLan <- stats::density(FmsyLan)
     vmodeLan <- fmsy.densLan$x[which.max(fmsy.densLan$y)]
-  
+    
     FmsyCat <- Fscan[maxpf]
     msymCat <- mean(FmsyCat)
     vcumCat <- stats::median(FmsyCat)
     fmsy.densCat <- stats::density(FmsyCat)
     vmodeCat <- fmsy.densCat$x[which.max(fmsy.densCat$y)]
-  
+    
     pFmsyCat  <- data.frame(Ftarget=fmsy.densCat$x,
                             value=cumsum(fmsy.densCat$y * diff(fmsy.densCat$x)[1]),
                             variable="pFmsyCatch")
@@ -846,29 +898,29 @@ eqsim_run <- function(fit,
                             value=cumsum(fmsy.densLan$y * diff(fmsy.densLan$x)[1]),
                             variable="pFmsyLandings")
     pProfile <- rbind(pFmsyCat,pFmsyLan)
-  
+    
     # PA REFERENCE POINTS
     if(!missing(Blim)) {
       pBlim <- apply(ssbsa > Blim, 1, mean)
-  
+      
       i <- max(which(pBlim > .95))
       grad <- diff(Fscan[i + 0:1]) / diff(pBlim[i + 0:1])
       flim <- Fscan[i] + grad * (0.95 - pBlim[i]) # linear interpolation i think..
-  
+      
       i <- max(which(pBlim > .90))
       grad <- diff(Fscan[i + 0:1]) / diff(pBlim[i + 0:1])
       flim10 <- Fscan[i]+grad*(0.9-pBlim[i]) # linear interpolation i think..
-  
+      
       i <- max(which(pBlim > .50))
       grad <- diff(Fscan[i + 0:1]) / diff(pBlim[i + 0:1])
       flim50 <- Fscan[i]+grad*(0.5-pBlim[i]) # linear interpolation i think..
-  
+      
       pBlim <- data.frame(Ftarget = Fscan,value = 1-pBlim,variable="Blim")
       pProfile <- rbind(pProfile,pBlim)
     } else {
       flim <- flim10 <- flim50 <- Blim <- NA
     }
-  
+    
     if(!missing(Bpa)) {
       pBpa <- apply(ssbsa > Bpa, 1, mean)
       pBpa <- data.frame(Ftarget = Fscan,value = 1-pBpa,variable="Bpa")
@@ -876,7 +928,7 @@ eqsim_run <- function(fit,
     } else {
       Bpa <- NA
     }
-  
+    
     # GENERATE REF-TABLE
     catF <- c(flim, flim10, flim50, vcumCat, Fscan[maxcatm], FCrash05, FCrash50)
     lanF <- c(   NA,    NA,     NA, vcumLan, Fscan[maxlanm],       NA,       NA)
@@ -884,16 +936,16 @@ eqsim_run <- function(fit,
     lanC <- stats::approx(Fscan, lans[4,], xout = lanF)$y
     catB <- stats::approx(Fscan, ssbs[4,], xout = catF)$y
     lanB <- stats::approx(Fscan, ssbs[4,], xout = lanF)$y
-  
+    
     Refs <- rbind(catF, lanF, catC, lanC, catB, lanB)
     rownames(Refs) <- c("catF","lanF","catch","landings","catB","lanB")
     colnames(Refs) <- c("F05","F10","F50","medianMSY","meanMSY","FCrash05","FCrash50")
-  
+    
     #TODO: id.sim - user specified.
-  
+    
     # 2014-03-12 Ammendments per note from Carmen/John
     # CALCULATIONS:
-  
+    
     # Fmsy: value that maximises median LT catch or median LT landings
     auxi <- stats::approx(Fscan, cats[4, ],xout=seq(min(Fscan),max(Fscan),length=200))
     FmsyMedianC <- auxi$x[which.max(auxi$y)]
@@ -901,32 +953,32 @@ eqsim_run <- function(fit,
     # Value of F that corresponds to 0.95*MSY:
     FmsylowerMedianC <- auxi$x[ min( (1:length(auxi$y))[auxi$y/MSYMedianC >= 0.95] ) ]
     FmsyupperMedianC <- auxi$x[ max( (1:length(auxi$y))[auxi$y/MSYMedianC >= 0.95] ) ]
-  
+    
     auxi <- stats::approx(Fscan, lans[4, ],xout=seq(min(Fscan),max(Fscan),length=200))
     FmsyMedianL <- auxi$x[which.max(auxi$y)]
     MSYMedianL <- max(auxi$y)
-  
+    
     # Value of F that corresponds to 0.95*MSY:
     FmsylowerMedianL <- auxi$x[ min( (1:length(auxi$y))[auxi$y/MSYMedianL >= 0.95] ) ]
     FmsyupperMedianL <- auxi$x[ max( (1:length(auxi$y))[auxi$y/MSYMedianL >= 0.95] ) ]
-  
+    
     F5percRiskBlim <- flim
-  
+    
     refs_interval <- data.frame(FmsyMedianC = FmsyMedianC,
-                               FmsylowerMedianC = FmsylowerMedianC,
-                               FmsyupperMedianC = FmsyupperMedianC,
-                               FmsyMedianL = FmsyMedianL,
-                               FmsylowerMedianL = FmsylowerMedianL,
-                               FmsyupperMedianL = FmsyupperMedianL,
-                               F5percRiskBlim = F5percRiskBlim,
-                               Btrigger = Btrigger)
-  
+                                FmsylowerMedianC = FmsylowerMedianC,
+                                FmsyupperMedianC = FmsyupperMedianC,
+                                FmsyMedianL = FmsyMedianL,
+                                FmsylowerMedianL = FmsylowerMedianL,
+                                FmsyupperMedianL = FmsyupperMedianL,
+                                F5percRiskBlim = F5percRiskBlim,
+                                Btrigger = Btrigger)
+    
     # END 2014-03-12 Ammendments per note from Carmen/John
-  
+    
   }
   
   sim <- list(ibya = list(Mat = Mat, M = M, Fprop = Fprop, Mprop = Mprop,
-                        west = west, weca = weca, sel = sel),
+                          west = west, weca = weca, sel = sel),
               rbya = list(ferr=ferr),
               rby = fit$rby,
               rbp = rbp,
@@ -938,12 +990,12 @@ eqsim_run <- function(fit,
               refs_interval = refs_interval,
               rhologRec = rhologRec,
               simStks = simStks)    #AC
-
+  
   if (calc.RPs){
     if (verbose) icesTAF::msg("Calculating MSY range values")
     sim <- eqsim_range(sim)
   }
-
+  
   return(sim)
-
+  
 }

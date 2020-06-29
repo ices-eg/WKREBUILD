@@ -203,8 +203,17 @@ fStatExtinct <- function(SSB, depletion=0.01, firstYear) {
 #   
 # }
 
-fStatRecovery <- function(SSB,RP){
+fStatRecovery <- function(SSB, RP, percs = c(0.025,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.975)) {
+  
   #time taken for (first) recovery above the biomass given by RP
+  
+  #exclude any iterations not initially below Blim 
+  t <- SSB[,,,,,SSB[,1]<Blim]
+  
+  t <- as.numeric(FLCore::yearSums(SSB.true<RP))
+  
+  t <- t[t>0]   #some iterations never fall below Blim
+  
   return(1)
 }
 
