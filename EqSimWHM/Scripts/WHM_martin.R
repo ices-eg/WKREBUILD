@@ -64,18 +64,16 @@ Base.dir <- file.path(Drive,"GIT")
 
 
 # WHOM SS
-#stock          <- "WHOM"
-#assess         <- "SS"
-#FLStockfile    <- "WGWIDE19.RData"
-#FLStockSimfile <- "MSE_WGWIDE19_FLStocks_15PG.RData"
-#FLStockSimfile <- "MSE_WGWIDE19_FLStocks_10k.RData"
+# stock          <- "WHOM"
+# assess         <- "SS"
+# FLStockfile    <- "WGWIDE19.RData"
+# FLStockSimfile <- "MSE_WGWIDE19_FLStocks_15PG.RData"   # "MSE_WGWIDE19_FLStocks_10k.RData"
 
 # WHOM SAM
 stock          <- "WHOM"
 assess         <- "SAM"
 FLStockfile    <- "WGWIDE19_SAM.RData"
-FLStockSimfile <- "MSE_WGWIDE19_FLStocks_SAM1000.RData"
-#FLStockSimfile <- "MSE_WGWIDE19_FLStocks_SAM.RData"
+FLStockSimfile <- "MSE_WGWIDE19_FLStocks_SAM1000.RData" #"MSE_WGWIDE19_FLStocks_SAM.RData"
 
 # MAC SAM
 #FLStockfile    <- "neaMacWGWIDE2019.RData"
@@ -141,8 +139,8 @@ OM <- OM2.3   #WGWIDE 2019 SAM + ref points, stochastic weights, selection
 #MP <- MP1.8   #10%/20% asymmetric IAV Test
 #MP <- MP1.9   #0%/10% asymmetric IAV Test
 #MP <- MP2.0
-#MP <- MP2.1   #ICES HCR, no IAV control, no minimum TAC, with assessment/advice error
-MP <- MP2.2   #ICES HCR, IAV control 20/25%, no minimum TAC, with assessment/advice error
+MP <- MP2.1   #ICES HCR, no IAV control, no minimum TAC, with assessment/advice error
+#MP <- MP2.2   #ICES HCR, IAV control 20/25%, no minimum TAC, with assessment/advice error
 
 runName <- paste(stock,assess,OM$code,MP$code,niters,nyr,sep="_")
 
@@ -476,10 +474,16 @@ save(lStats,file = file.path(Res.dir,runName,paste0(runName,"_eqSim_Stats.Rdata"
 settings <- fGetSettings(lStats, SimRuns, FLStockfile, FLStockSimfile)
 save(settings,file = file.path(Res.dir,runName,paste0(runName,"_eqSim_Settings.Rdata")))
 
-# Save results df
+# Save results df by period
 df <- fsummary_df(run=runName, Res.dir = Res.dir, Plot.dir = Plot.dir,lStatPer = lStatPer,
                   Blim = OM$refPts$Blim, Fbarrange=c(1,10)) 
 save(df,file = file.path(Res.dir,runName,paste0(runName,"_eqSim_df.Rdata")))
+
+# Save results df by year
+dfy <- fsummary_byyear_df(
+  run=runName, Res.dir = Res.dir, Plot.dir = Plot.dir,
+  lStatPer = lStatPer, Blim = OM$refPts$Blim, Fbarrange=c(1,10)) 
+save(dfy,file = file.path(Res.dir,runName,paste0(runName,"_eqSim_byyear_df.Rdata")))
 
 #generate the stock/stat trajectories
 # fPlotTraj(sim = lStats, plot.dir = file.path(Res.dir,runName), lStatPer = lStatPer)
@@ -560,35 +564,62 @@ save(df,file = file.path(Res.dir,runName,paste0(runName,"_eqSim_df.Rdata")))
 #                          "WHOM_SS_OM2.2_MP2.2_1000_20_eqSim_df.RData"))
 
 
-t <- bind_rows(
-  loadRData(file.path(Res.dir,
-                      "WHOM_SS_OM2.2_MP2.2_1000_20", 
-                      "WHOM_SS_OM2.2_MP2.2_1000_20_eqSim_df.RData")),
-  loadRData(file.path(Res.dir,
-                      "WHOM_SAM_OM2.2_MP2.2_1000_20", 
-                      "WHOM_SAM_OM2.2_MP2.2_1000_20_eqSim_df.RData")) ) %>% 
-  
-  separate(RunRef, into=c("stock","assess", "OM","MP","niters","nyrs"), sep="_") %>% 
-  
-  group_by(stock, assess, OM, MP, niters, nyrs, Label, Ftgt, PerfStat, Period, Period2) %>%
-  summarize(Val = mean(Val, na.rm=TRUE)) %>%
+# t <- bind_rows(
+#   loadRData(file.path(Res.dir,
+#                       "WHOM_SS_OM2.2_MP2.1_1000_20", 
+#                       "WHOM_SS_OM2.2_MP2.1_1000_20_eqSim_df.RData")),
+#   loadRData(file.path(Res.dir,
+#                       "WHOM_SS_OM2.2_MP2.2_1000_20", 
+#                       "WHOM_SS_OM2.2_MP2.2_1000_20_eqSim_df.RData")) ) %>% 
+#   
+# #  separate(RunRef, into=c("stock","assess", "OM","MP","niters","nyrs"), sep="_") %>% 
+#   
+#   group_by(stock, assess, OM, MP, niters, nyrs, Label, Ftgt, PerfStat, Period, Period2) %>%
+#   summarize(Val = mean(Val, na.rm=TRUE)) %>%
+#   ungroup() %>%
+#   
+#   mutate(flag = ifelse(Period == "CU", TRUE, FALSE)) %>%
+#   mutate(niters=factor(niters, levels=c("1000"))) %>% 
+#   mutate(Ftgt = as.numeric(Ftgt)) 
+
+# t %>%
+#   # filter(PerfStat == "SSB") %>% 
+#   filter(PerfStat %in% c("SSB", "Yield","Risk3","F", "IAV")) %>% 
+#   ggplot(aes(x=Period2, y=Val, group=MP)) +
+#   theme_bw() +
+#   theme(axis.text.x = element_text(angle = 90, vjust=0.5)) +
+#   # theme(legend.position = "none") +
+#   geom_line(aes(colour=MP), size=0.8) +
+#   geom_point(aes(colour=MP), size=0.8) +
+#   # scale_fill_manual(values = c('#595959', 'red')) +
+#   labs(x="", y="value") +
+#   facet_grid(PerfStat ~ Ftgt, scales="free_y")
+
+dfy %>%
+  # loadRData(file.path(Res.dir,
+  #                     "WHOM_SS_OM2.2_MP2.1_1000_20", 
+  #                     "WHOM_SS_OM2.2_MP2.1_1000_20_eqSim_byyear_df.RData")) %>% 
+  group_by(stock, assess, OM, MP, niters, nyrs, Label, Ftgt, PerfStat, year, period) %>%
+  summarize(Val = mean(value, na.rm=TRUE)) %>%
   ungroup() %>%
   
-  mutate(flag = ifelse(Period == "CU", TRUE, FALSE)) %>%
-  mutate(niters=factor(niters, levels=c("1000"))) %>% 
-  mutate(Ftgt = as.numeric(Ftgt)) 
-
-t %>%
-  # filter(PerfStat == "SSB") %>% 
-  filter(PerfStat %in% c("SSB", "Yield","Risk3","F", "IAV")) %>% 
-  ggplot(aes(x=Period2, y=Val, group=assess)) +
+  ggplot(aes(x=year, y=Val, group=MP)) +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 90, vjust=0.5)) +
   # theme(legend.position = "none") +
-  geom_line(aes(colour=assess), size=0.8) +
-  geom_point(aes(colour=assess), size=0.8) +
+  
+  geom_vline(xintercept=an(lStatPer[["CU"]][2]), linetype="dashed", colour="gray") +
+  geom_vline(xintercept=an(lStatPer[["ST"]][2]), linetype="dashed", colour="gray") +
+  geom_vline(xintercept=an(lStatPer[["MT"]][2]), linetype="dashed", colour="gray") +
+  geom_vline(xintercept=an(lStatPer[["LT"]][2]), linetype="dashed", colour="gray") +
+  
+  geom_line(aes(colour=period), size=0.8) +
+  geom_point(aes(colour=period), size=0.8) +
+  
   # scale_fill_manual(values = c('#595959', 'red')) +
-  labs(x="", y="value") +
+  labs(x="", y="value", title=runName) +
   facet_grid(PerfStat ~ Ftgt, scales="free_y")
 
-  
+ggsave(file = file.path(Res.dir,runName,paste0(runName,"_summary_byyear.png")),
+       device="png", width = 30, height = 20, units = "cm")
+
