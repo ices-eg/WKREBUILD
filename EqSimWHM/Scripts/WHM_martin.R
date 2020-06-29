@@ -357,6 +357,7 @@ stockTemplate <- FLCore::propagate(stockTemplate,niters)
 
 #populate each stock object
 #year dimension is trimmed to the actual simulation period (may be longer depending on HCR implemented)
+# ii <- "0.1"
 for (ii in names(SimRuns)) {
   
   cat("Calculating statistics for run with f =",ii,"\n")
@@ -461,29 +462,48 @@ for (ii in names(SimRuns)) {
   Stats[["pBlim"]][["val"]] <- fStatRisk(SSB = SSB.true, RP = OM$refPts$Blim, lStatPer = lStatPer)
   Stats[["pBpa"]][["val"]] <- fStatRisk(SSB = SSB.true, RP = OM$refPts$Bpa, lStatPer = lStatPer)
   Stats[["pExt"]][["val"]] <- fStatExtinct(SSB = SSB.true, depletion=0.01, firstYear = maxObsYear)
-    
+  
+  Stats[["df"]]  <- fsummary_df(
+    run=runName, ftgt = ii, simRuns = simRuns,
+    Res.dir = Res.dir, Plot.dir = Plot.dir,
+    lStatPer = lStatPer, simYears = simYears, xlab = MP$xlab,
+    Blim = OM$refPts$Blim, 
+    Fbarrange=c(range(FLS)[["minfbar"]], range(FLS)[["maxfbar"]])) 
+  
+  Stats[["dfy"]] <- fsummary_byyear_df(
+    run=runName, ftgt=ii, simRuns=simRuns,
+    Res.dir = Res.dir, Plot.dir = Plot.dir,
+    lStatPer = lStatPer, simYears = simYears, xlab = MP$xlab,
+    Blim = OM$refPts$Blim, 
+    Fbarrange=c(range(FLS)[["minfbar"]], range(FLS)[["maxfbar"]])) 
+  
+  Stats[["settings"]] <- fGetSettings(
+    lStatPer=lStatPer, SimRuns=SimRuns, 
+    FLStockfile=FLStockfile, FLStockSimfile=FLStockSimfile,
+    OM=OM, MP=MP, niters=niters, nyr=nyr)
+  
   AllStats[[ac(ii)]] <- Stats
     
 }
-  
+
 ## Save data
 lStats <- list(stats = AllStats, runName = runName, lStatPer = lStatPer, OM = OM, MP = MP)
-save(lStats,file = file.path(Res.dir,runName,paste0(runName,"_eqSim_Stats.Rdata")))
+save(lStats,file = file.path(dropbox.dir,paste0(runName,"_eqSim_Stats.Rdata")))
 
 # Save settings
-settings <- fGetSettings(lStats, SimRuns, FLStockfile, FLStockSimfile)
-save(settings,file = file.path(Res.dir,runName,paste0(runName,"_eqSim_Settings.Rdata")))
+# settings <- fGetSettings(lStats, SimRuns, FLStockfile, FLStockSimfile)
+# save(settings,file = file.path(Res.dir,runName,paste0(runName,"_eqSim_Settings.Rdata")))
 
 # Save results df by period
-df <- fsummary_df(run=runName, Res.dir = Res.dir, Plot.dir = Plot.dir,lStatPer = lStatPer,
-                  Blim = OM$refPts$Blim, Fbarrange=c(1,10)) 
-save(df,file = file.path(Res.dir,runName,paste0(runName,"_eqSim_df.Rdata")))
+# df <- fsummary_df(run=runName, Res.dir = Res.dir, Plot.dir = Plot.dir,lStatPer = lStatPer,
+#                   Blim = OM$refPts$Blim, Fbarrange=c(1,10)) 
+# save(df,file = file.path(Res.dir,runName,paste0(runName,"_eqSim_df.Rdata")))
 
 # Save results df by year
-dfy <- fsummary_byyear_df(
-  run=runName, Res.dir = Res.dir, Plot.dir = Plot.dir,
-  lStatPer = lStatPer, Blim = OM$refPts$Blim, Fbarrange=c(1,10)) 
-save(dfy,file = file.path(Res.dir,runName,paste0(runName,"_eqSim_byyear_df.Rdata")))
+# dfy <- fsummary_byyear_df(
+#   run=runName, Res.dir = Res.dir, Plot.dir = Plot.dir,
+#   lStatPer = lStatPer, Blim = OM$refPts$Blim, Fbarrange=c(1,10)) 
+# save(dfy,file = file.path(Res.dir,runName,paste0(runName,"_eqSim_byyear_df.Rdata")))
 
 #generate the stock/stat trajectories
 # fPlotTraj(sim = lStats, plot.dir = file.path(Res.dir,runName), lStatPer = lStatPer)
@@ -595,27 +615,49 @@ save(dfy,file = file.path(Res.dir,runName,paste0(runName,"_eqSim_byyear_df.Rdata
 #   labs(x="", y="value") +
 #   facet_grid(PerfStat ~ Ftgt, scales="free_y")
 
+df <- data.frame(stringsAsFactors = FALSE)
+for (i in 1:length(AllStats)) {
+  df <- 
+    df %>% 
+    bind_rows(lStats$stats[[i]]$df)
+}
+
+dfy <- data.frame(stringsAsFactors = FALSE)
+for (i in 1:length(AllStats)) {
+  dfy <- 
+    dfy %>% 
+    bind_rows(lStats$stats[[i]]$dfy)
+}
+
+  
 dfy %>%
   # loadRData(file.path(Res.dir,
-  #                     "WHOM_SS_OM2.2_MP2.1_1000_20", 
-  #                     "WHOM_SS_OM2.2_MP2.1_1000_20_eqSim_byyear_df.RData")) %>% 
+  #                     "WHOM_SS_OM2.2_MP2.1_1000_20",
+  #                     "WHOM_SS_OM2.2_MP2.1_1000_20_eqSim_byyear_df.RData")) %>%
   group_by(stock, assess, OM, MP, niters, nyrs, Label, Ftgt, PerfStat, year, period) %>%
-  summarize(Val = mean(value, na.rm=TRUE)) %>%
+  summarize(Val = mean(value, na.rm=TRUE),
+            Upp = quantile(value, probs=0.975, na.rm=TRUE),
+            Low = quantile(value, probs=0.025, na.rm=TRUE)) %>%
   ungroup() %>%
   
   ggplot(aes(x=year, y=Val, group=MP)) +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 90, vjust=0.5)) +
   # theme(legend.position = "none") +
-  
+
   geom_vline(xintercept=an(lStatPer[["CU"]][2]), linetype="dashed", colour="gray") +
   geom_vline(xintercept=an(lStatPer[["ST"]][2]), linetype="dashed", colour="gray") +
   geom_vline(xintercept=an(lStatPer[["MT"]][2]), linetype="dashed", colour="gray") +
   geom_vline(xintercept=an(lStatPer[["LT"]][2]), linetype="dashed", colour="gray") +
+
+  geom_ribbon(aes(ymin=Low, ymax=Upp), alpha=0.2) +
+  geom_line(aes(y=Upp, colour=period), size=0.4) +
+  geom_line(aes(y=Low, colour=period), size=0.4) +
   
   geom_line(aes(colour=period), size=0.8) +
   geom_point(aes(colour=period), size=0.8) +
   
+  expand_limits(y=0) +
   # scale_fill_manual(values = c('#595959', 'red')) +
   labs(x="", y="value", title=runName) +
   facet_grid(PerfStat ~ Ftgt, scales="free_y")

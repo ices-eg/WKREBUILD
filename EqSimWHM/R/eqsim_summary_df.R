@@ -7,8 +7,9 @@
 # PerfStat = c("IAVUpDown")
 # Fbarrange=c(1,10)
 
-fsummary_df <- function(run, 
+fsummary_df <- function(run, ftgt, simRuns, 
                         Res.dir, Plot.dir, 
+                        simYears, xlab, 
                         lStatPer, Blim, 
                         Fbarrange=c(1,10)){
 
@@ -22,25 +23,25 @@ fsummary_df <- function(run,
 
   #get the data
   # run <- "OM2.2_MP2.1_1000_20"
-  cat(run,"\n")
+  # cat(run,"\n")
   
   #load the output of the simulation and the summary statistics
-  load(file = file.path(Res.dir,run,paste0(run,"_SimRuns.RData")))
-  load(file = file.path(Res.dir,run,paste0(run,"_eqSim_Stats.RData")))
+  # load(file = file.path(Res.dir,run,paste0(run,"_SimRuns.RData")))
+  # load(file = file.path(Res.dir,run,paste0(run,"_eqSim_Stats.RData")))
   
   
   
   # ftgt <- 0.1
-  for (ftgt in an(names(SimRuns))){
+  # for (ftgt in an(names(SimRuns))){
     
-    cat("F ", ftgt,"\n")
+#    cat("F ", ftgt,"\n")
     
     #simulation op
     t <- SimRuns[[ac(ftgt)]]
     
     #simulation stats
     # t2 <- lOp$stats[[ac(ftgt)]]
-    t2 <- lStats$stats[[ac(ftgt)]]
+    # t2 <- lStats$stats[[ac(ftgt)]]
 
     # p <- "SSB"
     
@@ -56,7 +57,7 @@ fsummary_df <- function(run,
         Cwgt <- t[["catW"]]
         #catch weight (tons)
         CW <- apply(Cnum*Cwgt,2:3,sum)/1e3
-        dimnames(CW)$year <- t2$simYears
+        dimnames(CW)$year <- simYears
         
         if (p =="Catch"){
           
@@ -124,7 +125,7 @@ fsummary_df <- function(run,
 
         #harvest
         Harvest <- t[["F"]]
-        dimnames(Harvest)$year <- t2$simYears
+        dimnames(Harvest)$year <- simYears
         Harvest <- apply(Harvest[ac(Fbarrange[1]:Fbarrange[2]),,],2:3, mean)
 
         #abundance
@@ -136,7 +137,7 @@ fsummary_df <- function(run,
 
         #SSB (Mt)
         SSB <- apply(Abd*SW*Mat,2:3,sum)/1e6
-        dimnames(SSB)$year <- t2$simYears
+        dimnames(SSB)$year <- simYears
         
         # Harvest[ac(1:10),ac(seq(lStatPer$CU[1],lStatPer$CU[2])),]
         # apply(Harvest[ac(seq(lStatPer$CU[1],lStatPer$CU[2])), ],2,mean)
@@ -192,7 +193,7 @@ fsummary_df <- function(run,
       if(exists("CU")) {
         dfAll <- dplyr::bind_rows(dfAll,
                                   data.frame(RunRef = rep(run,length(CU)),
-                                             Label = rep(t2$MP$xlab,length(CU)),
+                                             Label = rep(xlab,length(CU)),
                                              Ftgt = rep(ftgt,length(CU)),
                                              PerfStat = rep(StatName,each=length(CU)/length(StatName)),
                                              Period = rep("CU",each=length(CU)),
@@ -206,7 +207,7 @@ fsummary_df <- function(run,
       #ST
       dfAll <- dplyr::bind_rows(dfAll,
                                 data.frame(RunRef = rep(run,length(ST)),
-                                           Label = rep(t2$MP$xlab,length(ST)),
+                                           Label = rep(xlab,length(ST)),
                                            Ftgt = rep(ftgt,length(ST)),
                                            PerfStat = rep(StatName,each=length(ST)/length(StatName)),
                                            Period = rep("ST",each=length(ST)),
@@ -217,7 +218,7 @@ fsummary_df <- function(run,
       #MT
       dfAll <- dplyr::bind_rows(dfAll,
                                 data.frame(RunRef = rep(run,length(MT)),
-                                           Label = rep(t2$MP$xlab,length(MT)),
+                                           Label = rep(xlab,length(MT)),
                                            Ftgt = rep(ftgt,length(MT)),
                                            PerfStat = rep(StatName,each=length(MT)/length(StatName)),
                                            Period = rep("MT",each=length(MT)),
@@ -228,7 +229,7 @@ fsummary_df <- function(run,
       #LT
       dfAll <- dplyr::bind_rows(dfAll,
                                 data.frame(RunRef = rep(run,length(LT)),
-                                           Label = rep(t2$MP$xlab,length(LT)),
+                                           Label = rep(xlab,length(LT)),
                                            Ftgt = rep(ftgt,length(LT)),
                                            PerfStat = rep(StatName,each=length(LT)/length(StatName)),
                                            Period = rep("LT",each=length(LT)),
@@ -239,7 +240,7 @@ fsummary_df <- function(run,
       
     } # end of p loop
 
-  } # end of for loop: ftgt
+  # } # end of for loop: ftgt
     
 
   dfAll
