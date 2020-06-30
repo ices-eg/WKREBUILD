@@ -3,3 +3,5 @@
 .RData
 .Ruserdata
 wk_WKREBUILD.Rproj
+*.RData
+*.Rdata
