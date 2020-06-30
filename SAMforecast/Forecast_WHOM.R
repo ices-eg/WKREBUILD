@@ -121,3 +121,13 @@ FC[[length(FC)+1]] <- forecast2(fit, fscale=c(1, rep(NA,ny-1)),
 )   
 
 
+# Looking at the outputs, example -----
+
+scenario_number <- 1
+name_scenario <- attr(FC[[scenario_number]], "label") # name of 1st scenario run above
+FC[[scenario_number]] # summary table of median outputs with CI
+plot(FC[[scenario_number]], main=name_scenario) # SSB, Fbar and rec plots
+forecast_year <- 1 # 1:ny
+variable_name <- ls(FC[[scenario_number]][forecast_year][[1]]) # all names of output replicates saved in FC
+FC[[scenario_number]][forecast_year][[1]][variable_name[1]] # to extract replicates of a specific output
+
