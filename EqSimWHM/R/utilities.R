@@ -49,3 +49,10 @@ loadRData <- function(fileName){
   load(fileName)
   get(ls()[ls() != "fileName"])
 }
+
+# lowcase function
+lowcase <- function(df) {
+  names(df) <- tolower(names(df)) %>% gsub("\\?|\\s+|\\.+|_+|\\(|\\)","",.) 
+  df
+}
+

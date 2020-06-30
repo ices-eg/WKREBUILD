@@ -56,7 +56,7 @@ nsim=1000
 seed=12345
 runName = "HCR2_SR"
 FC <- list()
-df <- data.frame(stringsAsFactors = FALSE)
+dfy <- data.frame(stringsAsFactors = FALSE)
 set.seed(seed) # same seed to repeat output
 
 for (i in 1:length(F_targets)) {
@@ -99,14 +99,13 @@ for (i in 1:length(F_targets)) {
           RW       = RW, 
           SR       = SR,
           stringsAsFactors = FALSE)
-        df <- bind_rows(df,t)
+        dfy <- bind_rows(dfy,t)
         #print(head(t))
       } # end of if statement
     } # end of v loop
   }  # end of y loop
 
 } # end of i loop
-
 
 
 # Run the forecast with HCR2 with decreasing recruitment -----
@@ -173,7 +172,7 @@ for (i in 1:length(F_targets)) {
 # variable_name <- ls(FC[[scenario_number]][forecast_year][[1]]) # all names of output replicates saved in FC
 # FC[[scenario_number]][forecast_year][[1]][variable_name[1]] # to extract replicates of a specific output
 
-save(df,file = file.path(dropbox.dir,paste0("SAM_",runName,"_df.Rdata")))
+save(dfy,file = file.path(Res.dir,"Stats",paste0("SAM_",runName,"_dfy.Rdata")))
 
 df2 <-
   df %>% 
@@ -184,7 +183,7 @@ df2 <-
             Low = quantile(value, probs=0.025, na.rm=TRUE)) %>%
   ungroup()
 
-save(df2,file = file.path(dropbox.dir,paste0("SAM_",runName,"_df2.Rdata")))
+# save(df2,file = file.path(dropbox.dir,paste0("SAM_",runName,"_df2.Rdata")))
 
 df %>% 
   filter(PerfStat %in% c("fbar","ssb", "catch", "rec")) %>% 
