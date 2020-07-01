@@ -1,14 +1,27 @@
-#WHM example
+# ================================================================================================================
+# EqSim HCR simulator
+# 
+# 02_EqSim_simulate.R
+# 
+# The EqSim simulator was developed by David Miller and Colin Millar
+# Further enhanced by Andy Campbell and Martin Pastoors and applied to Western Horse mackerel in June 2020
+#
+# 24/06/2020 generic option; code now independent of fish stock
+# 25/06/2020 tested on mackerel stock
+# 27/06/2020 tested on 1000 iters of SAM assessment
+# 29/06/2020 modified and bugchecked by Andy Campbell
+# 01/07/2020 included additional features by Martin Pastoors
+# ================================================================================================================
 
-source(file.path(getwd(),"Scripts","setup.R"))
+# source(file.path(getwd(),"Scripts","01_EqSim_setup.R"))
 
 #Note: niters and nyr could be included in the OM or MP definitions
 
 #basic simulation settings
 #niters <- 10000
 #niters <- 1000
-niters <- 1000
-nyr <- 50
+niters <- 100
+nyr <- 20
 
 # simulation periods
 per1 <- 5
@@ -33,7 +46,7 @@ OM <- OM2.2   #WGWIDE 2019, stochastic weights, selection
 #MP <- MP1.8   #10%/20% asymmetric IAV Test
 #MP <- MP1.9   #0%/10% asymmetric IAV Test
 
-#MP <- MP5.0    #Constant F
+#MP <- MP5.00    #Constant F
 #MP <- MP5.01   #Const , min TAC = 50kt
 #MP <- MP5.02   #Const , 20% IAV
 MP <- MP5.03   #Const , 20% IAV, only above Btrigger

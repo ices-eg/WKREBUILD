@@ -1,8 +1,21 @@
+# ================================================================================================================
+# EqSim HCR simulator
+# 
+# 01_EqSim_setup.R
+# 
+# The EqSim simulator was developed by David Miller and Colin Millar
+# Further enhanced by Andy Campbell and Martin Pastoors and applied to Western Horse mackerel in June 2020
+#
+# 24/06/2020 generic option; code now independent of fish stock
+# 25/06/2020 tested on mackerel stock
+# 27/06/2020 tested on 1000 iters of SAM assessment
+# ================================================================================================================
 #Setup the Environment, folder locations
 
 #clean up first
 rm(list=ls())
-gc()
+invisible(gc())
+
 try(dev.off(),silent=TRUE)
 try(sink(),silent=TRUE)
 
@@ -19,7 +32,7 @@ library(ggplot2)
 #stop on warning
 #options(warn=2)
 
-sessionInfo()
+#sessionInfo()
 #R version 3.5.3 (2019-03-11)
 #Platform: x86_64-w64-mingw32/x64 (64-bit)
 #Running under: Windows 10 x64 (build 17763)
@@ -47,10 +60,10 @@ sessionInfo()
 
 
 #computer specific locations
-Drive    <- "C:"
-Base.dir <- file.path(Drive,"Stocks","hom_27_2a4a5b6a7a-ce-k8","MP_MSE")
-#Drive    <- "D:"
-#Base.dir <- file.path(Drive,"GIT")
+# Drive    <- "C:"
+# Base.dir <- file.path(Drive,"Stocks","hom_27_2a4a5b6a7a-ce-k8","MP_MSE")
+Drive    <- "D:"
+Base.dir <- file.path(Drive,"GIT")
 
 #Basic MSE directory
 MSE.dir <- file.path(Base.dir,"wk_WKREBUILD","EqSimWHM")
