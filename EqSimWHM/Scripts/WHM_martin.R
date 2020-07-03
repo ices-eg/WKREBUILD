@@ -122,8 +122,8 @@ per2 <- 5
 
 # Operating model
 #OM <- OM2.1   #WGWIDE 2019, const weights, selection
-#OM <- OM2.2   #WGWIDE 2019, stochastic weights, selection
-OM <- OM2.3   #WGWIDE 2019 SAM + ref points, stochastic weights, selection
+OM <- OM2.2   #WGWIDE 2019, stochastic weights, selection
+#OM <- OM2.3   #WGWIDE 2019 SAM + ref points, stochastic weights, selection
 #OM <- OM2.2mac   #WGWIDE 2019 SAM + ref points, stochastic weights, selection
 
 
@@ -144,9 +144,9 @@ OM <- OM2.3   #WGWIDE 2019 SAM + ref points, stochastic weights, selection
 #MP <- MP5.02   #Const , 20% IAV
 #MP <- MP5.03   #Const , 20% IAV, only above Btrigger
 
-#MP <- MP5.10    #ICES AR
+MP <- MP5.10    #ICES AR
 #MP <- MP5.11   #ICES AR, min TAC = 50kt
-MP <- MP5.12   #ICES AR, 20% IAV
+#MP <- MP5.12   #ICES AR, 20% IAV
 #MP <- MP5.13   #ICES AR, 20% IAV, only above Btrigger
 
 #MP <- MP5.2    #Double BP
@@ -481,38 +481,50 @@ for (ii in names(SimRuns)) {
   Stats[["pBpa"]][["val"]] <- fStatRisk(SSB = SSB.true, RP = OM$refPts$Bpa, lStatPer = lStatPer)
   Stats[["pExt"]][["val"]] <- fStatExtinct(SSB = SSB.true, depletion=0.01, firstYear = maxObsYear)
   
-  Stats[["df"]]  <- fsummary_df(
-    run=runName, ftgt = ii, simRuns = simRuns,
-    Res.dir = Res.dir, Plot.dir = Plot.dir,
-    lStatPer = lStatPer, simYears = simYears, xlab = MP$xlab,
-    Blim = OM$refPts$Blim, 
-    Fbarrange=c(range(FLS)[["minfbar"]], range(FLS)[["maxfbar"]])) 
+  # Stats[["df"]]  <- fsummary_df(
+  #   run=runName, ftgt = ii, simRuns = simRuns,
+  #   Res.dir = Res.dir, Plot.dir = Plot.dir,
+  #   lStatPer = lStatPer, simYears = simYears, xlab = MP$xlab,
+  #   Blim = OM$refPts$Blim, 
+  #   Fbarrange=c(range(FLS)[["minfbar"]], range(FLS)[["maxfbar"]])) 
   
-  Stats[["dfy"]] <- fsummary_byyear_df(
-    run=runName, ftgt=ii, simRuns=simRuns,
-    Res.dir = Res.dir, Plot.dir = Plot.dir,
-    lStatPer = lStatPer, simYears = simYears, xlab = MP$xlab,
-    Blim = OM$refPts$Blim, 
-    Fbarrange=c(range(FLS)[["minfbar"]], range(FLS)[["maxfbar"]])) 
+  # Stats[["dfy"]] <- fsummary_byyear_df(
+  #   run=runName, ftgt=ii, simRuns=simRuns,
+  #   Res.dir = Res.dir, Plot.dir = Plot.dir,
+  #   lStatPer = lStatPer, simYears = simYears, xlab = MP$xlab,
+  #   Blim = OM$refPts$Blim, 
+  #   Fbarrange=c(range(FLS)[["minfbar"]], range(FLS)[["maxfbar"]])) 
   
-  Stats[["settings"]] <- fGetSettings(
-    lStatPer=lStatPer, SimRuns=SimRuns, 
-    FLStockfile=FLStockfile, FLStockSimfile=FLStockSimfile,
-    OM=OM, MP=MP, niters=niters, nyr=nyr)
+  # Stats[["settings"]] <- fGetSettings(
+  #   lStatPer=lStatPer, SimRuns=SimRuns, 
+  #   FLStockfile=FLStockfile, FLStockSimfile=FLStockSimfile,
+  #   OM=OM, MP=MP, niters=niters, nyr=nyr)
   
   AllStats[[ac(ii)]] <- Stats
     
 }
 
-## Save data
-lStats <- list(stats = AllStats, runName = runName, lStatPer = lStatPer, OM = OM, MP = MP)
-save(lStats,file = file.path(dropbox.dir,paste0(runName,"_eqSim_Stats.Rdata")))
 
-# Save settings
-# settings <- fGetSettings(lStats, SimRuns, FLStockfile, FLStockSimfile)
+settings <- fGetSettings(
+                stats = AllStats, lStatPer=lStatPer, SimRuns=SimRuns, 
+                FLStockfile=FLStockfile, FLStockSimfile=FLStockSimfile,
+                OM=OM, MP=MP, niters=niters, nyr=nyr)
 # save(settings,file = file.path(Res.dir,runName,paste0(runName,"_eqSim_Settings.Rdata")))
 
-# Save results df by period
+df  <- fsummary_df(
+  run=runName, simRuns = simRuns,
+  Res.dir = Res.dir, Plot.dir = Plot.dir,
+  lStatPer = lStatPer, simYears = simYears, xlab = MP$xlab,
+  OM = OM, 
+  Fbarrange=c(range(FLS)[["minfbar"]], range(FLS)[["maxfbar"]])) 
+
+## Save data
+lStats <- list(stats = AllStats, runName = runName, lStatPer = lStatPer, 
+               OM = OM, MP = MP,
+               settings=settings, df=df)
+save(lStats,file = file.path(dropbox.dir,paste0(runName,"_eqSim_Stats.Rdata")))
+
+# Save results data frame by period
 # df <- fsummary_df(run=runName, Res.dir = Res.dir, Plot.dir = Plot.dir,lStatPer = lStatPer,
 #                   Blim = OM$refPts$Blim, Fbarrange=c(1,10)) 
 # save(df,file = file.path(Res.dir,runName,paste0(runName,"_eqSim_df.Rdata")))
@@ -523,131 +535,24 @@ save(lStats,file = file.path(dropbox.dir,paste0(runName,"_eqSim_Stats.Rdata")))
 #   lStatPer = lStatPer, Blim = OM$refPts$Blim, Fbarrange=c(1,10)) 
 # save(dfy,file = file.path(Res.dir,runName,paste0(runName,"_eqSim_byyear_df.Rdata")))
 
+
 #generate the stock/stat trajectories
 # fPlotTraj(sim = lStats, plot.dir = file.path(Res.dir,runName), lStatPer = lStatPer)
 # suppressWarnings(fPlotSummary(sim = lStats, plot.dir = Res.dir, lStatPer = lStatPer))
-# fTabulateStats(sim = lStats, setting=settings, plot.dir = Res.dir)
+fTabulateStats(sim = lStats, setting=settings, plot.dir = Res.dir)
 
 # #SSB vs Blim
 # fAnnSSBvsBlimDist(OM = OM2, MP = MP2.0, res.dir = Res.dir, plot.dir = Res.dir)
-# 
 
-##############Ensure all scanrios to be compared have been run & stats calculated###############
-#code below should be moved to another script really to allow this script to be monolithic######
-
-# runs2Compare <- c("OM2.2_MP1.0","OM2.2_MP2.1")
-# for (stat in c("SSB", "Risk3")){
-#   fCompare_runs(runs2Compare = runs2Compare, Res.dir = Res.dir, Plot.dir = Res.dir,
-#                 PerfStat = stat,
-#                 TargetFs = c(0, 0.05, 0.074, 0.1, 0.108, 0.2, 0.3),
-#                 lStatPer = lStatPer,
-#                 Blim = OM$refPts$Blim)}
-
-#comparison of stochastic/random weights & selection - min, max, min & max TAC
-# runs2Compare <- c("OM2.2_MP1.0","OM2.2_MP1.1","OM2.2_MP1.2","OM2.2_MP1.3")
-# for (stat in c("Catch","SSB","Risk3","Risk1")){
-# fCompare_runs(runs2Compare = runs2Compare, Res.dir = Res.dir, Plot.dir = Res.dir,
-#              PerfStat = stat, TargetFs = c(0,0.05,0.074,0.1,0.108,0.2),
-#              lStatPer = lStatPer, Blim = OM$refPts$Blim)}
-
-#inclusion of assessment and advice error (stochastoc weights/selection)
-# runs2Compare <- c("OM2.2_MP1.0","OM2.2_MP1.4")
-# for (stat in c("Catch","SSB","Risk3","Risk1")){
-#   fCompare_runs(runs2Compare = runs2Compare, Res.dir = Res.dir, Plot.dir = Res.dir,
-#                 PerfStat = stat, TargetFs = c(0,0.05,0.074,0.1,0.108,0.2),
-#                 lStatPer = lStatPer, Blim = OM$refPts$Blim)}
-
-#IAV
-# runs2Compare <- c("OM2.2_MP1.0","OM2.2_MP1.5","OM2.2_MP1.6","OM2.2_MP1.7","OM2.2_MP1.8","OM2.2_MP1.9")
-# create folder
-# dir.create(path = file.path(Res.dir,"Comparisons","IAV"), showWarnings = TRUE, recursive = TRUE)
-# for (stat in c("Catch","SSB","Risk3","Risk1","IAV","IAVUpDown")){
-#  fCompare_runs(runs2Compare = runs2Compare, Res.dir = Res.dir, Plot.dir = file.path(Res.dir,"Comparisons","IAV"),
-#                PerfStat = stat, TargetFs = c(0,0.05,0.074,0.1,0.108,0.2),
-#                lStatPer = lStatPer, Blim = OM$refPts$Blim)}
-
-# df %>%
-#   filter(PerfStat == "SSB") %>%
-#   mutate(Ftgt = as.numeric(Ftgt)) %>%
-#   # mutate(Period = factor(Period, levels=c("ST","MT","LT"))) %>%
-#   ggplot(aes(x=Ftgt, y=Val, group=Period2)) +
-#   theme_bw() +
-#   geom_bar(stat="identity") +
-#   facet_grid(Label ~ Period2)
-
-# plot by variable
-# df %>%
-#   group_by(RunRef, Label, Ftgt, PerfStat, Period, Period2) %>% 
-#   summarize(Val = mean(Val, na.rm=TRUE)) %>% 
-#   ungroup() %>% 
-#   mutate(flag = ifelse(Period == "CU", TRUE, FALSE)) %>% 
-# 
-#   # filter(Label=="ICES AR") %>% 
-#   mutate(Ftgt = as.numeric(Ftgt)) %>%
-#   ggplot(aes(x=Period2, y=Val, group=Ftgt)) +
-#   theme_bw() +
-#   theme(axis.text.x = element_text(angle = 90, vjust=0.5)) +
-#   theme(legend.position = "none") +
-#   geom_bar(aes(fill=flag), stat="identity") +
-#   scale_fill_manual(values = c('#595959', 'red')) +
-#   labs(x="", y="value") +
-#   facet_grid(PerfStat ~ Ftgt, scales="free_y")
-
-# df <- loadRData(file.path(Res.dir,
-#                           "WHOM_SS_OM2.2_MP2.2_1000_20", 
-#                           "WHOM_SS_OM2.2_MP2.2_1000_20_eqSim_df.RData")) %>% 
-#   mutate(RunRef = paste0("WHOM_SS_", RunRef))
-# save(df,file = file.path(Res.dir,
-#                          "WHOM_SS_OM2.2_MP2.2_1000_20", 
-#                          "WHOM_SS_OM2.2_MP2.2_1000_20_eqSim_df.RData"))
+df %>% 
+  filter(PerfStat %in% c("recovblim", "recovbpa")) %>%
+  ggplot(aes(x=year, y=value)) +
+  theme_publication() +
+  geom_line(aes(colour=ac(Ftgt))) +
+  facet_wrap(~PerfStat)
 
 
-# t <- bind_rows(
-#   loadRData(file.path(Res.dir,
-#                       "WHOM_SS_OM2.2_MP2.1_1000_20", 
-#                       "WHOM_SS_OM2.2_MP2.1_1000_20_eqSim_df.RData")),
-#   loadRData(file.path(Res.dir,
-#                       "WHOM_SS_OM2.2_MP2.2_1000_20", 
-#                       "WHOM_SS_OM2.2_MP2.2_1000_20_eqSim_df.RData")) ) %>% 
-#   
-# #  separate(RunRef, into=c("stock","assess", "OM","MP","niters","nyrs"), sep="_") %>% 
-#   
-#   group_by(stock, assess, OM, MP, niters, nyrs, Label, Ftgt, PerfStat, Period, Period2) %>%
-#   summarize(Val = mean(Val, na.rm=TRUE)) %>%
-#   ungroup() %>%
-#   
-#   mutate(flag = ifelse(Period == "CU", TRUE, FALSE)) %>%
-#   mutate(niters=factor(niters, levels=c("1000"))) %>% 
-#   mutate(Ftgt = as.numeric(Ftgt)) 
 
-# t %>%
-#   # filter(PerfStat == "SSB") %>% 
-#   filter(PerfStat %in% c("SSB", "Yield","Risk3","F", "IAV")) %>% 
-#   ggplot(aes(x=Period2, y=Val, group=MP)) +
-#   theme_bw() +
-#   theme(axis.text.x = element_text(angle = 90, vjust=0.5)) +
-#   # theme(legend.position = "none") +
-#   geom_line(aes(colour=MP), size=0.8) +
-#   geom_point(aes(colour=MP), size=0.8) +
-#   # scale_fill_manual(values = c('#595959', 'red')) +
-#   labs(x="", y="value") +
-#   facet_grid(PerfStat ~ Ftgt, scales="free_y")
-
-df <- data.frame(stringsAsFactors = FALSE)
-for (i in 1:length(AllStats)) {
-  df <- 
-    df %>% 
-    bind_rows(lStats$stats[[i]]$df)
-}
-
-dfy <- data.frame(stringsAsFactors = FALSE)
-for (i in 1:length(AllStats)) {
-  dfy <- 
-    dfy %>% 
-    bind_rows(lStats$stats[[i]]$dfy)
-}
-
-  
 dfy %>%
   # loadRData(file.path(Res.dir,
   #                     "WHOM_SS_OM2.2_MP2.1_1000_20",

@@ -1,4 +1,5 @@
-fGetSettings <- function(lStatPer, SimRuns, FLStockfile, FLStockSimfile,
+fGetSettings <- function(stats, 
+                         lStatPer, SimRuns, FLStockfile, FLStockSimfile,
                          OM, MP, niters, nyr){
   
   # dfSimRuns <- SimRuns
