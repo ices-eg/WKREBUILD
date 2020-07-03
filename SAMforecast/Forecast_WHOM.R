@@ -4,7 +4,7 @@
 #################################################
 
 # Initialization ---------
-devtools::install_github("vtrijoulet/SAM/stockassessment", ref="master2") # Only to do once to install the right package
+#devtools::install_github("vtrijoulet/SAM/stockassessment", ref="master2") # Only to do once to install the right package
 
 library(stockassessment)
 library(Matrix)
@@ -42,7 +42,8 @@ TAC2019=110381
 TAC2020=83954 
 #TAC <- TAC2020 # For intermediate year
 
-F_targets <- c(0.01, seq(0.025,0.2,by=0.025))
+F_targets <- c(0.01, seq(0.05,0.15,by=0.025), 0.2)
+#F_targets <- c(0.05, 0.1)
 
 # To change between MS scenariosRW=TRUE
 RW = FALSE # random walk on recruitment
@@ -53,11 +54,19 @@ ny <- 20 # years for the forecast
 
 #nsim=5000
 nsim=1000
-seed=12345
-runName = "HCR2_SR"
+
+om = "-"
+mp = "5.1"
+assess = "sam"
+method = "samhcr"
+stock = "WHOM"
+runName = paste(method, stock,assess, om,mp,nsim,ny, sep="_")
+#runName = "HCR2_SR"
+
 FC <- list()
 dfy <- data.frame(stringsAsFactors = FALSE)
-set.seed(seed) # same seed to repeat output
+
+set.seed(12345) # same seed to repeat output
 
 for (i in 1:length(F_targets)) {
   
@@ -67,37 +76,41 @@ for (i in 1:length(F_targets)) {
   
   cat(i," ",ftgt,"\n")
   
-  FC[[i]]       <- forecast2(fit, fscale=c(1, rep(NA,ny-1)), 
-                                  catchval=c(NA, TAC2018, TAC2019, TAC2020, rep(NA,ny-4)),
-                                  fval=,rep(NA, ny),
-                                  rec.years=Ry, 
-                                  ave.years=Ay,
-                                  overwriteSelYears=Sy, 
-                                  label=runName,
-                                  nosim=nsim,deterministic=FALSE,
-                                  Fscenario=2,
-                                  MSYBtrig=c(rep(NA,4), rep(MSYBtrig,ny-4)), 
-                                  Blim=c(rep(NA,4), rep(Blim,ny-4)),
-                                  Fmsy=ftgt,
-                                  Flow=Flow, #for Fscenario= 3, 4 or 5
-                                  RW=RW,
-                                  Rdist=Rdist,
-                                  SR=SR,
-                                  SRpar=SRpar,
-                                  F.RW=F.RW )   
+  FC[[i]]       <- forecast2(fit, fscale            = c(rep(NA,ny)), 
+                                  catchval          = c(TAC2018, TAC2019, TAC2020, rep(NA,ny-3)),
+                                  fval              = rep(NA, ny),
+                                  rec.years         = Ry, 
+                                  ave.years         = Ay,
+                                  overwriteSelYears = Sy, 
+                                  label             = runName,
+                                  nosim             = nsim,
+                                  deterministic     = FALSE,
+                                  Fscenario         = 2,
+                                  MSYBtrig          = c(rep(NA,3), rep(MSYBtrig,ny-3)), 
+                                  Blim              = c(rep(NA,3), rep(Blim,ny-3)),
+                                  Fmsy              = ftgt,
+                                  Flow              = Flow, #for Fscenario= 3, 4 or 5
+                                  RW                = RW,
+                                  Rdist             = Rdist,
+                                  SR                = SR,
+                                  SRpar             = SRpar,
+                                  F.RW              = F.RW )   
   # Convert to data.frame
   for (y in 1:length(FC[[i]])) {
     for (v in names(FC[[i]][[y]])) {
       if (class(FC[[i]][[y]][[v]]) == "numeric") {
         t <- data.frame(
           value    = FC[[i]][[y]][[v]],
-          PerfStat = v,
+          perfstat = tolower(v),
           year     = as.numeric(FC[[i]][[y]]$year),
-          runName  = attr(FC[[i]],"label"),
+          runref   = runName,
           iter     = 1:nsim,
           ftgt     = ftgt,
-          RW       = RW, 
-          SR       = SR,
+          rw       = RW, 
+          sr       = SR,
+          om       = om, 
+          mp       = mp, 
+          blim     = Blim, 
           stringsAsFactors = FALSE)
         dfy <- bind_rows(dfy,t)
         #print(head(t))
@@ -172,7 +185,7 @@ for (i in 1:length(F_targets)) {
 # variable_name <- ls(FC[[scenario_number]][forecast_year][[1]]) # all names of output replicates saved in FC
 # FC[[scenario_number]][forecast_year][[1]][variable_name[1]] # to extract replicates of a specific output
 
-save(dfy,file = file.path(Res.dir,"Stats",paste0("SAM_",runName,"_dfy.Rdata")))
+save(dfy,file = file.path(Res.dir,"Stats",paste0(runName,"_dfy.Rdata")))
 
 df2 <-
   df %>% 

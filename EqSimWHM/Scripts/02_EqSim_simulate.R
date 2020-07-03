@@ -20,8 +20,8 @@
 #basic simulation settings
 #niters <- 10000
 #niters <- 1000
-niters <- 100
-nyr <- 20
+niters <- 1000
+nyr <- 50
 
 # simulation periods
 per1 <- 5
@@ -183,7 +183,8 @@ SRR$stk <- WHOM.WGWIDE2019
 #for (ii in 1:10001){lWHM[[ii]]<-FLCore::setPlusGroup(lWHM[[ii]],15)}
 #save(lWHM,file=file.path(RData.dir,"MSE_WGWIDE19_FLStocks_10k15PG.RData"))
 
-load(file=file.path(RData.dir,"MSE_WGWIDE19_FLStocks_10k15PG.RData"))
+#load(file=file.path(RData.dir,"MSE_WGWIDE19_FLStocks_10k15PG.RData"))
+load(file=file.path(dropbox.dir,"MSE_WGWIDE19_FLStocks_10k15PG.RData"))
 FLStockSimfile <- "MSE_WGWIDE19_FLStocks_10k15PG.RData"
 
 
@@ -263,6 +264,8 @@ iters <- c(6109,8929,9359,7959,3037,899,1237,8485,3811,4445,3232,9431,8336,5602,
            3500,8118,4657,6834,3240,5259,3585,6721,3306,3475,1185,5189,3352,5551,5503,4197,9383,3097,2082,996,623,6238,8272,
            2410,2847,8664,8570,6839,363,194,4919,8577,1232,5751,975,8955,8031,5559,2491,2968,1088,3102,1878,5005,889,5041,
            5121,4910,7550,1073,7392,2334,3308,5191,9061,3511,4151)
+
+if (niters<1000) {iters <- sample(iters,niters,replace=FALSE)}
 
 lWHM.10k <- lWHM
 lWHM <- lWHM.10k[iters]

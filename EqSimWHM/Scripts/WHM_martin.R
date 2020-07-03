@@ -64,16 +64,16 @@ Base.dir <- file.path(Drive,"GIT")
 
 
 # WHOM SS
-# stock          <- "WHOM"
-# assess         <- "SS"
-# FLStockfile    <- "WGWIDE19.RData"
-# FLStockSimfile <- "MSE_WGWIDE19_FLStocks_15PG.RData"   # "MSE_WGWIDE19_FLStocks_10k.RData"
+stock          <- "WHOM"
+assess         <- "SS"
+FLStockfile    <- "WGWIDE19.RData"
+FLStockSimfile <- "MSE_WGWIDE19_FLStocks_15PG.RData"   # "MSE_WGWIDE19_FLStocks_10k.RData"
 
 # WHOM SAM
-stock          <- "WHOM"
-assess         <- "SAM"
-FLStockfile    <- "WGWIDE19_SAM.RData"
-FLStockSimfile <- "MSE_WGWIDE19_FLStocks_SAM1000.RData" #"MSE_WGWIDE19_FLStocks_SAM.RData"
+# stock          <- "WHOM"
+# assess         <- "SAM"
+# FLStockfile    <- "WGWIDE19_SAM.RData"
+# FLStockSimfile <- "MSE_WGWIDE19_FLStocks_SAM1000.RData" #"MSE_WGWIDE19_FLStocks_SAM.RData"
 
 # MAC SAM
 #FLStockfile    <- "neaMacWGWIDE2019.RData"
@@ -111,7 +111,7 @@ dropbox.dir <- file.path(get_dropbox(), "HOM FG", "05. Data","RData")
 
 #basic simulation settings
 #niters <- 10000
-niters <- 1000
+niters <- 100
 #niters <- 100
 nyr <- 20
 
@@ -138,9 +138,27 @@ OM <- OM2.3   #WGWIDE 2019 SAM + ref points, stochastic weights, selection
 #MP <- MP1.7   #10% IAV Test
 #MP <- MP1.8   #10%/20% asymmetric IAV Test
 #MP <- MP1.9   #0%/10% asymmetric IAV Test
-#MP <- MP2.0
-MP <- MP2.1   #ICES HCR, no IAV control, no minimum TAC, with assessment/advice error
-#MP <- MP2.2   #ICES HCR, IAV control 20/25%, no minimum TAC, with assessment/advice error
+
+#MP <- MP5.00    #Constant F
+#MP <- MP5.01   #Const , min TAC = 50kt
+#MP <- MP5.02   #Const , 20% IAV
+#MP <- MP5.03   #Const , 20% IAV, only above Btrigger
+
+#MP <- MP5.10    #ICES AR
+#MP <- MP5.11   #ICES AR, min TAC = 50kt
+MP <- MP5.12   #ICES AR, 20% IAV
+#MP <- MP5.13   #ICES AR, 20% IAV, only above Btrigger
+
+#MP <- MP5.2    #Double BP
+#MP <- MP5.21   #Double BP, min TAC = 50kt
+#MP <- MP5.22   #Double BP, 20% IAV
+#MP <- MP5.23   #Double BP, 20% IAV, only above Btrigger
+
+#test
+#MP <- MP99
+#MP <- MP98
+
+
 
 runName <- paste(stock,assess,OM$code,MP$code,niters,nyr,sep="_")
 

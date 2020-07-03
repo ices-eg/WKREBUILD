@@ -394,7 +394,7 @@ eqsim_run <- function(fit,
       IAVDec <- fNAifEmpty(dfExplConstraints[dfExplConstraints$YearNum==1 & toupper(dfExplConstraints$Type)=="IAVDEC",]$Val)
       
       tgt <- rep(NA,Nmod)
-      incs <- decs <- 0
+      incs1 <- decs1 <- incs <- decs <- 0
       
       #increases
       if (!is.na(IAVInc)){
@@ -427,6 +427,7 @@ eqsim_run <- function(fit,
       }
       
       #message
+      icesTAF::msg(paste0(incs1,"/",decs1," IAV capped increases/decreases all SSB in year 1"))
       icesTAF::msg(paste0(incs,"/",decs," IAV capped increases/decreases set in year 1"))
       
       # if (!is.na(IAV)){
@@ -538,6 +539,8 @@ eqsim_run <- function(fit,
     #AC - will need to reinstate above code if ssb_lag>0 but OK for now
     for (j in (2+ssb_lag):Nrun) {
       
+      #cat("Year=",j,"\n")
+      
       #roll population forward
       #recruits
       Ny[1,j,] <- 0
@@ -637,7 +640,7 @@ eqsim_run <- function(fit,
         
         #new target when restrictions are included
         tgt <- rep(NA,Nmod)
-        incs <- decs <- 0
+        incs1 <- decs1 <- incs <- decs <- 0
         
         #increases
         if (!is.na(IAVInc)){
@@ -660,7 +663,10 @@ eqsim_run <- function(fit,
             #adjust targets to limit increases
             incs1 <- sum((Yld2/TAC[j-1,]) > (1+IAVInc), na.rm=TRUE)
             incs <- sum((Yld2[ssby.obs[j,]>Btrigger]/TAC[j-1,ssby.obs[j,]>Btrigger]) > (1+IAVInc), na.rm=TRUE)
-            tgt[((Yld2/TAC[j-1,]) > (1+IAVInc)) & (ssby.obs[j,]>Btrigger)] <- (1+IAVInc)*TAC[j-1,((Yld2/TAC[j-1,]) > (1+IAVInc)) & (ssby.obs[j,]>Btrigger)]
+            ratio <- Yld2/TAC[j-1,]
+            ratio[TAC[j-1,]==0] <- 0
+            #tgt[((Yld2/TAC[j-1,]) > (1+IAVInc)) & (ssby.obs[j,]>Btrigger)] <- (1+IAVInc)*TAC[j-1,((Yld2/TAC[j-1,]) > (1+IAVInc)) & (ssby.obs[j,]>Btrigger)]
+            tgt[(ratio > (1+IAVInc)) & (ssby.obs[j,]>Btrigger)] <- (1+IAVInc)*TAC[j-1,(ratio > (1+IAVInc)) & (ssby.obs[j,]>Btrigger)]
           }
           
                     
@@ -684,16 +690,22 @@ eqsim_run <- function(fit,
             #adjust targets to limit decreases
             decs1 <- sum((Yld2/TAC[j-1,]) < (1-IAVDec), na.rm=TRUE)
             decs <- sum((Yld2[ssby.obs[j,]>Btrigger]/TAC[j-1,ssby.obs[j,]>Btrigger]) < (1-IAVDec), na.rm=TRUE)
-            tgt[((Yld2/TAC[j-1,]) < (1-IAVDec)) & (ssby.obs[j,]>Btrigger)] <- (1-IAVDec)*TAC[j-1,((Yld2/TAC[j-1,]) < (1-IAVDec)) & (ssby.obs[j,]>Btrigger)]
+            ratio <- Yld2/TAC[j-1,]
+            ratio[TAC[j-1,]==0] <- 0
+            tgt[(ratio < (1-IAVDec)) & (ssby.obs[j,]>Btrigger)] <- (1-IAVDec)*TAC[j-1,(ratio < (1-IAVDec)) & (ssby.obs[j,]>Btrigger)]
+            #tgt[((Yld2/TAC[j-1,]) < (1-IAVDec)) & (ssby.obs[j,]>Btrigger)] <- (1-IAVDec)*TAC[j-1,((Yld2/TAC[j-1,]) < (1-IAVDec)) & (ssby.obs[j,]>Btrigger)]
           }
           
         }
+        
+        #if (j==4){browser()}
         
         #message
         icesTAF::msg(paste0(incs1,"/",decs1," IAV capped increases/decreases all SSB ",j))
         icesTAF::msg(paste0(incs,"/",decs," IAV capped increases/decreases set in year ",j))
         
-        if (sum(is.na(tgt)) < Nmod) {
+        #if (sum(is.na(tgt)) < Nmod) {
+        if (sum(is.na(tgt)) < Nmod & sum(is.na(tgt))>0) {
           
           #find the new F for those targets to be adjusted
           # Fmgmt[j,!is.na(tgt)] <- fFindF(N = Ny[,j,!is.na(tgt),drop=FALSE], CW = Wy[,j,!is.na(tgt),drop=FALSE], 
@@ -712,7 +724,13 @@ eqsim_run <- function(fit,
           Fy[,j,] <- rep(Fnext, each = ages) * sel[,rsamsel[j,]]
           Cy[,j,] <- Ny[,j,] * Fy[,j,] / (Fy[,j,] + M[,rsam[j,]]) * (1 - exp(-Fy[,j,] - M[,rsam[j,]]))
           Yld3 <- Yld2
-          Yld3[!is.na(tgt)] <- apply(Cy[,j,!is.na(tgt)]*Wy[,j,!is.na(tgt)], MARGIN=2, FUN="sum")
+          
+          if (sum(!is.na(tgt))==1){
+            Yld3[!is.na(tgt)] <- sum(Cy[,j,!is.na(tgt)]*Wy[,j,!is.na(tgt)])} 
+          else {
+            Yld3[!is.na(tgt)] <- apply(Cy[,j,!is.na(tgt)]*Wy[,j,!is.na(tgt)], MARGIN=2, FUN="sum")
+          }
+            
           TAC[j,!is.na(tgt)] <- tgt[!is.na(tgt)]
           
         } else {
