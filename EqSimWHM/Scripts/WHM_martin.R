@@ -111,9 +111,9 @@ dropbox.dir <- file.path(get_dropbox(), "HOM FG", "05. Data","RData")
 
 #basic simulation settings
 #niters <- 10000
-niters <- 100
+niters <- 1000
 #niters <- 100
-nyr <- 20
+nyr <- 23
 
 # simulation periods
 per1 <- 5
@@ -144,7 +144,7 @@ OM <- OM2.2   #WGWIDE 2019, stochastic weights, selection
 #MP <- MP5.02   #Const , 20% IAV
 #MP <- MP5.03   #Const , 20% IAV, only above Btrigger
 
-MP <- MP5.10    #ICES AR
+#MP <- MP5.10    #ICES AR
 #MP <- MP5.11   #ICES AR, min TAC = 50kt
 #MP <- MP5.12   #ICES AR, 20% IAV
 #MP <- MP5.13   #ICES AR, 20% IAV, only above Btrigger
@@ -158,9 +158,6 @@ MP <- MP5.10    #ICES AR
 #MP <- MP99
 #MP <- MP98
 
-
-
-runName <- paste(stock,assess,OM$code,MP$code,niters,nyr,sep="_")
 
 # set up the OM =========================================================================================================
 
@@ -184,9 +181,9 @@ set.seed(1)
 SRR <- eqsr_fit(window(FLS,1995,2018), remove.years = c(2018), nsamp=niters, models = c("SegregBlim"))
 # SRR <- eqsr_fit(FLS, nsamp=niters, remove.years = c(2018), models = c("SegregBlim"))
 
-emf(file = file.path(Res.dir,"SRR.emf"), width = 7, height = 7)
-eqsr_plot(SRR)
-dev.off()
+# emf(file = file.path(Res.dir,"SRR.emf"), width = 7, height = 7)
+# eqsr_plot(SRR)
+# dev.off()
 
 #stock/catch weights (SS3 models catch/stock weights at age as time invariant)
 dfSW <- readr::read_delim(file = file.path(Data.dir,"StockWeights.dat"),delim=",")
@@ -202,23 +199,23 @@ dfSAWeights = data.frame(Age = seq(0,15), CW = rowMeans(catch.wt(FLS)), SW = row
 dfSAWeights <- within(dfSAWeights, Age <- factor(Age, levels = as.character(seq(0,15))))
 
 #quick look, comparing with the assessment ouput
-gCW <- ggplot(data = dfWeights, mapping = aes(x=Year,y=CW)) +
-  geom_line(aes(group=Age)) +
-  geom_hline(data = dfSAWeights, mapping=aes(yintercept=CW), col="red") + 
-  facet_wrap(~Age) + ylab("Catch Weight")
+# gCW <- ggplot(data = dfWeights, mapping = aes(x=Year,y=CW)) +
+#   geom_line(aes(group=Age)) +
+#   geom_hline(data = dfSAWeights, mapping=aes(yintercept=CW), col="red") + 
+#   facet_wrap(~Age) + ylab("Catch Weight")
 
-emf(file = file.path(Res.dir,"CW.emf"), width = 7, height = 7)
-print(gCW)
-dev.off()
+# emf(file = file.path(Res.dir,"CW.emf"), width = 7, height = 7)
+# print(gCW)
+# dev.off()
 
-gSW <- ggplot(data = dfWeights, mapping = aes(x=Year,y=SW)) +
-  geom_line(aes(group=Age)) +
-  geom_hline(data = dfSAWeights, mapping=aes(yintercept=SW), col="red") + 
-  facet_wrap(~Age) + ylab("Stock Weight")
+# gSW <- ggplot(data = dfWeights, mapping = aes(x=Year,y=SW)) +
+#   geom_line(aes(group=Age)) +
+#   geom_hline(data = dfSAWeights, mapping=aes(yintercept=SW), col="red") + 
+#   facet_wrap(~Age) + ylab("Stock Weight")
 
-emf(file = file.path(Res.dir,"SW.emf"), width = 7, height = 7)
-print(gSW)
-dev.off()
+# emf(file = file.path(Res.dir,"SW.emf"), width = 7, height = 7)
+# print(gSW)
+# dev.off()
 
 # read_docx() %>%
 #   body_add("Catch Weights") %>%
@@ -232,7 +229,7 @@ dev.off()
 #   print(target = file.path(Res.dir,"Graphics.docx"))
   
 #remove temp graphics
-sapply(list.files(path=file.path(Res.dir), pattern=".emf", full.names=TRUE), file.remove)
+# sapply(list.files(path=file.path(Res.dir), pattern=".emf", full.names=TRUE), file.remove)
 
 #assign the stock and catch weights into the assessment FLStock object
 tSW <- FLQuant(t(dfSW[,-1]), dim=dim(stock.wt(FLS)), dimnames=dimnames(stock.wt(FLS)))
@@ -249,297 +246,279 @@ FLSs <- loadRData(file.path(RData.dir,FLStockSimfile))
 #add required number of stochastic FLStocks to FIT object
 SRR$stks <- FLSs[as.character(seq(1,niters))]
 
-# Define MP ================================================================================================================
+# Define MP's ================================================================================================================
 
-#start,end,vectors of observation and simulation years
-#simulation starts in assessment terminal year
-minObsYear <- range(SRR$stk)["minyear"]
-maxObsYear <- range(SRR$stk)["maxyear"]
-obsYears <- ac(seq(minObsYear,maxObsYear))
-yStart <- as.numeric(maxObsYear)
-yEnd <- yStart + nyr - 1
-simYears <- ac(seq(yStart,yEnd))
+for (mp in c("MP5.00","MP5.01","MP5.10","MP5.11","MP5.20","MP5.21")) {
 
-#exploitation constraints
-#2018 catch known, 2019 as assumed during WGWIDE 2019, 2020 as advised
-dfExplConstraints <- data.frame("Type" = c("Catch","Catch","Catch"), 
-                                "YearNum" = c("1","2","3"),
-                                "Val" = c(101682,110381,83954), 
-                                stringsAsFactors = FALSE)
-
-#min/max TAC
-if (!is.na(MP$minTAC)) {
-  dfExplConstraints <- dplyr::bind_rows(dfExplConstraints,
-                                        data.frame("Type" = "MinTAC",
-                                                   "YearNum" = "all",
-                                                   "Val" = MP$minTAC,
-                                                   stringsAsFactors = FALSE))
-}
-
-#min/max TAC
-if (!is.na(MP$maxTAC)) {
-  dfExplConstraints <- dplyr::bind_rows(dfExplConstraints,
-                                        data.frame("Type" = "MaxTAC",
-                                                   "YearNum" = "all",
-                                                   "Val" = MP$maxTAC,
-                                                   stringsAsFactors = FALSE))
-}
-
-#IAV
-if (!any(is.na(MP$TAC_IAV))) {
-  if (length(MP$TAC_IAV)==2){
-#  dfExplConstraints <- dplyr::bind_rows(dfExplConstraints,
-#                                        data.frame("Type" = "IAV",
-#                                                   "YearNum" = "all",
-#                                                   "Val" = MP$TAC_IAV,
-#                                                   stringsAsFactors = FALSE))
-  dfExplConstraints <- dplyr::bind_rows(dfExplConstraints,
-                                        data.frame("Type" = c("IAVInc","IAVDec"),
-                                                   "YearNum" = c("all","all"),
-                                                   "Val" = c(MP$TAC_IAV[1],MP$TAC_IAV[2]),
-                                                   stringsAsFactors = FALSE))
-  } else {
-    stop("IAV needs to be vector of length 2 (limit on increase, limit on decrease)")
-    #assume same for both
+  MP <- get(mp)
+  
+  invisible(gc())
+  
+  runName <- paste(stock,assess,OM$code,MP$code,niters,nyr,sep="_")
+  
+  #start,end,vectors of observation and simulation years
+  #simulation starts in assessment terminal year
+  minObsYear <- range(SRR$stk)["minyear"]
+  maxObsYear <- range(SRR$stk)["maxyear"]
+  obsYears <- ac(seq(minObsYear,maxObsYear))
+  yStart <- as.numeric(maxObsYear)
+  yEnd <- yStart + nyr - 1
+  simYears <- ac(seq(yStart,yEnd))
+  
+  #exploitation constraints
+  #2018 catch known, 2019 as assumed during WGWIDE 2019, 2020 as advised
+  dfExplConstraints <- data.frame("Type" = c("Catch","Catch","Catch"), 
+                                  "YearNum" = c("1","2","3"),
+                                  "Val" = c(101682,110381,83954), 
+                                  stringsAsFactors = FALSE)
+  
+  #min/max TAC
+  if (!is.na(MP$minTAC)) {
     dfExplConstraints <- dplyr::bind_rows(dfExplConstraints,
-                                          data.frame("Type" = c("IAVInc","IAVDec"),
-                                                     "YearNum" = c("all","all"),
-                                                     "Val" = c(MP$TAC_IAV[1],MP$TAC_IAV[1]),
+                                          data.frame("Type" = "MinTAC",
+                                                     "YearNum" = "all",
+                                                     "Val" = MP$minTAC,
                                                      stringsAsFactors = FALSE))
   }
-}
-
-#statistical periods for reporting
-lStatPer <- lStatPer2 <- list()
-#create a list for the output statistical periods
-#annual statistics, for each historic and simulated year
-for (y in seq(minObsYear,yEnd)){lStatPer[[ac(y)]]<-c(y,y)}
-for (y in seq(maxObsYear+1,yEnd)){lStatPer2[[ac(y)]]<-c(y,y)}
-
-#Current (yConstraint years), Short (first 5 after constraints), Medium (next 5) and Long Term (next 20)
-yConstraints <- 3
-lStatPer[['CU']] <- lStatPer2[['CU']] <- c(yStart, yStart+yConstraints-1)
-lStatPer[['ST']] <- c(yStart+yConstraints,yStart+yConstraints+(per1-1))
-lStatPer2[['ST']] <- c(yStart+yConstraints+1,yStart+yConstraints+(per1-1))
-lStatPer[['MT']] <- lStatPer2[['MT']] <- c(yStart+yConstraints+per1,yStart+yConstraints+(per1+per2-1))
-lStatPer[['LT']] <- lStatPer2[['LT']] <- c(yStart+yConstraints+per1+per2,yStart+nyr-1)
-
-
-sim <- eqsim_run(fit = SRR, 
-                 bio.years = OM$BioYrs, 
-                 bio.const = OM$BioConst,
-                 sel.years = OM$SelYrs, 
-                 sel.const = OM$SelConst,
-                 Fscan = fGetValsScan(MP$F_target,OM$refPts), 
-                 Fcv = MP$Obs$cvF, 
-                 Fphi = MP$Obs$phiF,
-                 SSBcv = MP$Obs$cvSSB, 
-                 SSBphi = MP$Obs$phiSSB,
-                 Blim = OM$refPts$Blim,
-                 Nrun = nyr, 
-                 calc.RPs = FALSE,
-                 dfExplConstraints = dfExplConstraints, 
-                 Btrigger = fGetValsScan(MP$B_trigger,OM$refPts),
-                 HCRName = paste0("fHCR_",MP$HCRName))
-
-SimRuns <- sim$simStks
-
-#save ouptut
-
-#create a folder for the output and save simRuns data
-dir.create(path = file.path(Res.dir,runName), showWarnings = TRUE, recursive = TRUE)
-save(SimRuns,file = file.path(Res.dir,runName,paste0(runName,"_SimRuns.RData")))
-
-#Write the output to dropbox dir (necessary to save entire image?)
-#save.image(file = file.path(dropbox.dir,paste0(runName,"_Workspace.Rdata")))
-
-#Percentiles to report, number of worm lines for plots
-percentiles = c(0.025,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.975)
-numWorm <- 100
   
-#Create list objects to store stocks, stats
-Stocks <- AllStats <- list()
-#create a template by extending the time frame out to the final year of the simulation
-stockTemplate <- window(SRR$stk, end=yEnd)
+  #min/max TAC
+  if (!is.na(MP$maxTAC)) {
+    dfExplConstraints <- dplyr::bind_rows(dfExplConstraints,
+                                          data.frame("Type" = "MaxTAC",
+                                                     "YearNum" = "all",
+                                                     "Val" = MP$maxTAC,
+                                                     stringsAsFactors = FALSE))
+  }
   
-#set the maturity, natural mortality and f/m proportions
-mat(stockTemplate)[,simYears] <- mat(stockTemplate)[,ac(yStart-1)]
-m(stockTemplate)[,simYears] <- m(stockTemplate)[,ac(yStart-1)]
-m.spwn(stockTemplate)[,simYears] <- m.spwn(stockTemplate)[,ac(yStart-1)]
-harvest.spwn(stockTemplate)[,simYears] <- harvest.spwn(stockTemplate)[,ac(yStart-1)]
-#quick look
-#plot(stockTemplate)
-  
-#extend object to store neessary number of iterations
-stockTemplate <- FLCore::propagate(stockTemplate,niters)
-
-#populate each stock object
-#year dimension is trimmed to the actual simulation period (may be longer depending on HCR implemented)
-# ii <- "0.1"
-for (ii in names(SimRuns)) {
-  
-  cat("Calculating statistics for run with f =",ii,"\n")
-  
-  Stocks[[ii]] <- stockTemplate
-  stock.n(Stocks[[ii]])[,simYears,,,,] <- SimRuns[[ii]]$N[,1:(yEnd-yStart+1),]
-  harvest(Stocks[[ii]])[,simYears,,,,] <- SimRuns[[ii]]$F[,1:(yEnd-yStart+1),]
-  catch.n(Stocks[[ii]])[,simYears,,,,] <- SimRuns[[ii]]$C[,1:(yEnd-yStart+1),]
-  catch.wt(Stocks[[ii]])[,simYears,,,,] <- SimRuns[[ii]]$catW[,1:(yEnd-yStart+1),]
-  #landings.n(Stocks[[ii]])[,simYears,,,,] <- SimRuns[[ii]]$L[,1:(yEnd-yStart+1),]
-  landings.n(Stocks[[ii]])[,simYears,,,,] <- SimRuns[[ii]]$C[,1:(yEnd-yStart+1),]
-  stock.wt(Stocks[[ii]])[,simYears,,,,] <- SimRuns[[ii]]$stkW[,1:(yEnd-yStart+1),]
-  mat(Stocks[[ii]])[,simYears,,,,] <- SimRuns[[ii]]$Mat[,1:(yEnd-yStart+1),]
-  discards.wt(Stocks[[ii]]) <- catch.wt(Stocks[[ii]])
-  landings.wt(Stocks[[ii]]) <- catch.wt(Stocks[[ii]])
-  discards.n(Stocks[[ii]])[,simYears,,,,] <- 0
-  catch(Stocks[[ii]])[,simYears] <- apply(catch.n(Stocks[[ii]])[,simYears]*catch.wt(Stocks[[ii]])[,simYears],2:6,sum)
-  landings(Stocks[[ii]])[,simYears] <- apply(landings.n(Stocks[[ii]])[,simYears]*landings.wt(Stocks[[ii]])[,simYears],2:6,sum)
-  discards(Stocks[[ii]])[,simYears] <- apply(discards.n(Stocks[[ii]])[,simYears]*discards.wt(Stocks[[ii]])[,simYears],2:6,sum)
-  
-  #statistics
-  Stats <- list()
-    
-  #store the operating model and harvest rules
-  Stats[["OM"]] <- OM
-  Stats[["MP"]] <- MP
-  Stats[["simYears"]] <- as.integer(simYears)
-  Stats[["obsYears"]] <- as.integer(obsYears)
-  
-  #SSB
-  SSB.true <- ssb(Stocks[[ii]])
-  Stats[["SSB"]][["val"]] <- fStatPercs(SSB.true, lStatPer=lStatPer)
-  Stats[["SSB"]][["worm"]] <- FLCore::iter(SSB.true,1:numWorm)
-
-  #SSB error
-  tSSB <- FLQuant(SimRuns[[ii]]$SSBratio[1:(yEnd-yStart+1),],
-                  dim = c(1,yEnd-yStart+1,1,1,1,niters),
-                  dimnames = list(age="all",year=ac(seq(yStart,yEnd)),unit="unique",season="all",
-                                  area="unique",iter=ac(seq(1,niters))))
-
-  Stats[["SSBratio"]][["val"]] <- fStatPercs(tSSB, lStatPer = lStatPer)
-  Stats[["SSBratio"]][["worm"]] <- FLCore::iter(tSSB,1:numWorm)
-
-  SSB.dev <- SimRuns[[ii]][["SSBdev"]]
-  Stats[["SSB.dev"]] <- SSB.dev
-
-  #FBar - realised F
-  FBar <- fbar(Stocks[[ii]])
-  Stats[["FBar"]][["val"]] <- fStatPercs(FBar, lStatPer=lStatPer)
-  Stats[["FBar"]][["worm"]] <- FLCore::iter(FBar,1:numWorm)
-
-  #FBar error
-  tFBar <- FLQuant(SimRuns[[ii]]$Fratio[1:(yEnd-yStart+1),],
-                  dim = c(1,yEnd-yStart+1,1,1,1,niters),
-                  dimnames = list(age="all",year=ac(seq(yStart,yEnd)),unit="unique",season="all",
-                                  area="unique",iter=ac(seq(1,niters))))
-
-  #browser()
-  Stats[["Fratio"]][["val"]] <- fStatPercs(tFBar, lStatPer = lStatPer)
-  Stats[["Fratio"]][["worm"]] <- FLCore::iter(tFBar,1:numWorm)
-
-  Fdev <- SimRuns[[ii]][["Fdev"]]
-  Stats[["Fdev"]] <- Fdev
-
-  #yield
-  Catch <- catch(Stocks[[ii]])
-  Stats[["Catch"]][["val"]] <- fStatPercs(Catch, lStatPer=lStatPer)
-  Stats[["Catch"]][["worm"]] <- FLCore::iter(Catch,1:numWorm)
-
-  #TAC
-  tTAC <- FLQuant(SimRuns[[ii]]$TAC[1:(yEnd-yStart+1),],
-                  dim = c(1,yEnd-yStart+1,1,1,1,niters),
-                  dimnames = list(age="all",year=ac(seq(yStart,yEnd)),unit="unique",season="all",
-                                  area="unique",iter=ac(seq(1,niters))))
-
-  Stats[["TAC"]][["val"]] <- fStatPercs(tTAC, lStatPer = lStatPer)
-  Stats[["TAC"]][["worm"]] <- FLCore::iter(tTAC,1:numWorm)
-
   #IAV
-  IAV <- abs(1-Catch[,as.character(seq(yStart+1,yEnd))]/Catch[,as.character(seq(yStart,yEnd-1))])
-  #replace Inf with NA (NA results from comparing with zero catch)
-  IAV <- ifelse(is.finite(IAV),IAV,NA)
+  if (!any(is.na(MP$TAC_IAV))) {
+    if (length(MP$TAC_IAV)==2){
+      #  dfExplConstraints <- dplyr::bind_rows(dfExplConstraints,
+      #                                        data.frame("Type" = "IAV",
+      #                                                   "YearNum" = "all",
+      #                                                   "Val" = MP$TAC_IAV,
+      #                                                   stringsAsFactors = FALSE))
+      dfExplConstraints <- dplyr::bind_rows(dfExplConstraints,
+                                            data.frame("Type" = c("IAVInc","IAVDec"),
+                                                       "YearNum" = c("all","all"),
+                                                       "Val" = c(MP$TAC_IAV[1],MP$TAC_IAV[2]),
+                                                       stringsAsFactors = FALSE))
+    } else {
+      stop("IAV needs to be vector of length 2 (limit on increase, limit on decrease)")
+      #assume same for both
+      dfExplConstraints <- dplyr::bind_rows(dfExplConstraints,
+                                            data.frame("Type" = c("IAVInc","IAVDec"),
+                                                       "YearNum" = c("all","all"),
+                                                       "Val" = c(MP$TAC_IAV[1],MP$TAC_IAV[1]),
+                                                       stringsAsFactors = FALSE))
+    }
+  }
   
-  Stats[["IAV"]][["val"]] <- fStatPercs(IAV, lStatPer = lStatPer2)
-  Stats[["IAV"]][["worm"]] <- FLCore::iter(IAV,1:numWorm)
-
-  #IAV increases/decreases
-  IAVup <- IAVdown <- IAVupdown <- Catch[,as.character(seq(yStart+1,yEnd))]/Catch[,as.character(seq(yStart,yEnd-1))] - 1
-  IAVup[IAVup<0] <- NA
-  IAVdown[IAVdown>0] <- NA
+  #statistical periods for reporting
+  lStatPer <- lStatPer2 <- list()
+  #create a list for the output statistical periods
+  #annual statistics, for each historic and simulated year
+  for (y in seq(minObsYear,yEnd)){lStatPer[[ac(y)]]<-c(y,y)}
+  for (y in seq(maxObsYear+1,yEnd)){lStatPer2[[ac(y)]]<-c(y,y)}
   
-  Stats[["IAVupdown"]][["worm"]] <- FLCore::iter(IAVupdown,1:numWorm)
-  Stats[["IAVup"]][["val"]] <- fStatPercs(IAVup, lStatPer = lStatPer2)
-  Stats[["IAVdown"]][["val"]] <- fStatPercs(IAVdown, lStatPer = lStatPer2)
+  #Current (yConstraint years), Short (first 5 after constraints), Medium (next 5) and Long Term (next 20)
+  yConstraints <- 3
+  lStatPer[['CU']] <- lStatPer2[['CU']] <- c(yStart, yStart+yConstraints-1)
+  lStatPer[['ST']] <- c(yStart+yConstraints,yStart+yConstraints+(per1-1))
+  lStatPer2[['ST']] <- c(yStart+yConstraints+1,yStart+yConstraints+(per1-1))
+  lStatPer[['MT']] <- lStatPer2[['MT']] <- c(yStart+yConstraints+per1,yStart+yConstraints+(per1+per2-1))
+  lStatPer[['LT']] <- lStatPer2[['LT']] <- c(yStart+yConstraints+per1+per2,yStart+nyr-1)
   
-  #Recruitment
-  Rec <- rec(Stocks[[ii]])
-  Stats[["Rec"]][["val"]] <- fStatPercs(Rec, lStatPer=lStatPer)
-  Stats[["Rec"]][["worm"]] <- FLCore::iter(Rec,1:numWorm)
-
-  #probability that SSB is below RP (should this be true or observed SSB?)
-  Stats[["pBlim"]][["val"]] <- fStatRisk(SSB = SSB.true, RP = OM$refPts$Blim, lStatPer = lStatPer)
-  Stats[["pBpa"]][["val"]] <- fStatRisk(SSB = SSB.true, RP = OM$refPts$Bpa, lStatPer = lStatPer)
-  Stats[["pExt"]][["val"]] <- fStatExtinct(SSB = SSB.true, depletion=0.01, firstYear = maxObsYear)
   
-  # Stats[["df"]]  <- fsummary_df(
-  #   run=runName, ftgt = ii, simRuns = simRuns,
-  #   Res.dir = Res.dir, Plot.dir = Plot.dir,
-  #   lStatPer = lStatPer, simYears = simYears, xlab = MP$xlab,
-  #   Blim = OM$refPts$Blim, 
-  #   Fbarrange=c(range(FLS)[["minfbar"]], range(FLS)[["maxfbar"]])) 
+  sim <- eqsim_run(fit = SRR, 
+                   bio.years = OM$BioYrs, 
+                   bio.const = OM$BioConst,
+                   sel.years = OM$SelYrs, 
+                   sel.const = OM$SelConst,
+                   Fscan = fGetValsScan(MP$F_target,OM$refPts), 
+                   Fcv = MP$Obs$cvF, 
+                   Fphi = MP$Obs$phiF,
+                   SSBcv = MP$Obs$cvSSB, 
+                   SSBphi = MP$Obs$phiSSB,
+                   Blim = OM$refPts$Blim,
+                   Nrun = nyr, 
+                   calc.RPs = FALSE,
+                   dfExplConstraints = dfExplConstraints, 
+                   Btrigger = fGetValsScan(MP$B_trigger,OM$refPts),
+                   HCRName = paste0("fHCR_",MP$HCRName))
   
-  # Stats[["dfy"]] <- fsummary_byyear_df(
-  #   run=runName, ftgt=ii, simRuns=simRuns,
-  #   Res.dir = Res.dir, Plot.dir = Plot.dir,
-  #   lStatPer = lStatPer, simYears = simYears, xlab = MP$xlab,
-  #   Blim = OM$refPts$Blim, 
-  #   Fbarrange=c(range(FLS)[["minfbar"]], range(FLS)[["maxfbar"]])) 
+  SimRuns <- sim$simStks
   
-  # Stats[["settings"]] <- fGetSettings(
-  #   lStatPer=lStatPer, SimRuns=SimRuns, 
-  #   FLStockfile=FLStockfile, FLStockSimfile=FLStockSimfile,
-  #   OM=OM, MP=MP, niters=niters, nyr=nyr)
+  #save ouptut
   
-  AllStats[[ac(ii)]] <- Stats
+  #create a folder for the output and save simRuns data
+  dir.create(path = file.path(Res.dir,runName), showWarnings = TRUE, recursive = TRUE)
+  save(SimRuns,file = file.path(Res.dir,runName,paste0(runName,"_SimRuns.RData")))
+  
+  #Write the output to dropbox dir (necessary to save entire image?)
+  #save.image(file = file.path(dropbox.dir,paste0(runName,"_Workspace.Rdata")))
+  
+  #Percentiles to report, number of worm lines for plots
+  percentiles = c(0.025,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.975)
+  numWorm <- 100
+  
+  #Create list objects to store stocks, stats
+  Stocks <- AllStats <- list()
+  #create a template by extending the time frame out to the final year of the simulation
+  stockTemplate <- window(SRR$stk, end=yEnd)
+  
+  #set the maturity, natural mortality and f/m proportions
+  mat(stockTemplate)[,simYears] <- mat(stockTemplate)[,ac(yStart-1)]
+  m(stockTemplate)[,simYears] <- m(stockTemplate)[,ac(yStart-1)]
+  m.spwn(stockTemplate)[,simYears] <- m.spwn(stockTemplate)[,ac(yStart-1)]
+  harvest.spwn(stockTemplate)[,simYears] <- harvest.spwn(stockTemplate)[,ac(yStart-1)]
+  #quick look
+  #plot(stockTemplate)
+  
+  #extend object to store neessary number of iterations
+  stockTemplate <- FLCore::propagate(stockTemplate,niters)
+  
+  #populate each stock object
+  #year dimension is trimmed to the actual simulation period (may be longer depending on HCR implemented)
+  # ii <- "0.1"
+  for (ii in names(SimRuns)) {
     
-}
+    cat("Calculating statistics for run with f =",ii,"\n")
+    
+    Stocks[[ii]] <- stockTemplate
+    stock.n(Stocks[[ii]])[,simYears,,,,] <- SimRuns[[ii]]$N[,1:(yEnd-yStart+1),]
+    harvest(Stocks[[ii]])[,simYears,,,,] <- SimRuns[[ii]]$F[,1:(yEnd-yStart+1),]
+    catch.n(Stocks[[ii]])[,simYears,,,,] <- SimRuns[[ii]]$C[,1:(yEnd-yStart+1),]
+    catch.wt(Stocks[[ii]])[,simYears,,,,] <- SimRuns[[ii]]$catW[,1:(yEnd-yStart+1),]
+    #landings.n(Stocks[[ii]])[,simYears,,,,] <- SimRuns[[ii]]$L[,1:(yEnd-yStart+1),]
+    landings.n(Stocks[[ii]])[,simYears,,,,] <- SimRuns[[ii]]$C[,1:(yEnd-yStart+1),]
+    stock.wt(Stocks[[ii]])[,simYears,,,,] <- SimRuns[[ii]]$stkW[,1:(yEnd-yStart+1),]
+    mat(Stocks[[ii]])[,simYears,,,,] <- SimRuns[[ii]]$Mat[,1:(yEnd-yStart+1),]
+    discards.wt(Stocks[[ii]]) <- catch.wt(Stocks[[ii]])
+    landings.wt(Stocks[[ii]]) <- catch.wt(Stocks[[ii]])
+    discards.n(Stocks[[ii]])[,simYears,,,,] <- 0
+    catch(Stocks[[ii]])[,simYears] <- apply(catch.n(Stocks[[ii]])[,simYears]*catch.wt(Stocks[[ii]])[,simYears],2:6,sum)
+    landings(Stocks[[ii]])[,simYears] <- apply(landings.n(Stocks[[ii]])[,simYears]*landings.wt(Stocks[[ii]])[,simYears],2:6,sum)
+    discards(Stocks[[ii]])[,simYears] <- apply(discards.n(Stocks[[ii]])[,simYears]*discards.wt(Stocks[[ii]])[,simYears],2:6,sum)
+    
+    #statistics
+    Stats <- list()
+    
+    #store the operating model and harvest rules
+    Stats[["OM"]] <- OM
+    Stats[["MP"]] <- MP
+    Stats[["simYears"]] <- as.integer(simYears)
+    Stats[["obsYears"]] <- as.integer(obsYears)
+    
+    #SSB
+    SSB.true <- ssb(Stocks[[ii]])
+    Stats[["SSB"]][["val"]] <- fStatPercs(SSB.true, lStatPer=lStatPer)
+    Stats[["SSB"]][["worm"]] <- FLCore::iter(SSB.true,1:numWorm)
+    
+    #SSB error
+    tSSB <- FLQuant(SimRuns[[ii]]$SSBratio[1:(yEnd-yStart+1),],
+                    dim = c(1,yEnd-yStart+1,1,1,1,niters),
+                    dimnames = list(age="all",year=ac(seq(yStart,yEnd)),unit="unique",season="all",
+                                    area="unique",iter=ac(seq(1,niters))))
+    
+    Stats[["SSBratio"]][["val"]] <- fStatPercs(tSSB, lStatPer = lStatPer)
+    Stats[["SSBratio"]][["worm"]] <- FLCore::iter(tSSB,1:numWorm)
+    
+    SSB.dev <- SimRuns[[ii]][["SSBdev"]]
+    Stats[["SSB.dev"]] <- SSB.dev
+    
+    #FBar - realised F
+    FBar <- fbar(Stocks[[ii]])
+    Stats[["FBar"]][["val"]] <- fStatPercs(FBar, lStatPer=lStatPer)
+    Stats[["FBar"]][["worm"]] <- FLCore::iter(FBar,1:numWorm)
+    
+    #FBar error
+    tFBar <- FLQuant(SimRuns[[ii]]$Fratio[1:(yEnd-yStart+1),],
+                     dim = c(1,yEnd-yStart+1,1,1,1,niters),
+                     dimnames = list(age="all",year=ac(seq(yStart,yEnd)),unit="unique",season="all",
+                                     area="unique",iter=ac(seq(1,niters))))
+    
+    #browser()
+    Stats[["Fratio"]][["val"]] <- fStatPercs(tFBar, lStatPer = lStatPer)
+    Stats[["Fratio"]][["worm"]] <- FLCore::iter(tFBar,1:numWorm)
+    
+    Fdev <- SimRuns[[ii]][["Fdev"]]
+    Stats[["Fdev"]] <- Fdev
+    
+    #yield
+    Catch <- catch(Stocks[[ii]])
+    Stats[["Catch"]][["val"]] <- fStatPercs(Catch, lStatPer=lStatPer)
+    Stats[["Catch"]][["worm"]] <- FLCore::iter(Catch,1:numWorm)
+    
+    #TAC
+    tTAC <- FLQuant(SimRuns[[ii]]$TAC[1:(yEnd-yStart+1),],
+                    dim = c(1,yEnd-yStart+1,1,1,1,niters),
+                    dimnames = list(age="all",year=ac(seq(yStart,yEnd)),unit="unique",season="all",
+                                    area="unique",iter=ac(seq(1,niters))))
+    
+    Stats[["TAC"]][["val"]] <- fStatPercs(tTAC, lStatPer = lStatPer)
+    Stats[["TAC"]][["worm"]] <- FLCore::iter(tTAC,1:numWorm)
+    
+    #IAV
+    IAV <- abs(1-Catch[,as.character(seq(yStart+1,yEnd))]/Catch[,as.character(seq(yStart,yEnd-1))])
+    #replace Inf with NA (NA results from comparing with zero catch)
+    IAV <- ifelse(is.finite(IAV),IAV,NA)
+    
+    Stats[["IAV"]][["val"]] <- fStatPercs(IAV, lStatPer = lStatPer2)
+    Stats[["IAV"]][["worm"]] <- FLCore::iter(IAV,1:numWorm)
+    
+    #IAV increases/decreases
+    IAVup <- IAVdown <- IAVupdown <- Catch[,as.character(seq(yStart+1,yEnd))]/Catch[,as.character(seq(yStart,yEnd-1))] - 1
+    IAVup[IAVup<0] <- NA
+    IAVdown[IAVdown>0] <- NA
+    
+    Stats[["IAVupdown"]][["worm"]] <- FLCore::iter(IAVupdown,1:numWorm)
+    Stats[["IAVup"]][["val"]] <- fStatPercs(IAVup, lStatPer = lStatPer2)
+    Stats[["IAVdown"]][["val"]] <- fStatPercs(IAVdown, lStatPer = lStatPer2)
+    
+    #Recruitment
+    Rec <- rec(Stocks[[ii]])
+    Stats[["Rec"]][["val"]] <- fStatPercs(Rec, lStatPer=lStatPer)
+    Stats[["Rec"]][["worm"]] <- FLCore::iter(Rec,1:numWorm)
+    
+    #probability that SSB is below RP (should this be true or observed SSB?)
+    Stats[["pBlim"]][["val"]] <- fStatRisk(SSB = SSB.true, RP = OM$refPts$Blim, lStatPer = lStatPer)
+    Stats[["pBpa"]][["val"]] <- fStatRisk(SSB = SSB.true, RP = OM$refPts$Bpa, lStatPer = lStatPer)
+    Stats[["pExt"]][["val"]] <- fStatExtinct(SSB = SSB.true, depletion=0.01, firstYear = maxObsYear)
+    
+    AllStats[[ac(ii)]] <- Stats
+    
+  }
+  
+  
+  settings <- fGetSettings(
+    stats = AllStats, lStatPer=lStatPer, SimRuns=SimRuns, 
+    FLStockfile=FLStockfile, FLStockSimfile=FLStockSimfile,
+    OM=OM, MP=MP, niters=niters, nyr=nyr)
+  # save(settings,file = file.path(Res.dir,runName,paste0(runName,"_eqSim_Settings.Rdata")))
+  
+  df  <- fsummary_df(
+    run=runName, simRuns = simRuns,
+    Res.dir = Res.dir, Plot.dir = Plot.dir,
+    lStatPer = lStatPer, simYears = simYears, xlab = MP$xlab,
+    OM = OM, 
+    Fbarrange=c(range(FLS)[["minfbar"]], range(FLS)[["maxfbar"]])) 
+  
+  ## Save data
+  lStats <- list(stats = AllStats, runName = runName, lStatPer = lStatPer, 
+                 OM = OM, MP = MP,
+                 settings=settings, df=df)
+  save(lStats,file = file.path(dropbox.dir,paste0(runName,"_eqSim_Stats.Rdata")))
+  
+  #generate the stock/stat trajectories
+  fPlotTraj(sim = lStats, plot.dir = file.path(Res.dir,runName), lStatPer = lStatPer)
+  suppressWarnings(fPlotSummary(sim = lStats, plot.dir = Res.dir, lStatPer = lStatPer))
+  fTabulateStats(sim = lStats, setting=settings, plot.dir = Res.dir)
+  
+  
+} # end of for loop Management procedures
 
 
-settings <- fGetSettings(
-                stats = AllStats, lStatPer=lStatPer, SimRuns=SimRuns, 
-                FLStockfile=FLStockfile, FLStockSimfile=FLStockSimfile,
-                OM=OM, MP=MP, niters=niters, nyr=nyr)
-# save(settings,file = file.path(Res.dir,runName,paste0(runName,"_eqSim_Settings.Rdata")))
-
-df  <- fsummary_df(
-  run=runName, simRuns = simRuns,
-  Res.dir = Res.dir, Plot.dir = Plot.dir,
-  lStatPer = lStatPer, simYears = simYears, xlab = MP$xlab,
-  OM = OM, 
-  Fbarrange=c(range(FLS)[["minfbar"]], range(FLS)[["maxfbar"]])) 
-
-## Save data
-lStats <- list(stats = AllStats, runName = runName, lStatPer = lStatPer, 
-               OM = OM, MP = MP,
-               settings=settings, df=df)
-save(lStats,file = file.path(dropbox.dir,paste0(runName,"_eqSim_Stats.Rdata")))
-
-# Save results data frame by period
-# df <- fsummary_df(run=runName, Res.dir = Res.dir, Plot.dir = Plot.dir,lStatPer = lStatPer,
-#                   Blim = OM$refPts$Blim, Fbarrange=c(1,10)) 
-# save(df,file = file.path(Res.dir,runName,paste0(runName,"_eqSim_df.Rdata")))
-
-# Save results df by year
-# dfy <- fsummary_byyear_df(
-#   run=runName, Res.dir = Res.dir, Plot.dir = Plot.dir,
-#   lStatPer = lStatPer, Blim = OM$refPts$Blim, Fbarrange=c(1,10)) 
-# save(dfy,file = file.path(Res.dir,runName,paste0(runName,"_eqSim_byyear_df.Rdata")))
-
-
-#generate the stock/stat trajectories
-# fPlotTraj(sim = lStats, plot.dir = file.path(Res.dir,runName), lStatPer = lStatPer)
-# suppressWarnings(fPlotSummary(sim = lStats, plot.dir = Res.dir, lStatPer = lStatPer))
-fTabulateStats(sim = lStats, setting=settings, plot.dir = Res.dir)
 
 # #SSB vs Blim
 # fAnnSSBvsBlimDist(OM = OM2, MP = MP2.0, res.dir = Res.dir, plot.dir = Res.dir)
