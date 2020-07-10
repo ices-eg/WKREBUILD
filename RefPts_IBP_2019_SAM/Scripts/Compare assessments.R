@@ -66,7 +66,8 @@ df <-
   bind_rows(ss2018,ss2019,sam2018,sam2019) %>% 
   mutate(assesscode = paste(assess,assessmentyear,sep="_"))
 
-df %>% filter(slot=="fbar") %>% View()
+# df %>% filter(slot=="fbar") %>% View()
+df %>% distinct(slot) %>% View()
 
 df %>% 
   filter(tolower(slot) %in% c("stock","fbar")) %>% 
@@ -75,5 +76,7 @@ df %>%
   geom_line(aes(colour=assess, linetype=assessmentyear, size=assessmentyear)) +
   scale_linetype_manual(values = c("dashed", "solid")) +
   scale_size_manual(values=c(0.8, 1.0)) +
-  facet_wrap(~slot, scales="free_y")
+  facet_wrap(~slot, scales="free_y") +
+  expand_limits(y=0)
+
 
