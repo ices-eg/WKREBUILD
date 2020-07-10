@@ -66,8 +66,12 @@ Base.dir <- file.path(Drive,"GIT")
 # WHOM SS
 stock          <- "WHOM"
 assess         <- "SS"
+method         <- "EqSim"
 FLStockfile    <- "WGWIDE19.RData"
-FLStockSimfile <- "MSE_WGWIDE19_FLStocks_15PG.RData"   # "MSE_WGWIDE19_FLStocks_10k.RData"
+
+# FLStockSimfile <- "MSE_WGWIDE19_FLStocks_10k.RData"
+# FLStockSimfile <- "MSE_WGWIDE19_FLStocks_15PG.RData"
+FLStockSimfile <- "MSE_WGWIDE19_FLStocks_1k15PG.RData" 
 
 # WHOM SAM
 # stock          <- "WHOM"
@@ -113,7 +117,7 @@ dropbox.dir <- file.path(get_dropbox(), "HOM FG", "05. Data","RData")
 #niters <- 10000
 niters <- 1000
 #niters <- 100
-nyr <- 23
+nyr <- 50
 
 # simulation periods
 per1 <- 5
@@ -244,12 +248,21 @@ SRR$stk <- FLS
 FLSs <- loadRData(file.path(RData.dir,FLStockSimfile))
 
 #add required number of stochastic FLStocks to FIT object
-SRR$stks <- FLSs[as.character(seq(1,niters))]
+#SRR$stks <- FLSs[as.character(seq(1,niters))]
+SRR$stks <- FLSs
+
+# xm <- FLSs[[1]]
+# xa <- FLSs[[1]]
+# plot(xm)
+# plot(xa)
+# names(SRR$stks)
 
 # Define MP's ================================================================================================================
 
-for (mp in c("MP5.00","MP5.01","MP5.10","MP5.11","MP5.20","MP5.21")) {
-
+# mp <- "MP5.00"
+# for (mp in c("MP5.00","MP5.01","MP5.10","MP5.11","MP5.20","MP5.21")) {
+for (mp in c("MP5.03","MP5.13","MP5.23")) {
+    
   MP <- get(mp)
   
   invisible(gc())

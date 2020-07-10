@@ -30,7 +30,15 @@ maxyr <- 2040
 
 stats.dir <- file.path(Res.dir, "Stats")
 
-list.files.eqsim.ss <- list.files(path=stats.dir, pattern="WHOM_SS", full.names=TRUE)[c(-3,-7,-11)]
+list.files.eqsim.ss <- list.files(path=stats.dir, pattern="WHOM_SS3", full.names=TRUE)
+#list.files.eqsim.ss <- list.files(path=stats.dir, pattern="WHOM_SS3", full.names=TRUE)[c(-3,-7,-11)]
+# list.files.eqsim.ss <- list.files(path=stats.dir, pattern="WHOM_SS", full.names=TRUE)[c(-6,-9,-12)]
+# list.files.eqsim.ss <- 
+#   c("D:/GIT/wk_WKREBUILD/EqSimWHM/Results/Stats/old/WHOM_SS_OM2.2_MP5.23_1000_23_eqSim_Stats.Rdata",
+#     "D:/GIT/wk_WKREBUILD/EqSimWHM/Results/Stats/WHOM_SS3_OM2.2_MP5.23_1000_50_eqSim_Stats.Rdata"
+#   )
+# list.files.eqsim.ss <- 
+#   c("D:/GIT/wk_WKREBUILD/EqSimWHM/Results/Stats/WHOM_SS3_OM2.2_MP5.00_1000_50_eqSim_Stats.Rdata")
 
 periods <-
   loadRData(list.files.eqsim.ss[1])[["lStatPer"]][c("CU","ST","MT","LT")] %>% 
@@ -57,86 +65,77 @@ periods2 <-
   group_by(period) %>% 
   filter(year == max(year))
 
+loadRData(list.files.eqsim.ss[1])[["stats"]][["0.1"]][["IAV"]]$val
+  
+# Compare 2 specific cases; one run by Andy, one by Martin
+# list.files.eqsim.ss <-
+#   c("D:/GIT/wk_WKREBUILD/EqSimWHM/Results/Stats/WHOM_SS3_OM2.2_MP5.23_1000_23_eqSim_Stats.Rdata",
+#     "D:/GIT/wk_WKREBUILD/EqSimWHM/Results/Stats/WHOM_SS3_OM2.2_MP5.23_1000_50_eqSim_Stats.Rdata"
+#   )
+# x <- loadRData(list.files.eqsim.ss[1])[["df"]] %>% filter(Ftgt=="0.075") %>% 
+#    mutate(runby="Martin")
+# y <- loadRData(list.files.eqsim.ss[2])[["stats"]][["0.075"]][["dfy"]] %>% filter(year <= 2040) %>%
+#   mutate(runby="Andy", Ftgt=as.numeric(Ftgt)) %>% 
+#   mutate(value = ifelse(PerfStat %in% c("SSB", "CW"), 1000*value, value))
+# 
+# bind_rows(x,y) %>%
+#   filter(PerfStat == "CW") %>%
+#   group_by(year, runby, Ftgt, MP) %>%
+#   summarize(median = median(value),
+#             upper  = quantile(value, probs=0.975, na.rm=TRUE),
+#             lower  = quantile(value, probs=0.025, na.rm=TRUE))  %>%
+#   ggplot((aes(x=year, y=median))) +
+#   theme_publication() +
+#   geom_line(aes(colour=runby)) +
+#   geom_ribbon(aes(fill=runby, ymin=lower, ymax=upper), alpha=0.3)
+
+  
+
 # SS / EqSim
+i <- 1
 df <- worms <- data.frame(stringsAsFactors = FALSE)
 for (i in 1:length(list.files.eqsim.ss)) {
-  #for (i in 1:2) {
+  
   gc()  
   cat(list.files.eqsim.ss[i],"\n")
-  t <- loadRData(list.files.eqsim.ss[i])[["stats"]]
-  # f <- "0.05"
-  for (f in names(t)) {
-    # cat(f," \n")
-    x     <- 
-      t[[f]][["dfy"]] %>% 
-      lowcase() %>% 
-      filter(year <= maxyr) %>% 
-      mutate(perfstat = tolower(perfstat)) %>% 
-      mutate(perfstat = ifelse(perfstat=="cw","catch",perfstat)) %>% 
-      mutate(method="EqSim") %>% 
-      mutate(blim = t[[f]][["OM"]][["refPts"]][["Blim"]]) %>% 
-      mutate(bpa = t[[f]][["OM"]][["refPts"]][["Bpa"]]) %>% 
-      mutate(iter = str_replace(iter,"[\\.]{1,3}"," ")) %>% 
-      separate(iter, into=c("iter","tmp"), sep=" ") %>% 
-      mutate(iter = as.numeric(iter)) %>% 
-      mutate(period = factor(period, levels=c("CU","ST","MT","LT"))) %>% 
-      dplyr::select(-tmp)
-    
-    recov <- 
-      x %>% 
-      filter(perfstat == "ssb") %>% 
-      dplyr::select(-period) %>% 
-      arrange (runref, assess, method, om, mp, niters, nyrs, label, ftgt, unit, blim, bpa, iter, year) %>% 
-      group_by(runref, assess, method, om, mp, niters, nyrs, label, ftgt, unit, blim, bpa, iter) %>% 
-      mutate(value = value*1000) %>% 
-      mutate(v1 = lag(value, n=1),
-             v2 = lag(value, n=2)) %>% 
-      mutate(recovblim = ifelse(v2 >= blim & v1 >= blim & value >= blim, TRUE, FALSE),
-             recovbpa  = ifelse(v2 >= bpa & v1 >= bpa & value >= bpa, TRUE, FALSE),
-             pblim     = ifelse(value < blim, TRUE, FALSE),
-             pbpa      = ifelse(value < bpa, TRUE, FALSE)) %>%
-      
-      group_by(runref, assess, method, om, mp, niters, nyrs, label, ftgt, unit, blim, bpa, year) %>% 
-      mutate(n=max(iter)) %>% 
-      
-      left_join(periods, by="year") %>% 
-      
-      group_by(runref, assess, method, om, mp, niters, nyrs, label, ftgt, period, unit, blim, bpa, year) %>% 
-      summarize(
-        recovblim = sum(recovblim, na.rm=TRUE),
-        recovbpa  = sum(recovbpa, na.rm=TRUE),    
-        pblim     = sum(pblim, na.rm=TRUE),
-        pbpa      = sum(pbpa, na.rm=TRUE),
-        n         = mean(n)
-      ) %>% 
-      mutate(
-        recovblim = recovblim/n,
-        recovbpa  = recovbpa/n,    
-        pblim     = pblim/n,
-        pbpa      = pbpa/n
-      ) %>% 
-      
-      pivot_longer(cols=c(recovblim, recovbpa, pblim, pbpa), names_to = "perfstat", values_to="value")
-    
-    # recov %>% ggplot(aes(x=year, y=value, colour=perfstat)) + geom_line()
+
+  OM <- loadRData(list.files.eqsim.ss[i])[["OM"]]  
+  MP <- loadRData(list.files.eqsim.ss[i])[["MP"]]  
+  
+  x <- 
+    loadRData(list.files.eqsim.ss[i])[["df"]] %>% 
+    lowcase() %>% 
+    mutate(perfstat = tolower(perfstat)) %>%
+    mutate(perfstat = ifelse(perfstat == "cw", "catch", perfstat)) %>% 
+    mutate(method = "EqSim") %>% 
+    mutate(blim = OM[["refPts"]][["Blim"]]) %>%
+    mutate(bpa = OM[["refPts"]][["Bpa"]])
     
     # summarize the dataframe for this run
-    summ <-
-      x %>% 
-      group_by(runref, assess, method, om, mp, niters, nyrs, label, ftgt, perfstat, unit, blim, bpa, period, year) %>% 
-      summarize(mean = mean(value, na.rm=TRUE),
-                median = median(value, na.rm=TRUE),
-                upper = quantile(value, probs=0.975, na.rm=TRUE),
-                lower = quantile(value, probs=0.025, na.rm=TRUE)) %>%
-      ungroup() 
+  summ <-
+    x %>% 
+    group_by(runref, assess, method, om, mp, niters, nyrs, label, ftgt, perfstat, unit, blim, bpa, period, year) %>% 
+    mutate(value = ifelse(perfstat=="iav" & ftgt==0, NA, value)) %>% 
+    summarize(mean = mean(value, na.rm=TRUE),
+              median = median(value, na.rm=TRUE),
+              upper = quantile(value, probs=0.975, na.rm=TRUE),
+              lower = quantile(value, probs=0.025, na.rm=TRUE)) %>%
+    ungroup() 
     
-    df    <- bind_rows(df, summ, recov)
+  df    <- bind_rows(df, summ)
     
-    # add the worms of this run
-    worms <- bind_rows(worms, filter(x, iter <= 5))
+  # add the worms of this run
+  y <-
+    x %>% 
+    group_by(runref, assess, method, om, mp, niters, nyrs, label, ftgt, perfstat, unit, blim, bpa, period, year) %>% 
+    filter(row_number() <= 5) %>% 
+    ungroup() 
+  
+  worms <- bind_rows(worms, y)
     
-  }
+  # }
 }
+
 
 # df %>% 
 #   filter(perfstat=="recovbpa") %>% 
@@ -201,6 +200,9 @@ save(worms,file = file.path(dropbox.dir,paste0("worms.Rdata")))
 
 # plot for single method and assessment; different MPs
 
+myruns <- c("WHOM_SS3_OM2.2_MP5.03_1000_23", 
+            "WHOM_SS3_OM2.2_MP5.13_1000_23",
+            "WHOM_SS3_OM2.2_MP5.23_1000_23")
 myruns <- c("WHOM_SS3_OM2.2_MP5.03_1000_50", 
             "WHOM_SS3_OM2.2_MP5.13_1000_50",
             "WHOM_SS3_OM2.2_MP5.23_1000_50")
@@ -220,61 +222,111 @@ myruns <- c("WHOM_SAM_OM2.3_MP2.1_1000_20",
             "WHOM_SAM_OM2.3_MP2.2_1000_20")
 myruns <- c("samhcr_WHOM_sam_-_5.1_1000_20")
 
-myftgt <- c(0.05, 0.075, 0.10, 0.125, 0.15)
-myperfstat <- "ssb"; mycolour   <- "blue"; myyintercept <- 834
-myperfstat <- "ssb"; mycolour   <- "blue"; myyintercept <- 612
-myperfstat <- "harvest"; mycolour   <- "darkgreen"; myyintercept <- as.numeric(NA)
-myperfstat <- "catch"; mycolour   <- "purple"; myyintercept <- as.numeric(NA)
-myperfstat <- "rec"; mycolour   <- "orange"; myyintercept <- as.numeric(NA)
-myperfstat <- "pblim"; mycolour   <- "red"; myyintercept <- 0.05
-myperfstat <- "recovblim"; mycolour   <- "red"; myyintercept <- as.numeric(NA); myvalue = "value"
-myperfstat <- "recovbpa"; mycolour   <- "blue"; myyintercept <- as.numeric(NA); myvalue = "value"
+# plot function
+plotvar <- function(myruns =  c("WHOM_SS3_OM2.2_MP5.03_1000_23", 
+                                "WHOM_SS3_OM2.2_MP5.13_1000_23",
+                                "WHOM_SS3_OM2.2_MP5.23_1000_23"),
+                    myftgt = c(0.0, 0.025, 0.05, 0.075, 0.10, 0.125, 0.15),
+                    myperfstat = "ssb",
+                    mycolour   = "blue",
+                    myyintercept = 834000,
+                    myvalue="median") {
+  
+  d <- 
+    df %>%
+    filter(ftgt %in% myftgt) %>% 
+    filter(perfstat==myperfstat) %>% 
+    filter(runref %in% myruns) %>% 
+    # separate(runref, into=c("stock","assess","om","mp","iters","nyears"), sep="_", convert=FALSE) %>% 
+    mutate(code = paste(method, assess,om,mp,sep="_")) 
+  
+  mp <- d %>% distinct(mp) %>% summarize(s = paste(mp, collapse="_")) %>% as.character()
+  
+  p <-
+    d %>% 
+    ggplot(aes(x=year, y=get(myvalue), group=mp)) +
+    theme_publication() +
+    theme(axis.text.x = element_text(angle = 90, vjust=0.5)) +
+    theme( panel.grid.major.x = element_blank()) +
+    theme(legend.position = "none") +
+    
+    geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.2, fill=mycolour) +
+    
+    geom_line(data=filter(worms, ftgt %in% myftgt,
+                          perfstat %in% myperfstat,
+                          runref %in% myruns), 
+              aes(x=year, y=value, group=iter),
+              size=0.5, colour="gray", inherit.aes = FALSE) +
+    
+    geom_line(colour=mycolour) +
+    
+    geom_hline(yintercept=myyintercept, linetype="dashed") +
+    
+    geom_vline(xintercept=periods2$year[1], linetype="dotted") +
+    geom_vline(xintercept=periods2$year[2], linetype="dotted") +
+    geom_vline(xintercept=periods2$year[3], linetype="dotted") +
+    geom_vline(xintercept=periods2$year[4], linetype="dotted") +
+    
+    expand_limits(y=0) +
+    labs(x="", y="value", title=myperfstat) +
+    facet_grid(mp ~ ftgt, scales="free_y") 
+    
+  print(p)
 
-df %>%
-  filter(ftgt %in% myftgt) %>% 
-  filter(perfstat==myperfstat) %>% 
-  filter(runref %in% myruns) %>% 
-  # separate(runref, into=c("stock","assess","om","mp","iters","nyears"), sep="_", convert=FALSE) %>% 
-  mutate(code = paste(method, assess,om,mp,sep="_")) %>% 
+  ggsave(file = file.path(Res.dir,paste0(mp, "_", myperfstat,"_summary_byyear.png")),
+         device="png", width = 30, height = 20, units = "cm")
   
-  ggplot(aes(x=year, y=get(myvalue), group=mp)) +
-  theme_publication() +
-  theme(axis.text.x = element_text(angle = 90, vjust=0.5)) +
-  theme( panel.grid.major.x = element_blank()) +
-  theme(legend.position = "none") +
-  
-  geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.2, fill=mycolour) +
-  
-  geom_line(data=filter(worms, ftgt %in% myftgt,
-                        perfstat %in% myperfstat,
-                        runref %in% myruns), 
-            aes(x=year, y=value, group=iter),
-            size=0.5, colour="gray", inherit.aes = FALSE) +
-  
-  geom_line(colour=mycolour) +
-  
-  geom_hline(yintercept=myyintercept, linetype="dashed") +
-  
-  geom_vline(xintercept=periods2$year[1], linetype="dotted") +
-  geom_vline(xintercept=periods2$year[2], linetype="dotted") +
-  geom_vline(xintercept=periods2$year[3], linetype="dotted") +
-  geom_vline(xintercept=periods2$year[4], linetype="dotted") +
-  
-  expand_limits(y=0) +
-  labs(x="", y="value", title=myperfstat) +
-  facet_grid(mp ~ ftgt, scales="free_y")
+}
+
+
+
+plotvar(myruns =  c("WHOM_SS3_OM2.2_MP5.00_1000_23", 
+                    "WHOM_SS3_OM2.2_MP5.01_1000_23",
+                    "WHOM_SS3_OM2.2_MP5.03_1000_23"),
+        myftgt = c(0.0, 0.025, 0.05, 0.075, 0.10, 0.125, 0.15),
+        myperfstat = "ssb", mycolour   = "blue", myyintercept = 834000, myvalue="median")
+
+plotvar(myruns =  c("WHOM_SS3_OM2.2_MP5.03_1000_23", 
+                    "WHOM_SS3_OM2.2_MP5.13_1000_23",
+                    "WHOM_SS3_OM2.2_MP5.23_1000_23"),
+        myftgt = c(0.0, 0.025, 0.05, 0.075, 0.10, 0.125, 0.15),
+        myperfstat = "ssb", mycolour   = "blue", myyintercept = 834000, myvalue="median")
+plotvar(myftgt = c(0.0, 0.025, 0.05, 0.075, 0.10, 0.125, 0.15),
+        myperfstat = "harvest", mycolour   = "darkgreen", myyintercept = 0.074, myvalue="median")
+plotvar(myftgt = c(0.0, 0.025, 0.05, 0.075, 0.10, 0.125, 0.15),
+        myperfstat = "catch", mycolour   = "purple", myyintercept = as.numeric(NA), myvalue="median")
+plotvar(myftgt = c(0.0, 0.025, 0.05, 0.075, 0.10, 0.125, 0.15),
+        myperfstat = "rec", mycolour   = "orange", myyintercept = as.numeric(NA), myvalue="median")
+plotvar(myftgt = c(0.025, 0.05, 0.075, 0.10, 0.125, 0.15),
+        myperfstat = "iav", mycolour   = "brown", myyintercept = as.numeric(NA), myvalue="median")
+
+plotvar(myruns =  c("WHOM_SS3_OM2.2_MP5.20_1000_23", 
+                    "WHOM_SS3_OM2.2_MP5.21_1000_23",
+                    "WHOM_SS3_OM2.2_MP5.23_1000_23"),
+        myftgt = c(0.0, 0.025, 0.05, 0.075, 0.10, 0.125, 0.15),
+        myperfstat = "ssb", mycolour   = "blue", myyintercept = 834000, myvalue="median")
+plotvar(myruns =  c("WHOM_SS3_OM2.2_MP5.20_1000_23", 
+                    "WHOM_SS3_OM2.2_MP5.21_1000_23",
+                    "WHOM_SS3_OM2.2_MP5.23_1000_23"),
+        myftgt = c(0.025, 0.05, 0.075, 0.10, 0.125, 0.15),
+        myperfstat = "iav", mycolour   = "brown", myyintercept = as.numeric(NA), myvalue="median")
+
 
 # Calculate recovery year to Blim and Bpa (50%)
+myruns =  c("WHOM_SS3_OM2.2_MP5.20_1000_23", 
+            "WHOM_SS3_OM2.2_MP5.21_1000_23",
+            "WHOM_SS3_OM2.2_MP5.23_1000_23")
+
 r <-
   df %>% 
   filter(ftgt %in% myftgt) %>% 
   filter(perfstat %in% c("recovblim","recovbpa")) %>%
-  # filter(perfstat %in% c("recovbpa")) %>% 
   filter(runref %in% myruns) %>% 
-  filter(value >= 0.5) %>%
+  filter(median >= 0.5) %>%
   group_by(runref, mp, perfstat, ftgt) %>% 
   filter(year == min(year))
 
+mp <- r %>% ungroup() %>% distinct(mp) %>% summarize(s = paste(mp, collapse="_")) %>% as.character()
 
 # plot recovery to blim and bpa
 df %>%
@@ -284,7 +336,7 @@ df %>%
   # separate(runref, into=c("stock","assess","om","mp","iters","nyears"), sep="_", convert=FALSE) %>% 
   mutate(code = paste(method, assess,om,mp,sep="_")) %>% 
   
-  ggplot(aes(x=year, y=value, group=perfstat)) +
+  ggplot(aes(x=year, y=median, group=perfstat)) +
   theme_publication() +
   theme(axis.text.x = element_text(angle = 90, vjust=0.5)) +
   theme( panel.grid.major.x = element_blank()) +
@@ -305,6 +357,14 @@ df %>%
   expand_limits(y=0) +
   labs(x="", y="value", title="Recovery to Blim and Bpa") +
   facet_grid(mp ~ ftgt, scales="free_y")
+
+ggsave(file = file.path(Res.dir,paste0(mp, "_recovery_summary_byyear.png")),
+       device="png", width = 30, height = 20, units = "cm")
+
+
+
+
+
 
 # Plot with comparison across methods and assessments
 
