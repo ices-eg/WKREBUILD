@@ -7,6 +7,16 @@
 # Fbarrange=c(1,10)
 # stats <- AllStats
 
+# run=runName
+# simRuns = simRuns
+# Res.dir = Res.dir
+# Plot.dir = Plot.dir
+# lStatPer = lStatPer
+# simYears = simYears
+# xlab = MP$xlab
+# OM = OM
+# Fbarrange=c(range(FLS)[["minfbar"]], range(FLS)[["maxfbar"]])
+
 fsummary_df <- function(runName, ftgt, simRuns,
                         Res.dir, Plot.dir, 
                         lStatPer, OM,  
@@ -54,7 +64,7 @@ fsummary_df <- function(runName, ftgt, simRuns,
     stringsAsFactors = FALSE
   )
   
-  # ftgt <- 0.1
+  # ftgt <- 0
   for (ftgt in an(names(SimRuns))){
     
     cat("Ftgt: ", ftgt, "\n")
@@ -137,12 +147,19 @@ fsummary_df <- function(runName, ftgt, simRuns,
              v2 = lag(v, n=2)) %>% 
       mutate(recovblim = ifelse(v2 >= Blim & v1 >= Blim & v >= Blim, TRUE, FALSE),
              recovbpa  = ifelse(v2 >= Bpa & v1 >= Bpa & v >= Bpa, TRUE, FALSE)) %>% 
-      filter(!is.na(v1), !is.na(v2)) %>% 
+      filter(!is.na(v1), !is.na(v2)) %>%
+      
+      group_by(year) %>% 
+      mutate(n=max(as.numeric(iter))) %>% 
       group_by(year) %>% 
       summarize(
-        recovblim = sum(recovblim, na.rm=TRUE)/n(),
-        recovbpa  = sum(recovbpa, na.rm=TRUE)/n()
-      )
+        n         = max(n, na.rm=TRUE),
+        recovblim = sum(recovblim, na.rm=TRUE),
+        recovbpa  = sum(recovbpa, na.rm=TRUE)
+      ) %>% 
+      mutate(
+        recovblim = recovblim / n,
+        recovbpa  = recovbpa / n)
     
     t$recovblim <- recov %>% dplyr::select(year, value=recovblim)
     t$recovbpa <- recov %>% dplyr::select(year, value=recovbpa)
