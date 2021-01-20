@@ -10,7 +10,6 @@ library(stockassessment)
 library(Matrix)
 library(gridExtra)
 library(tidyverse)
-getwd()
 
 Drive    <- "D:"
 Base.dir <- file.path(Drive,"GIT")
@@ -32,6 +31,7 @@ Blim=611814
 MSYBtrig=856540
 Fmsy=0.115 # Used as Ftarget in HCR
 Flow=Fmsy/5 # To choose if HCR 3-5
+
 ## Simulation assumptions: 
 SRpar <- HS_fit_fixBlim(name, pair.years=1995:2017) # years for SSB-R pairs, usually the same than ones used to calculate FMSY if relevant (SR=TRUE)
 Ay<-max(fit$data$years)+(-9:0) # for average for bio input (M, w, etc.)
@@ -42,21 +42,27 @@ TAC2019=110381
 TAC2020=83954 
 #TAC <- TAC2020 # For intermediate year
 
-F_targets <- c(0.01, seq(0.05,0.15,by=0.025), 0.2)
-#F_targets <- c(0.05, 0.1)
+# simulation periods; hardcoded !!
+CU <- 2018:2020
+ST <- 2021:2025
+MT <- 2026:2030
+LT <- 2031:2040
+
+F_targets <- c(0.01, seq(0.05,0.15,by=0.025))
+#F_targets <- c(0.05)
 
 # To change between MS scenariosRW=TRUE
 RW = FALSE # random walk on recruitment
 Rdist=FALSE # recruitment with mean and sd from sampled years
 F.RW=FALSE # if false no RW with increase variance in F in the forecast
 SR=TRUE # for SR relationship for rec coming from SRpar
-ny <- 20 # years for the forecast
+ny <- 23 # years for the forecast
 
 #nsim=5000
 nsim=1000
 
 om = "-"
-mp = "5.1"
+mp = "5.10"
 assess = "sam"
 method = "samhcr"
 stock = "WHOM"
@@ -67,6 +73,7 @@ FC <- list()
 dfy <- data.frame(stringsAsFactors = FALSE)
 
 set.seed(12345) # same seed to repeat output
+i <- 1
 
 for (i in 1:length(F_targets)) {
   
@@ -95,24 +102,46 @@ for (i in 1:length(F_targets)) {
                                   SR                = SR,
                                   SRpar             = SRpar,
                                   F.RW              = F.RW )   
+  
   # Convert to data.frame
   for (y in 1:length(FC[[i]])) {
     for (v in names(FC[[i]][[y]])) {
+      
+      
       if (class(FC[[i]][[y]][[v]]) == "numeric") {
+        # print(paste(v, class(FC[[i]][[y]][[v]])), sep="  ")
         t <- data.frame(
+          assess   = assess,
+          method   = method,
+          stock    = stock,
           value    = FC[[i]][[y]][[v]],
           perfstat = tolower(v),
           year     = as.numeric(FC[[i]][[y]]$year),
           runref   = runName,
           iter     = 1:nsim,
+          niters   = nsim, 
+          nyrs     = ny,
           ftgt     = ftgt,
           rw       = RW, 
           sr       = SR,
           om       = om, 
           mp       = mp, 
           blim     = Blim, 
-          stringsAsFactors = FALSE)
+          bpa      = MSYBtrig,
+          fmsy     = Fmsy,
+          stringsAsFactors = FALSE) %>% 
+          
+          mutate(ftgt = ifelse(ftgt==0.01, 0, ftgt)) %>% 
+          
+          mutate(period = ifelse(year %in% CU, "CU", as.character(NA))) %>% 
+          mutate(period = ifelse(year %in% ST, "ST", period)) %>% 
+          mutate(period = ifelse(year %in% MT, "MT", period)) %>% 
+          mutate(period = ifelse(year %in% LT, "LT", period)) %>% 
+          
+          mutate(unit = as.character(NA))  # temporary fix
+          
         dfy <- bind_rows(dfy,t)
+        
         #print(head(t))
       } # end of if statement
     } # end of v loop
@@ -120,6 +149,29 @@ for (i in 1:length(F_targets)) {
 
 } # end of i loop
 
+# calculate overall statistics and add to dataset
+t2 <- 
+  dfy %>% 
+  filter(perfstat %in% c("ssb"))  %>% 
+  pivot_wider(names_from = perfstat, values_from = value)  %>% 
+  group_by(assess, method, stock, year, runref,
+           niters,nyrs,ftgt,rw,sr,om,mp, fmsy, period, unit) %>%
+  summarize(
+    pblim = sum(ssb<blim)/nsim,
+    pbpa  = sum(ssb<bpa)/nsim) %>% 
+  pivot_longer(c(pblim, pbpa), names_to="perfstat") %>% 
+  mutate(iter = 1)
+
+dfy <- 
+  bind_rows(dfy, t2) %>% 
+  mutate(ftgt = as.numeric(as.character(ftgt)))
+
+save(dfy,file = file.path(Res.dir,"Stats",paste0(runName,"_dfy.Rdata")))
+
+# dfy %>% filter(ftgt > 0.05 & ftgt < 0.1) %>% View()
+# dfy %>% filter(ftgt > 0.05 & ftgt < 0.1) %>% View()
+# dfy %>% filter(ftgt == 0.075) %>% View()
+# scales::comma(unique(dfy$ftgt), accuracy=0.0001)
 
 # Run the forecast with HCR2 with decreasing recruitment -----
 # RW = TRUE  # random walk on recruitment
@@ -184,36 +236,4 @@ for (i in 1:length(F_targets)) {
 # forecast_year <- 1 # 1:ny
 # variable_name <- ls(FC[[scenario_number]][forecast_year][[1]]) # all names of output replicates saved in FC
 # FC[[scenario_number]][forecast_year][[1]][variable_name[1]] # to extract replicates of a specific output
-
-save(dfy,file = file.path(Res.dir,"Stats",paste0(runName,"_dfy.Rdata")))
-
-df2 <-
-  df %>% 
-  group_by(runName, ftgt, year, PerfStat, ) %>%
-  filter(PerfStat %in% c("fbar","ssb", "catch", "rec")) %>% 
-  summarize(Val = mean(value, na.rm=TRUE),
-            Upp = quantile(value, probs=0.975, na.rm=TRUE),
-            Low = quantile(value, probs=0.025, na.rm=TRUE)) %>%
-  ungroup()
-
-# save(df2,file = file.path(dropbox.dir,paste0("SAM_",runName,"_df2.Rdata")))
-
-df %>% 
-  filter(PerfStat %in% c("fbar","ssb", "catch", "rec")) %>% 
-  filter(iter <= 100) %>% 
-  ggplot(aes(x=year, y=value, group=iter)) +
-  theme_bw() +
-
-  geom_line(colour="gray", size=0.2) +
-  
-  geom_ribbon(data=df2, aes(x=year, ymin=Low, ymax=Upp), alpha=0.2, inherit.aes = FALSE, fill="red") +
-  geom_line(data=df2, aes(x=year, y=Val), size=0.8, inherit.aes = FALSE, colour="red") +
-  
-  expand_limits(y=0) +
-  # scale_fill_manual(values = c('#595959', 'red')) +
-  labs(x="", y="value") +
-  facet_grid(PerfStat~ftgt, scales="free_y")
-
-ggsave(file = file.path(Res.dir,paste0("SAM_",runName,"_summary_byyear.png")),
-       device="png", width = 30, height = 20, units = "cm")
 

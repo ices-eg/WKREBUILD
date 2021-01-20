@@ -30,7 +30,8 @@ maxyr <- 2040
 
 stats.dir <- file.path(Res.dir, "Stats")
 
-list.files.eqsim.ss <- list.files(path=stats.dir, pattern="WHOM_SS3", full.names=TRUE)
+list.files.eqsim.ss <- list.files(path=stats.dir, pattern="WHOM_SAM", full.names=TRUE)
+#list.files.eqsim.ss <- list.files(path=stats.dir, pattern="WHOM_SS3", full.names=TRUE)
 #list.files.eqsim.ss <- list.files(path=stats.dir, pattern="WHOM_SS3", full.names=TRUE)[c(-3,-7,-11)]
 # list.files.eqsim.ss <- list.files(path=stats.dir, pattern="WHOM_SS", full.names=TRUE)[c(-6,-9,-12)]
 # list.files.eqsim.ss <- 
@@ -65,18 +66,18 @@ periods2 <-
   group_by(period) %>% 
   filter(year == max(year))
 
-loadRData(list.files.eqsim.ss[1])[["stats"]][["0.1"]][["IAV"]]$val
-  
+
 # Compare 2 specific cases; one run by Andy, one by Martin
+
 # list.files.eqsim.ss <-
 #   c("D:/GIT/wk_WKREBUILD/EqSimWHM/Results/Stats/WHOM_SS3_OM2.2_MP5.23_1000_23_eqSim_Stats.Rdata",
-#     "D:/GIT/wk_WKREBUILD/EqSimWHM/Results/Stats/WHOM_SS3_OM2.2_MP5.23_1000_50_eqSim_Stats.Rdata"
+#     "D:/GIT/wk_WKREBUILD/EqSimWHM/Results/Stats/andy/WHOM_SS3_OM2.2_MP5.23_1000_50_eqSim_Stats.Rdata"
 #   )
-# x <- loadRData(list.files.eqsim.ss[1])[["df"]] %>% filter(Ftgt=="0.075") %>% 
+# x <- loadRData(list.files.eqsim.ss[1])[["df"]] %>% filter(Ftgt=="0.075") %>%
 #    mutate(runby="Martin")
 # y <- loadRData(list.files.eqsim.ss[2])[["stats"]][["0.075"]][["dfy"]] %>% filter(year <= 2040) %>%
-#   mutate(runby="Andy", Ftgt=as.numeric(Ftgt)) %>% 
-#   mutate(value = ifelse(PerfStat %in% c("SSB", "CW"), 1000*value, value))
+#   mutate(runby="Andy", Ftgt=as.numeric(Ftgt)) %>%
+#   mutate(value = ifelse(PerfStat %in% c("SSB", "CW"), value, value))
 # 
 # bind_rows(x,y) %>%
 #   filter(PerfStat == "CW") %>%
@@ -240,6 +241,8 @@ plotvar <- function(myruns =  c("WHOM_SS3_OM2.2_MP5.03_1000_23",
     # separate(runref, into=c("stock","assess","om","mp","iters","nyears"), sep="_", convert=FALSE) %>% 
     mutate(code = paste(method, assess,om,mp,sep="_")) 
   
+  print(head(d))
+  
   mp <- d %>% distinct(mp) %>% summarize(s = paste(mp, collapse="_")) %>% as.character()
   
   p <-
@@ -311,11 +314,17 @@ plotvar(myruns =  c("WHOM_SS3_OM2.2_MP5.20_1000_23",
         myftgt = c(0.025, 0.05, 0.075, 0.10, 0.125, 0.15),
         myperfstat = "iav", mycolour   = "brown", myyintercept = as.numeric(NA), myvalue="median")
 
+plotvar(myruns =  c("WHOM_SAM_OM2.3_MP5.03_1000_23", 
+                    "WHOM_SAM_OM2.3_MP5.13_1000_23",
+                    "WHOM_SAM_OM2.3_MP5.23_1000_23"),
+        myftgt = c(0.0, 0.025, 0.05, 0.075, 0.10, 0.125, 0.15),
+        myperfstat = "ssb", mycolour   = "blue", myyintercept = 612000, myvalue="median")
 
 # Calculate recovery year to Blim and Bpa (50%)
-myruns =  c("WHOM_SS3_OM2.2_MP5.20_1000_23", 
-            "WHOM_SS3_OM2.2_MP5.21_1000_23",
-            "WHOM_SS3_OM2.2_MP5.23_1000_23")
+myruns =  c("WHOM_SAM_OM2.3_MP5.03_1000_23", 
+            "WHOM_SAM_OM2.3_MP5.13_1000_23",
+            "WHOM_SAM_OM2.3_MP5.23_1000_23")
+myftgt = c(0.0, 0.025, 0.05, 0.075, 0.10, 0.125, 0.15)
 
 r <-
   df %>% 

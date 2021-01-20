@@ -33,21 +33,23 @@ per2 <- 5
 #OM <- OM2; MP <- MP2.0_10000
 #OM <- OM2; MP <- MP3.0
 #OM <- OM2.1   #WGWIDE 2019, const weights, selection
-OM <- OM2.2   #WGWIDE 2019, stochastic weights, selection
+#OM <- OM2.2   #WGWIDE 2019, stochastic weights, selection
+OM <- OM2.3   #WGWIDE SAM 2019, stochastic weights, selection
 
 # WHOM SS
-stock          <- "WHOM"
-assess         <- "SS3"
-FLStockfile    <- "WGWIDE19.RData"
+# stock          <- "WHOM"
+# assess         <- "SS3"
+# FLStockfile    <- "WGWIDE19.RData"
+# FLStockSimfile <- "MSE_WGWIDE19_FLStocks_1k15PG.RData" 
+
 # FLStockSimfile <- "MSE_WGWIDE19_FLStocks_10k.RData"
 # FLStockSimfile <- "MSE_WGWIDE19_FLStocks_15PG.RData"
-FLStockSimfile <- "MSE_WGWIDE19_FLStocks_1k15PG.RData" 
 
 # WHOM SAM
-# stock          <- "WHOM"
-# assess         <- "SAM"
-# FLStockfile    <- "WGWIDE19_SAM.RData"
-# FLStockSimfile <- "MSE_WGWIDE19_FLStocks_SAM1000.RData" #"MSE_WGWIDE19_FLStocks_SAM.RData"
+stock          <- "WHOM"
+assess         <- "SAM"
+FLStockfile    <- "WGWIDE19_SAM.RData"
+FLStockSimfile <- "MSE_WGWIDE19_FLStocks_SAM1000.RData" #"MSE_WGWIDE19_FLStocks_SAM.RData"
 
 #assessment FLStock
 FLS <-
@@ -134,7 +136,7 @@ SRR$stk <- FLS
 FLSs <- loadRData(file.path(RData.dir,FLStockSimfile))
 
 #add required number of stochastic FLStocks to FIT object
-SRR$stks <- FLSs
+SRR$stks <- FLSs[(length(FLSs)-niters+1):(length(FLSs))]
 
 # Define MP ================================================================================================================
 #MP <- MP1.0   #baseline, constant F harvest rule, no IAV control, no minimum TAC, no assessment/advice error
