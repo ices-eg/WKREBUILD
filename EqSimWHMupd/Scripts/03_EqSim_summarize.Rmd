@@ -119,6 +119,33 @@ FLSs <- loadRData(file.path(dropbox.dir,"_SS3_FLSs.Rdata"))
 load(file = file.path(dropbox.dir,paste0("df.Rdata")))
 load(file = file.path(dropbox.dir,paste0("worms.Rdata")))
 
+# calculate 3 years above threshold
+# t <-
+#   worms %>% 
+#   filter(perfstat=="ssb") %>% 
+#   group_by(om, mp, assess, ftgt, perfstat, iter) %>% 
+#   mutate(
+#     recovBlim = ifelse(value >= blim & lag(value,n=1) >= blim & lag(value, n=2)>= blim, 
+#                        TRUE,
+#                        FALSE),
+#     recovBpa  = ifelse(value >= bpa & lag(value,n=1) >= bpa & lag(value, n=2)>= bpa, 
+#                        TRUE,
+#                        FALSE)
+#   ) %>% 
+#   group_by(om, mp, assess, ftgt, perfstat, year) %>%
+#   add_tally() %>% 
+#   summarise(
+#     recovBlim = sum(recovBlim == TRUE)/n,
+#     recovBpa  = sum(recovBpa == TRUE)/n,
+#   ) 
+
+# t %>% 
+#   pivot_longer(names_to="var", values_to = "value", recovBlim:recovBpa) %>% 
+#   ggplot(aes(x=year, y=value)) +
+#   theme_publication() +
+#   geom_line(aes(colour=var)) +
+#   facet_grid(mp~ftgt)
+
 periods <-
   df %>% 
   distinct(period,year) 

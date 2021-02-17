@@ -19,6 +19,9 @@ invisible(gc())
 try(dev.off(),silent=TRUE)
 try(sink(),silent=TRUE)
 
+# library(devtools)
+# install_github("flr/FLCore")
+
 #packages
 library(FLCore)
 library(Cairo)    #plotting
@@ -82,6 +85,7 @@ Plot.dir <- file.path(MSE.dir2, "Plots")
 
 # Source dir and Scripts dir
 Source.dir <- file.path(MSE.dir,"R")              #R functions
+Source.dir2 <- file.path(MSE.dir2,"R")              #R functions new
 Scripts.dir <- file.path(MSE.dir2, "Scripts")      #R scripts
 
 # Load OMs, MPs
@@ -90,6 +94,7 @@ source(file = file.path(Scripts.dir,"MPs.R"))
 
 #source all functions in source.dir
 sapply(list.files(path=file.path(Source.dir), pattern=".R", full.names=TRUE), source)
+sapply(list.files(path=file.path(Source.dir2), pattern=".R", full.names=TRUE), source)
 
 # Get dropbox dir; for storing large RData files
 dropbox.dir <- file.path(get_dropbox(), "HOM FG", "05. Data","RData","upd")
