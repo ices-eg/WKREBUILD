@@ -20,7 +20,7 @@
 #basic simulation settings
 #niters <- 10000
 #niters <- 1000
-niters <- 1000
+niters <- 100
 nyr <- 23
 
 # simulation periods
@@ -33,28 +33,37 @@ per2 <- 5
 #OM <- OM2; MP <- MP2.0_10000
 #OM <- OM2; MP <- MP3.0
 #OM <- OM2.1   #WGWIDE 2019, const weights, selection
-#OM <- OM2.2   #WGWIDE 2019, stochastic weights, selection
-OM <- OM2.3   #WGWIDE SAM 2019, stochastic weights, selection
+OM <- OM2.2   #WGWIDE 2019, stochastic weights, selection
+#OM <- OM2.3   #WGWIDE SAM 2019, stochastic weights, selection
 
 # WHOM SS
-# stock          <- "WHOM"
-# assess         <- "SS3"
-# FLStockfile    <- "WGWIDE19.RData"
-# FLStockSimfile <- "MSE_WGWIDE19_FLStocks_1k15PG.RData" 
+stock          <- "WHOM"
+assess         <- "SS3"
+FLStockfile    <- "WGWIDE19.RData"
+FLStockSimfile <- "MSE_WGWIDE19_FLStocks_1k15PG.RData"
 
 # FLStockSimfile <- "MSE_WGWIDE19_FLStocks_10k.RData"
 # FLStockSimfile <- "MSE_WGWIDE19_FLStocks_15PG.RData"
 
 # WHOM SAM
-stock          <- "WHOM"
-assess         <- "SAM"
-FLStockfile    <- "WGWIDE19_SAM.RData"
-FLStockSimfile <- "MSE_WGWIDE19_FLStocks_SAM1000.RData" #"MSE_WGWIDE19_FLStocks_SAM.RData"
+# stock          <- "WHOM"
+# assess         <- "SAM"
+# FLStockfile    <- "WGWIDE19_SAM.RData"
+# FLStockSimfile <- "MSE_WGWIDE19_FLStocks_SAM1000.RData" #"MSE_WGWIDE19_FLStocks_SAM.RData"
 
 #assessment FLStock
-FLS <-
-  loadRData(file.path(RData.dir,FLStockfile)) %>%
-  FLCore::setPlusGroup(., 15)
+FLS  <- loadRData(file.path(RData.dir,FLStockfile)) %>% FLCore::setPlusGroup(., 15)
+
+#assessment FLStocks object
+t    <- loadRData(file.path(RData.dir,FLStockSimfile))[1:niters] 
+FLSs <- propagate(FLS, length(t))
+for (i in 1:length(t)) {
+  print(i)
+  FLSs[,,,,,i] <- t[[i]]
+}
+
+minObsYear <- range(FLS)["minyear"]
+maxObsYear <- range(FLS)["maxyear"]
 
 #Blim <- min(ssb(FLS))
 #The IBP in 2019 selected SSB in 2003 as a proxy for Bpa and derived Blim from this (Bpa/1.4)
@@ -69,11 +78,12 @@ SegregBlim  <- function(ab, ssb) log(ifelse(ssb >= Blimloss, ab$a * Blimloss, ab
 set.seed(1)
 
 #segmented regression with breakpoint at Blim, from 1995 excluding terminal
-SRR <- eqsr_fit(window(FLS,1995,2018), remove.years = c(2018), nsamp=niters, models = c("SegregBlim"))
+# SRR <- eqsr_fit(window(FLS,1995,2018), remove.years = c(2018), nsamp=niters, models = c("SegregBlim"))
+SRR <- eqsr_fit(window(FLS,1995,maxObsYear-1), nsamp=niters, models = c("SegregBlim"))
 
-emf(file = file.path(Res.dir,"SRR.emf"), width = 7, height = 7)
-eqsr_plot(SRR)
-dev.off()
+# emf(file = file.path(Res.dir,"SRR.emf"), width = 7, height = 7)
+# eqsr_plot(SRR)
+# dev.off()
 
 #stock/catch weights (SS3 models catch/stock weights at age as time invariant)
 dfSW <- readr::read_delim(file = file.path(Data.dir,"StockWeights.dat"),delim=",")
@@ -89,7 +99,8 @@ dfSAWeights = data.frame(Age = seq(0,15), CW = rowMeans(catch.wt(FLS)), SW = row
 dfSAWeights <- within(dfSAWeights, Age <- factor(Age, levels = as.character(seq(0,15))))
 
 #quick look, comparing with the assessment ouput
-gCW <- ggplot(data = dfWeights, mapping = aes(x=Year,y=CW)) +
+gCW <- 
+  ggplot(data = dfWeights, mapping = aes(x=Year,y=CW)) +
   geom_line(aes(group=Age)) +
   geom_hline(data = dfSAWeights, mapping=aes(yintercept=CW), col="red") + 
   facet_wrap(~Age) + ylab("Catch Weight")
@@ -98,7 +109,8 @@ gCW <- ggplot(data = dfWeights, mapping = aes(x=Year,y=CW)) +
 # print(gCW)
 # dev.off()
 
-gSW <- ggplot(data = dfWeights, mapping = aes(x=Year,y=SW)) +
+gSW <- 
+  ggplot(data = dfWeights, mapping = aes(x=Year,y=SW)) +
   geom_line(aes(group=Age)) +
   geom_hline(data = dfSAWeights, mapping=aes(yintercept=SW), col="red") + 
   facet_wrap(~Age) + ylab("Stock Weight")
@@ -130,7 +142,7 @@ tCW <- FLQuant(t(dfCW[,-1]), dim=dim(catch.wt(FLS)), dimnames=dimnames(catch.wt(
 #catch.wt(FLS) <- tCW
 
 #reassign FLStock object with updated weights into stk slot of SRR 
-SRR$stk <- FLS
+# SRR$stk <- FLS
 
 #start with simulated initial populations
 FLSs <- loadRData(file.path(RData.dir,FLStockSimfile))
@@ -150,7 +162,7 @@ SRR$stks <- FLSs[(length(FLSs)-niters+1):(length(FLSs))]
 #MP <- MP1.8   #10%/20% asymmetric IAV Test
 #MP <- MP1.9   #0%/10% asymmetric IAV Test
 
-MP <- MP5.00    #Constant F
+#MP <- MP5.00    #Constant F
 #MP <- MP5.01   #Const , min TAC = 50kt
 #MP <- MP5.02   #Const , 20% IAV
 #MP <- MP5.03   #Const , 20% IAV, only above Btrigger
@@ -169,10 +181,11 @@ MP <- MP5.00    #Constant F
 #MP <- MP99
 #MP <- MP98
 
+for (mp in c("MP5.23","MP5.23b")) {
 # for (mp in c("MP5.00","MP5.01","MP5.10","MP5.11","MP5.20","MP5.21")) {
-for (mp in c("MP5.00","MP5.01","MP5.03",
-             "MP5.10","MP5.11","MP5.13",
-             "MP5.20","MP5.21","MP5.23")) {
+# for (mp in c("MP5.00","MP5.01","MP5.03",
+#              "MP5.10","MP5.11","MP5.13",
+#              "MP5.20","MP5.21","MP5.23")) {
 
   MP <- get(mp)
   
@@ -496,6 +509,8 @@ for (mp in c("MP5.00","MP5.01","MP5.03",
                  OM = OM, MP = MP,
                  settings=settings, df=df)
   save(lStats,file = file.path(Res.dir,"Stats",paste0(runName,"_eqSim_Stats.Rdata")))
+  
+  save(FLSs, file=file.path(dropbox.dir,"_SS3_FLSs.Rdata"))
   
   # Save settings
   # settings <- fGetSettings(lStats, SimRuns, FLStockfile = FLStockfile,FLStockSimfile = FLStockSimfile,OM=OM, MP=MP, niters=niters, nyr=nyr)
