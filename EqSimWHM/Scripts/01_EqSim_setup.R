@@ -70,23 +70,25 @@ Base.dir <- file.path(Drive,"GIT")
 
 #Basic MSE directory
 MSE.dir  <- file.path(Base.dir,"wk_WKREBUILD","EqSimWHM")
-MSE.dir2 <- file.path(Base.dir,"wk_WKREBUILD","EqSimWHMupd")
 
 #this is where the results of the 1000 assessment runs for initialisation of the MSE are saved
 Data.dir <- file.path(MSE.dir,"Data")              
+
 #any useful stuff contained in RData files
 RData.dir <- file.path(MSE.dir,"RData")
+
 #debug/verbose output
 Log.dir <- file.path(MSE.dir,"Logs")              
+
 #Simulation and statistical outputs
-Res.dir <- file.path(MSE.dir2, "Results")
+Res.dir <- file.path(MSE.dir, "Results")
+
 #Plot dir
-Plot.dir <- file.path(MSE.dir2, "Plots")
+Plot.dir <- file.path(MSE.dir, "Plots")
 
 # Source dir and Scripts dir
 Source.dir <- file.path(MSE.dir,"R")              #R functions
-Source.dir2 <- file.path(MSE.dir2,"R")              #R functions new
-Scripts.dir <- file.path(MSE.dir2, "Scripts")      #R scripts
+Scripts.dir <- file.path(MSE.dir, "Scripts")      #R scripts
 
 # Load OMs, MPs
 source(file = file.path(Scripts.dir,"OMs.R"))
@@ -94,7 +96,7 @@ source(file = file.path(Scripts.dir,"MPs.R"))
 
 #source all functions in source.dir
 sapply(list.files(path=file.path(Source.dir), pattern=".R", full.names=TRUE), source)
-sapply(list.files(path=file.path(Source.dir2), pattern=".R", full.names=TRUE), source)
+sapply(list.files(path=file.path(Source.dir), pattern=".R", full.names=TRUE), source)
 
 # Get dropbox dir; for storing large RData files
 dropbox.dir <- file.path(get_dropbox(), "HOM FG", "05. Data","RData","upd")
