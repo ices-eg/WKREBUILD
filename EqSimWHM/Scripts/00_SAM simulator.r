@@ -5,19 +5,19 @@
 rm(list=ls())
 gc()
 
+# install.packages("devtools")
+
 # install.packages("FLCore", repos="http://flr-project.org/R")
 library(FLCore)
 
-# install.packages("FLSAM", repos="http://flr-project.org/R")
-# library(FLSAM)
-
-# devtools::install_github('fishfollower/SAM/stockassessment', ref='components') - version for FLSAM
+# devtools::install_github('fishfollower/SAM/stockassessment') 
 library(stockassessment)
 
 library(tidyverse)
 
+basedir  <- "E:/MARTIN"
 sao.name <- "WHOM_2019"
-tempdir  <- file.path("C:/TEMP",sao.name) 
+tempdir  <- file.path(basedir,sao.name) 
 
 setwd(tempdir)
 
@@ -62,19 +62,13 @@ for (i in seq(inputs)) {
   fqs[[names(inputs[i])]] <- readVPAFile(file)
 }
 
-# FLS@range["min"]       <- fit$data$minAge[[1]]
-# FLS@range["max"]       <- fit$data$maxAge[[1]]
-# FLS@range["plusgroup"] <- ifelse(fit$conf$maxAgePlusGroup[1]==1,fit$data$maxAge[[1]],NA)
-# FLS@range["minyear"]   <- min(fit$data$years)
-# FLS@range["maxyear"]   <- max(fit$data$years)-1
-# FLS@range["minfbar"]   <- fit$conf$fbarRange[1]
-# FLS@range["maxfbar"]   <- fit$conf$fbarRange[2]
 
 minage       <- fit$data$minAge[[1]]
 maxage       <- fit$data$maxAge[[1]]
 pg           <- ifelse(fit$conf$maxAgePlusGroup[1]==1,fit$data$maxAge[[1]],NA)
 minyear      <- min(fit$data$years)
-maxyear      <- max(fit$data$years)-1
+maxyear      <- max(as.numeric(rownames(cn)))  # max year from data
+maxyearsam   <- max(fit$data$years)            # max year from assessment
 minfbar      <- fit$conf$fbarRange[1]
 maxfbar      <- fit$conf$fbarRange[2]
 
@@ -84,10 +78,15 @@ FLS  <- FLStock()
 # set generate properties
 FLS@desc               <- paste("FLStock object generated from SAM:", date(), sep=" ")
 FLS@name               <- sao.name
+FLS@range["min"]       <- minage
+FLS@range["max"]       <- maxage
+FLS@range["plusgroup"] <- pg
+FLS@range["minyear"]   <- minyear
+FLS@range["maxyear"]   <- maxyear
+FLS@range["minfbar"]   <- minfbar
+FLS@range["maxfbar"]   <- maxfbar
 
 units(FLS)             <- FLCore::standardUnits(FLS)
-
-
 
 FLS@catch.n            <- fqs[["catch.n"]] 
 FLS@landings.n         <- fqs[["catch.n"]] * fqs[["landings.fraction"]]
@@ -107,13 +106,13 @@ FLS@discards          <- quantSums(FLS@discards.n * FLS@discards.wt)
 FLS@catch             <- quantSums(FLS@catch.n * FLS@catch.wt)
 
 # stock numbers
-FLS@stock.n          <- FLQuant(NA, dimnames=list(age=minage:maxage, year=minyear:(maxyear+1)))
+FLS@stock.n          <- FLQuant(NA, dimnames=list(age=minage:maxage, year=minyear:maxyearsam))
 FLS@stock.n[,]       <- exp(fit$pl$logN) 
 FLS@stock.n          <- FLCore::window(FLS@stock.n, end=maxyear)
 
 # harvest
 n.ages               <- nrow(fit$pl$logF)
-FLS@harvest          <- FLQuant(NA, dimnames=list(age=minage:maxage, year=minyear:(maxyear+1)))
+FLS@harvest          <- FLQuant(NA, dimnames=list(age=minage:maxage, year=minyear:maxyearsam))
 FLS@harvest[minage:(minage+n.ages),] <- exp(fit$pl$logF)
 FLS@harvest[(n.ages+1),]    <- FLS@harvest[n.ages,]
 FLS@harvest          <- FLCore::window(FLS@harvest, end=maxyear)
@@ -122,11 +121,13 @@ units(FLS@harvest)   <-  "f"
 # ssb
 FLS@stock            <- ssb(FLS)
 
+validObject(FLS)
+
 # plot(FLS)
 # plot(FLS@catch)
 
 # set simulator properties
-nsim     <- 10
+nsim     <- 1000
 set.seed(123)
 
 # Generate FLstock object with iterations
@@ -136,11 +137,11 @@ FLSs <- propagate(FLS, nsim)
 simdata <- simulate(fit, nsim=nsim,  full.data=TRUE)
 
 # iterations. start with 2, 1 is the real observation.
-i <- 2   
+i <- 708   
 
 while (i <= nsim) {
   
-  print(i)
+  start_time <- Sys.time()
   
   # sim_fit <-  invisible(capture.output(sam.fit(simdata[[i]], conf, par)))
  sim_fit <-  sam.fit(simdata[[i]], conf, par)
@@ -148,14 +149,14 @@ while (i <= nsim) {
   if(exists("sim_fit")) {
     
     # stock numbers
-    stock.n                 <- FLQuant(NA, dimnames=list(age=minage:maxage, year=minyear:(maxyear+1)))
+    stock.n                 <- FLQuant(NA, dimnames=list(age=minage:maxage, year=minyear:maxyearsam))
     stock.n[,]              <- exp(sim_fit$pl$logN) 
     stock.n                 <- FLCore::window(stock.n, end=maxyear)
     FLSs[,,,,,i]@stock.n    <- stock.n
 
     # harvest
     n.ages                  <- nrow(sim_fit$pl$logF)
-    harvest                 <- FLQuant(NA, dimnames=list(age=minage:maxage, year=minyear:(maxyear+1)))
+    harvest                 <- FLQuant(NA, dimnames=list(age=minage:maxage, year=minyear:maxyearsam))
     harvest[minage:(minage+n.ages),] <- exp(sim_fit$pl$logF)
     harvest[(n.ages+1),]    <- harvest[n.ages,]
     FLSs[,,,,,i]@harvest    <- FLCore::window(harvest, end=maxyear)
@@ -164,17 +165,22 @@ while (i <= nsim) {
     # ssb
     FLSs[,,,,,i]@stock            <- ssb(FLSs[,,,,,i])
     
+    save(FLSs, file="run/FLSs.RData")
     rm(sim_fit)
     
+    end_time <- Sys.time()
+    duration = end_time - start_time
+    print(paste("run", i, duration, sep=" "))
+    
     i = i + 1
-    save(FLSs, file="run/FLSs.RData")
+    
+    
     
   }
 } # end of while statement
 
-load(file="C:/TEMP/WHOM_2020/run/FLSs.RData")
 
-
+# load(file="C:/TEMP/WHOM_2020/run/FLSs.RData")
 
 df <-
   as.data.frame(FLSs) %>% 
