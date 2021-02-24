@@ -27,6 +27,10 @@ basedir  <- "D:/TEMP"
 sao.name <- "WHOM_2019"
 tempdir  <- file.path(basedir,sao.name) 
 
+# set simulator properties
+nsim     <- 1000
+set.seed(123)
+
 setwd(tempdir)
 
 cn<-read.ices("data/cn.dat")
@@ -64,7 +68,7 @@ start_time <- Sys.time()
 fit  <- sam.fit2(dat, conf, par, silent=TRUE)
 end_time <- Sys.time()
 duration <- as.numeric(difftime(end_time, start_time, units="secs"))
-d        <- ((nsim-i) * duration)/3600
+d        <- ((nsim-1) * duration)/3600
 
 simruns <- base::data.frame(
   assess    = sao.name,
@@ -158,10 +162,6 @@ FLS@stock            <- ssb(FLS)
 # validObject(FLS)
 # plot(FLS)
 # plot(FLS@catch)
-
-# set simulator properties
-nsim     <- 1000
-set.seed(123)
 
 # Generate FLstock object with iterations
 FLSs <- propagate(FLS, nsim)
