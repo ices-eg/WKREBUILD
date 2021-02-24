@@ -1,5 +1,5 @@
 # ============================================================================
-# HOM SAM simulator
+# 00 SAM simulator
 # ============================================================================
 
 rm(list=ls())
@@ -22,7 +22,8 @@ source("D:/GIT/wk_WKREBUILD/EqSimWHM/R/sam_fit2.r")
 source("D:/GIT/wk_WKREBUILD/EqSimWHM/R/utilities.r")
 
 # basedir  <- "E:/MARTIN"
-basedir  <- "C:/TEMP"
+# basedir  <- "C:/TEMP"
+basedir  <- "D:/TEMP"
 sao.name <- "WHOM_2019"
 tempdir  <- file.path(basedir,sao.name) 
 
@@ -59,7 +60,24 @@ conf <- loadConf(dat,"conf/model.cfg", patch=TRUE)
 par  <- defpar(dat, conf)
 
 print("running initial SAM")
+start_time <- Sys.time()
 fit  <- sam.fit2(dat, conf, par, silent=TRUE)
+end_time <- Sys.time()
+duration <- as.numeric(difftime(end_time, start_time, units="secs"))
+d        <- ((nsim-i) * duration)/3600
+
+simruns <- base::data.frame(
+  assess    = sao.name,
+  iter       = 1,
+  starttime = start_time,
+  endtime   = end_time,
+  duration  = duration,
+  aic       = as.numeric(AIC(fit)),
+  convergence = fit$opt$convergence,
+  allSDnotNA  = all(!is.na(unlist(fit$plsd[which(names(fit$plsd)%in%names(fit$sdrep$par.fixed))]))),
+  maxgradient = max(fit$sdrep$gradient.fixed),
+  stringsAsFactors = FALSE)
+save(simruns, file="run/simruns.RData")
 
 # # should be 0 if the model has converged
 # fit$opt$convergence 
@@ -142,14 +160,14 @@ FLS@stock            <- ssb(FLS)
 # plot(FLS@catch)
 
 # set simulator properties
-nsim     <- 10
+nsim     <- 1000
 set.seed(123)
 
 # Generate FLstock object with iterations
 FLSs <- propagate(FLS, nsim)
 
 # Simulate the observations
-simdata <- simulate(fit, nsim=1.2*nsim,  full.data=TRUE)
+simdata <- simulate(fit, nsim=2*nsim,  full.data=TRUE)
 simruns <- data.frame(stringsAsFactors = FALSE)
 
 # iterations. start with 2, 1 is the real observation.
@@ -161,56 +179,72 @@ while (i <= nsim) {
   start_time <- Sys.time()
   
   # sim_fit <-  sam.fit(simdata[[it]], conf, par)
-  # sim_fit  <- sam.fit2(simdata[[it]], conf, par, silent=TRUE)
   sim_fit  <- try(sam.fit2(simdata[[it]], conf, par, silent=TRUE), TRUE)
   
+  end_time <- Sys.time()
+  duration <- as.numeric(difftime(end_time, start_time, units="secs"))
+  d        <- (it/i * (nsim-i) * mean(simruns$duration))/3600
+  
   if(exists("sim_fit")) {
-    
-    # stock numbers
-    stock.n                 <- FLQuant(NA, dimnames=list(age=minage:maxage, year=minyear:maxyearsam))
-    stock.n[,]              <- exp(sim_fit$pl$logN) 
-    stock.n                 <- FLCore::window(stock.n, end=maxyear)
-    FLSs[,,,,,i]@stock.n    <- stock.n
 
-    # harvest
-    n.ages                  <- nrow(sim_fit$pl$logF)
-    harvest                 <- FLQuant(NA, dimnames=list(age=minage:maxage, year=minyear:maxyearsam))
-    harvest[minage:(minage+n.ages),] <- exp(sim_fit$pl$logF)
-    harvest[(n.ages+1),]    <- harvest[n.ages,]
-    FLSs[,,,,,i]@harvest    <- FLCore::window(harvest, end=maxyear)
-    units(FLSs[,,,,,i]@harvest)   <-  "f"
+    if(sim_fit$opt$convergence==0) {
+      
+      # stock numbers
+      stock.n                 <- FLQuant(NA, dimnames=list(age=minage:maxage, year=minyear:maxyearsam))
+      stock.n[,]              <- exp(sim_fit$pl$logN) 
+      stock.n                 <- FLCore::window(stock.n, end=maxyear)
+      FLSs[,,,,,i]@stock.n    <- stock.n
+      
+      # harvest
+      n.ages                  <- nrow(sim_fit$pl$logF)
+      harvest                 <- FLQuant(NA, dimnames=list(age=minage:maxage, year=minyear:maxyearsam))
+      harvest[minage:(minage+n.ages),] <- exp(sim_fit$pl$logF)
+      harvest[(n.ages+1),]    <- harvest[n.ages,]
+      FLSs[,,,,,i]@harvest    <- FLCore::window(harvest, end=maxyear)
+      units(FLSs[,,,,,i]@harvest)   <-  "f"
+      
+      # ssb
+      FLSs[,,,,,i]@stock            <- ssb(FLSs[,,,,,i])
+      
+      save(FLSs, file="run/FLSs.RData")
+      
+      df       <- base::data.frame(
+        assess    = sao.name,
+        iter       = i,
+        starttime = start_time,
+        endtime   = end_time,
+        duration  = round(end_time - start_time, digits=0),
+        aic       = as.numeric(AIC(sim_fit)),
+        convergence = sim_fit$opt$convergence,
+        allSDnotNA  = all(!is.na(unlist(sim_fit$plsd[which(names(sim_fit$plsd)%in%names(sim_fit$sdrep$par.fixed))]))),
+        maxgradient = max(sim_fit$sdrep$gradient.fixed),
+        stringsAsFactors = FALSE)
+      simruns <- bind_rows(simruns, df)
+      save(simruns, file="run/simruns.RData")
+      
+      print(paste("trial", it, ";",
+                  "iter", i, "of", nsim, ";",  
+                  round(as.numeric(duration), digits=0), "sec;",
+                  "converged = ", sim_fit$opt$convergence, ";",
+                  round(d, digits=2), "hours remaining", sep=" "))
+      
+      i = i + 1
+      
+    } else {
+      
+      # non converged
+      print(paste("iter", i, " of ", nsim, ": trial", it, ";", 
+                  round(as.numeric(duration), digits=0), "sec;",
+                  "converged = ", sim_fit$opt$convergence, ";",
+                  round(d, digits=2), "hours remaining", sep=" "))
+      
+    } # end of if converged statement
     
-    # ssb
-    FLSs[,,,,,i]@stock            <- ssb(FLSs[,,,,,i])
-    
-    save(FLSs, file="run/FLSs.RData")
-    
-    end_time <- Sys.time()
-    duration <- end_time - start_time
-    df       <- base::data.frame(
-      assess    = sao.name,
-      run       = i,
-      starttime = start_time,
-      endtime   = end_time,
-      duration  = round(end_time - start_time, digits=0),
-      aic       = as.numeric(AIC(sim_fit)),
-      convergence = sim_fit$opt$convergence,
-      allSDnotNA  = all(!is.na(unlist(fit$plsd[which(names(fit$plsd)%in%names(fit$sdrep$par.fixed))]))),
-      maxgradient = max(fit$sdrep$gradient.fixed),
-      stringsAsFactors = FALSE)
-    simruns <- bind_rows(simruns, df)
-    save(simruns, file="run/simruns.RData")
-    
-    d <- (nsim-i) * as.numeric(mean(simruns$duration))/60
-
-    print(paste("run", i, " of ", nsim, round(as.numeric(duration), digits=0), 
-                "sec;", round(d, digits=2), "minutes remaining", sep=" "))
     
     rm(sim_fit)
     invisible(gc())
     
-    i = i + 1
-  } # end of if statement
+  } # end of if exists statement
   
   # increase i trials in all cases
   it = it + 1
@@ -218,47 +252,43 @@ while (i <= nsim) {
 } # end of while statement
 
 
-df2019 <- as.data.frame(loadRData(file="C:/TEMP/WHOM_2019/run/FLSs.RData"))  %>%  mutate(assess="SAM2019")
-df2020 <- as.data.frame(loadRData(file="C:/TEMP/WHOM_2020/run/FLSs.RData"))  %>%  mutate(assess="SAM2020")
+# df2019 <- as.data.frame(loadRData(file="C:/TEMP/WHOM_2019/run/FLSs.RData"))  %>%  mutate(assess="SAM2019")
+# df2020 <- as.data.frame(loadRData(file="C:/TEMP/WHOM_2020/run/FLSs.RData"))  %>%  mutate(assess="SAM2020")
 
-df <-
-  bind_rows(df2019, df2020) %>% 
-  filter(slot=="harvest", age >= minage, age <= maxage) %>%
-  group_by(year, unit, season, area, iter) %>% 
-  summarise(data = mean(data, na.rm=TRUE)) %>% 
-  mutate(
-    slot="meanf",
-    age ="1-10"
-  ) %>% 
-  bind_rows(df2019, df2020)
-
-
-
-df %>% 
-  filter(slot=="stock") %>% 
-  ggplot(aes(year, data, group=iter)) +
-  theme(legend.position="none") +
-  geom_line(aes(colour=assess)) +
-  geom_line(data=filter(df, slot=="stock", iter==1), colour="black", size=1) +
-  facet_wrap(~assess)
-
-  
-    
+# df <-
+#   bind_rows(df2019, df2020) %>% 
+#   filter(slot=="harvest", age >= minage, age <= maxage) %>%
+#   group_by(year, unit, season, area, iter) %>% 
+#   summarise(data = mean(data, na.rm=TRUE)) %>% 
+#   mutate(
+#     slot="meanf",
+#     age ="1-10"
+#   ) %>% 
+#   bind_rows(df2019, df2020)
 
 
-df %>% 
-  filter(slot=="stock") %>% 
-  ggplot(aes(year, data, group=iter)) +
-  theme(legend.position="none") +
-  geom_line(aes(colour=iter)) +
-  geom_line(data=filter(df, slot=="stock", iter==1), colour="black", size=1)
 
-df %>% 
-  filter(slot=="meanf") %>%
-  ggplot(aes(year, data, group=iter)) +
-  theme(legend.position="none") +
-  geom_line(aes(colour=iter)) +
-  geom_line(data=filter(df, slot=="meanf", iter==1), colour="black", size=1)
+# df %>% 
+#   filter(slot=="stock") %>% 
+#   ggplot(aes(year, data, group=iter)) +
+#   theme(legend.position="none") +
+#   geom_line(aes(colour=assess)) +
+#   geom_line(data=filter(df, slot=="stock", iter==1), colour="black", size=1) +
+#   facet_wrap(~assess)
+
+# df %>% 
+#   filter(slot=="stock") %>% 
+#   ggplot(aes(year, data, group=iter)) +
+#   theme(legend.position="none") +
+#   geom_line(aes(colour=iter)) +
+#   geom_line(data=filter(df, slot=="stock", iter==1), colour="black", size=1)
+
+# df %>% 
+#   filter(slot=="meanf") %>%
+#   ggplot(aes(year, data, group=iter)) +
+#   theme(legend.position="none") +
+#   geom_line(aes(colour=iter)) +
+#   geom_line(data=filter(df, slot=="meanf", iter==1), colour="black", size=1)
 
 
 # df %>% 
