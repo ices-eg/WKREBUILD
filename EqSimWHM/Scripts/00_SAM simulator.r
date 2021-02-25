@@ -20,11 +20,12 @@ library(tidyverse)
 
 source("D:/GIT/wk_WKREBUILD/EqSimWHM/R/sam_fit2.r")
 source("D:/GIT/wk_WKREBUILD/EqSimWHM/R/utilities.r")
+source("D:/GIT/wk_WKREBUILD/EqSimWHM/R/get_dropbox.r")
 
 # basedir  <- "E:/MARTIN"
-# basedir  <- "C:/TEMP"
-basedir  <- "D:/TEMP"
-sao.name <- "WHOM_2019"
+basedir  <- "C:/TEMP"
+# basedir  <- "D:/TEMP"
+sao.name <- "WHOM_2020"
 tempdir  <- file.path(basedir,sao.name) 
 
 # set simulator properties
@@ -80,6 +81,7 @@ simruns <- base::data.frame(
   convergence = fit$opt$convergence,
   allSDnotNA  = all(!is.na(unlist(fit$plsd[which(names(fit$plsd)%in%names(fit$sdrep$par.fixed))]))),
   maxgradient = max(fit$sdrep$gradient.fixed),
+  inFLStock   = TRUE,
   stringsAsFactors = FALSE)
 save(simruns, file="run/simruns.RData")
 
@@ -185,8 +187,29 @@ while (i <= nsim) {
   duration <- as.numeric(difftime(end_time, start_time, units="secs"))
   d        <- (it/i * (nsim-i) * mean(simruns$duration))/3600
   
-  if(exists("sim_fit")) {
-
+  if(grepl("Error",sim_fit)[1]==TRUE) {
+    
+    # error
+    print(paste("trial", it, ";",
+                "iter", i, "of", nsim, ";",  
+                round(as.numeric(duration), digits=0), "sec;",
+                as.character(sim_fit), 
+                sep=" "))
+    
+    df       <- base::data.frame(
+      assess    = sao.name,
+      iter       = i,
+      starttime = start_time,
+      endtime   = end_time,
+      duration  = round(end_time - start_time, digits=0),
+      error     = as.character(sim_fit),
+      inFLStock = FALSE,
+      stringsAsFactors = FALSE)
+    simruns <- bind_rows(simruns, df)
+    save(simruns, file="run/simruns.RData")
+    
+  } else {
+      
     if(sim_fit$opt$convergence==0) {
       
       # stock numbers
@@ -208,20 +231,6 @@ while (i <= nsim) {
       
       save(FLSs, file="run/FLSs.RData")
       
-      df       <- base::data.frame(
-        assess    = sao.name,
-        iter       = i,
-        starttime = start_time,
-        endtime   = end_time,
-        duration  = round(end_time - start_time, digits=0),
-        aic       = as.numeric(AIC(sim_fit)),
-        convergence = sim_fit$opt$convergence,
-        allSDnotNA  = all(!is.na(unlist(sim_fit$plsd[which(names(sim_fit$plsd)%in%names(sim_fit$sdrep$par.fixed))]))),
-        maxgradient = max(sim_fit$sdrep$gradient.fixed),
-        stringsAsFactors = FALSE)
-      simruns <- bind_rows(simruns, df)
-      save(simruns, file="run/simruns.RData")
-      
       print(paste("trial", it, ";",
                   "iter", i, "of", nsim, ";",  
                   round(as.numeric(duration), digits=0), "sec;",
@@ -233,13 +242,28 @@ while (i <= nsim) {
     } else {
       
       # non converged
-      print(paste("iter", i, " of ", nsim, ": trial", it, ";", 
+      print(paste("trial", it, ";",
+                  "iter", i, "of", nsim, ";",  
                   round(as.numeric(duration), digits=0), "sec;",
                   "converged = ", sim_fit$opt$convergence, ";",
                   round(d, digits=2), "hours remaining", sep=" "))
       
     } # end of if converged statement
     
+    df       <- base::data.frame(
+      assess    = sao.name,
+      iter       = i,
+      starttime = start_time,
+      endtime   = end_time,
+      duration  = round(end_time - start_time, digits=0),
+      aic       = as.numeric(AIC(sim_fit)),
+      convergence = sim_fit$opt$convergence,
+      allSDnotNA  = all(!is.na(unlist(sim_fit$plsd[which(names(sim_fit$plsd)%in%names(sim_fit$sdrep$par.fixed))]))),
+      maxgradient = max(sim_fit$sdrep$gradient.fixed),
+      inFLStock   = ifelse(sim_fit$opt$convergence==0,TRUE,FALSE),
+      stringsAsFactors = FALSE)
+    simruns <- bind_rows(simruns, df)
+    save(simruns, file="run/simruns.RData")
     
     rm(sim_fit)
     invisible(gc())
@@ -252,43 +276,46 @@ while (i <= nsim) {
 } # end of while statement
 
 
-# df2019 <- as.data.frame(loadRData(file="C:/TEMP/WHOM_2019/run/FLSs.RData"))  %>%  mutate(assess="SAM2019")
-# df2020 <- as.data.frame(loadRData(file="C:/TEMP/WHOM_2020/run/FLSs.RData"))  %>%  mutate(assess="SAM2020")
-
-# df <-
-#   bind_rows(df2019, df2020) %>% 
-#   filter(slot=="harvest", age >= minage, age <= maxage) %>%
-#   group_by(year, unit, season, area, iter) %>% 
-#   summarise(data = mean(data, na.rm=TRUE)) %>% 
-#   mutate(
-#     slot="meanf",
-#     age ="1-10"
-#   ) %>% 
-#   bind_rows(df2019, df2020)
 
 
+dropboxdir <- file.path(get_dropbox(), "HOM FG", "05. Data", "WHOM_SAM20")
 
-# df %>% 
-#   filter(slot=="stock") %>% 
-#   ggplot(aes(year, data, group=iter)) +
-#   theme(legend.position="none") +
-#   geom_line(aes(colour=assess)) +
-#   geom_line(data=filter(df, slot=="stock", iter==1), colour="black", size=1) +
-#   facet_wrap(~assess)
+df2020a <- as.data.frame(loadRData(file=file.path(dropboxdir, "run/WHOM_SAM20_FLS_all.RData")))  %>%  mutate(assess="SAM20a")
+df2020c <- as.data.frame(loadRData(file=file.path(dropboxdir, "run/WHOM_SAM20_FLS_converged.RData")))  %>%  mutate(assess="SAM20c")
 
-# df %>% 
-#   filter(slot=="stock") %>% 
-#   ggplot(aes(year, data, group=iter)) +
-#   theme(legend.position="none") +
-#   geom_line(aes(colour=iter)) +
-#   geom_line(data=filter(df, slot=="stock", iter==1), colour="black", size=1)
+df <-
+  bind_rows(df2020a, df2020c) %>%
+  filter(slot=="harvest", age >= minage, age <= maxage) %>%
+  group_by(assess, year, unit, season, area, iter) %>%
+  summarise(data = mean(data, na.rm=TRUE)) %>%
+  mutate(
+    slot="meanf",
+    age ="1-10"
+  ) %>%
+  bind_rows(df2020a, df2020c)
 
-# df %>% 
-#   filter(slot=="meanf") %>%
-#   ggplot(aes(year, data, group=iter)) +
-#   theme(legend.position="none") +
-#   geom_line(aes(colour=iter)) +
-#   geom_line(data=filter(df, slot=="meanf", iter==1), colour="black", size=1)
+df %>%
+  mutate(year=factor(year)) %>% 
+  filter(slot=="stock") %>%
+  ggplot(aes(year, data, fill=assess, colour=assess)) +
+  theme(axis.text.x=element_text(angle =90, vjust = 0.5)) +
+  geom_boxplot(position=position_dodge())
+
+df %>%
+  mutate(year=factor(year)) %>% 
+  filter(slot=="stock.n") %>%
+  filter(age==5) %>% 
+  ggplot(aes(year, data, fill=assess, colour=assess)) +
+  theme(axis.text.x=element_text(angle =90, vjust = 0.5)) +
+  geom_boxplot(position=position_dodge()) +
+  scale_y_continuous(trans = 'log10')
+
+df %>%
+  mutate(year=factor(year)) %>% 
+  filter(slot=="meanf") %>%
+  ggplot(aes(year, data, fill=assess, colour=assess)) +
+  theme(axis.text.x=element_text(angle =90, vjust = 0.5)) +
+  geom_boxplot(position=position_dodge())
 
 
 # df %>% 
