@@ -318,6 +318,15 @@ df %>%
   geom_boxplot(position=position_dodge())
 
 
+df2020c %>%
+  mutate(year=factor(year)) %>% 
+  filter(slot %in% c("stock.wt", "catch.wt")) %>%
+  ggplot(aes(year, data, colour=slot)) +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle =90, vjust = 0.5)) +
+  geom_boxplot(position=position_dodge()) +
+  facet_wrap(~age)
+
 # df %>% 
 #   filter(run<=2) %>% 
 #   ggplot(aes(x=year,y=data, group=run)) +
@@ -325,3 +334,4 @@ df %>%
 #   geom_line(colour="gray")
 
 # plot(FLSs)
+
