@@ -164,10 +164,16 @@ eqsim_run <- function(fit,
   SR <- fit $ sr.sto
   data <- fit $ rby[,c("rec","ssb","year")]
   stk <- fit $ stk
+  #1000 iterations
+  stks <- fit$stks
   
   # forecast settings (mean wt etc)
   stk.win <- FLCore::window(stk, start = btyr1, end = btyr2)
   stk.winsel <- FLCore::window(stk, start = slyr1  , end = slyr2)
+  
+  #1000 iterations
+  stks.win <- FLCore::window(stks, start = btyr1, end = btyr2)
+  stks.winsel <- FLCore::window(stks, start = slyr1, end = slyr2)
   
   littleHelper <- function(x,i) {
     x2 <- x
@@ -176,6 +182,13 @@ eqsim_run <- function(fit,
     x[i] <- x2[i]
     return(x)
   }
+  
+  # get ready for the simulations
+  Nmod <- nrow(SR)
+  NF <- length(Fscan)
+  ages <- FLCore::dims(stk)$age
+  tyr <- range(fit$stk)["maxyear"]    #terminal assessment year
+  ssb_lag <- fit$rby$ssb_lag[1]
   
   west <- matrix(FLCore::stock.wt(stk.win), ncol = btyr2 - btyr1 + 1)
   i <- west == 0
@@ -202,6 +215,16 @@ eqsim_run <- function(fit,
     catch[]  <- apply(catch, 1, mean)
   }
   
+  #iteration specific selection
+  sels <- array(NA, c(ages,slyr2-slyr1+1,Nmod),dimnames=list(age=(range(stk)[1]:range(stk)[2]),year=seq(slyr1,slyr2),iter=1:Nmod))
+  Fbars <- array(NA, c(ages,slyr2-slyr1+1,Nmod),dimnames=list(age=(range(stk)[1]:range(stk)[2]),year=seq(slyr1,slyr2),iter=1:Nmod))
+  for (ii in 1:Nmod){
+    sels[,,ii] <- matrix(FLCore::harvest(stks.winsel[,,,,,ii]), ncol = slyr2 - slyr1 + 1)
+    Fbars[,,ii] <- matrix(FLCore::fbar(stks.winsel[,,,,,ii]), ncol = slyr2 - slyr1  + 1, nrow = ages, byrow = TRUE)
+    sels[,,ii] <- sels[,,ii]/Fbars[,,ii]
+    if (sel.const == TRUE) {sels[,,ii] <- rowMeans(sels[,,ii])}
+  }
+  
   # 22.2.2014 Added weight of landings per comment from Carmen
   if (bio.const==TRUE){ # take means of wts Mat and M and ratio of landings to catch
     west[] <- apply(west, 1, mean)
@@ -219,12 +242,6 @@ eqsim_run <- function(fit,
   
   Fprop <- apply(FLCore::harvest.spwn(stk.winsel), 1, mean)[drop=TRUE] # vmean(harvest.spwn(stk.win))
   Mprop <- apply(FLCore::m.spwn(stk.win), 1, mean)[drop=TRUE] # mean(m.spwn(stk.win))
-  
-  # get ready for the simulations
-  Nmod <- nrow(SR)
-  NF <- length(Fscan)
-  ages <- FLCore::dims(stk)$age
-  ssb_lag <- fit$rby$ssb_lag[1]
   
   ssby <- ssby.obs <- array(NA, c(Nrun,Nmod),dimnames=list(year=1:Nrun,iter=1:Nmod))
   Ferr <- SSBerr <- Fmgmt <- Fmgmt_err <- TAC <- array(0, c(Nrun,Nmod),dimnames=list(year=1:Nrun,iter=1:Nmod))
@@ -320,25 +337,34 @@ eqsim_run <- function(fit,
     
     ############################################################################
     #Population in simulation year 1 (Jan1)
-    Ny[,1,] <- unlist(lapply(lapply(fit$stks,FUN=FLCore::stock.n),'[',,ac(range(fit$stk)["maxyear"])))
+    #Ny[,1,] <- unlist(lapply(lapply(fit$stks,FUN=FLCore::stock.n),'[',,ac(range(fit$stk)["maxyear"])))
+    Ny[,1,] <- array(as.numeric(stock.n(stks[,ac(tyr)])),dim=c(ages,Nmod))   #FLStock iter vesrion
     
-    #ssby[1,] <- ssby.obs[1,] <- unlist(lapply(lapply(fit$stks,FUN=FLCore::ssb),'[',,ac(range(fit$stk)["maxyear"])))
-    ssby[1,] <- unlist(lapply(lapply(fit$stks,FUN=FLCore::ssb),'[',,ac(range(fit$stk)["maxyear"])))
+    #ssby[1,] <- unlist(lapply(lapply(fit$stks,FUN=FLCore::ssb),'[',,ac(range(fit$stk)["maxyear"])))
+    #ssby.obs[1,] <- ssby[1,]*exp(SSBerr[1,])
+    #FLStock iterations version
+    ssby[1,] <- as.numeric(ssb(stks[,ac(tyr)]))
     ssby.obs[1,] <- ssby[1,]*exp(SSBerr[1,])
     
     #last catch (for IAV constraint)
     lastTAC <- rep(an(FLCore::catch(fit$stk)[,ac(range(fit$stk)["maxyear"]-1),,,,]),Nmod)
     
+    #selections now iteration specific, put the selections for the current year in a temporary object simyear.sels
+    #with dimensions ages x iters
+    simyear.sels <- array(NA,c(ages,Nmod))
+    for(ii in 1:Nmod){
+      simyear.sels[,ii] <- sel[,rsamsel[1,ii]]        #assessment based selection
+      #simyear.sels[,ii] <- sels[,rsamsel[1,ii],ii]    #iteration based selection
+    }
+    
     #apply the HCR - for the y-1 ssb use the y values (any action will be overridden by the catch constraint in year 1 anyway)
-    #Fmgmt[1,] <- do.call(fManagement, args=list(list("Fnext" = Fbar,"Btrigger" = Btrigger, "SSB" = ssby[1,])))
     Fmgmt[1,] <- do.call(fManagement, args=list(list("Fnext" = Fbar,"Btrigger" = Btrigger, "SSB" = ssby.obs, "Yr" = 1, 
-                                                     "M" = M[,rsam[1,]], "sel" = sel[,rsamsel[1,]], "N" = Ny[,1,], 
+                                                     "M" = M[,rsam[1,]], "sel" = simyear.sels, "N" = Ny[,1,], 
                                                      "SW" = west[,rsam[1,]], "Mat" = Mat[,rsam[1,]], "Blim" = Blim)))
     
     #apply error on the management F to get the realised F
     Fnext <- Fmgmt_err[1,] <- exp(Ferr[1,]) * Fmgmt[1,]
-    
-    Fy[,1,] <- rep(Fnext, each = ages) * sel[,rsamsel[1,]]
+    Fy[,1,] <- rep(Fnext, each = ages) * simyear.sels
     Cy[,1,] <- Ny[,1,] * Fy[,1,] / (Fy[,1,] + M[,rsam[1,]]) * (1 - exp(-Fy[,1,] - M[,rsam[1,]]))
     TAC[1,] <- Yld1 <- apply(Cy[,1,]*Wy[,1,], MARGIN=2, FUN="sum")
     Yld2 <- Yld3 <- Yld4 <- rep(NA,Nmod)
@@ -361,20 +387,14 @@ eqsim_run <- function(fit,
       }
       
       if (sum(is.na(tgt)) < Nmod) {
-        
-        # Fmgmt[1,!is.na(tgt)] <- fFindF(N = Ny[,1,!is.na(tgt),drop=FALSE], CW = Wy[,1,!is.na(tgt),drop=FALSE], 
-        #                                SW = WSy[,1,!is.na(tgt),drop=FALSE], Mat = Mat[,rsam[1,!is.na(tgt)],drop=FALSE],
-        #                                M = M[,rsam[1,!is.na(tgt)],drop=FALSE], Sel = sel[,rsamsel[1,!is.na(tgt)],drop=FALSE], 
-        #                                tgt = tgt[!is.na(tgt)], type = 1, ages = ages, iters = sum(!is.na(tgt)))
-        
+
         Fmgmt_err[1,!is.na(tgt)] <- fFindF(N = Ny[,1,!is.na(tgt),drop=FALSE], CW = Wy[,1,!is.na(tgt),drop=FALSE], 
-                                       SW = WSy[,1,!is.na(tgt),drop=FALSE], Mat = Mat[,rsam[1,!is.na(tgt)],drop=FALSE],
-                                       M = M[,rsam[1,!is.na(tgt)],drop=FALSE], Sel = sel[,rsamsel[1,!is.na(tgt)],drop=FALSE], 
-                                       tgt = tgt[!is.na(tgt)], type = 1, ages = ages, iters = sum(!is.na(tgt)))
+                                           SW = WSy[,1,!is.na(tgt),drop=FALSE], Mat = Mat[,rsam[1,!is.na(tgt)],drop=FALSE],
+                                           M = M[,rsam[1,!is.na(tgt)],drop=FALSE], Sel = simyear.sels[,!is.na(tgt),drop=FALSE], 
+                                           tgt = tgt[!is.na(tgt)], type = 1, ages = ages, iters = sum(!is.na(tgt)))
         
-        #Fnext <- Fmgmt_err[1,] <- Fmgmt[1,]
         Fnext <- Fmgmt_err[1,]
-        Fy[,1,] <- rep(Fnext, each = ages) * sel[,rsamsel[1,]]
+        Fy[,1,] <- rep(Fnext, each = ages) * simyear.sels
         Cy[,1,] <- Ny[,1,] * Fy[,1,] / (Fy[,1,] + M[,rsam[1,]]) * (1 - exp(-Fy[,1,] - M[,rsam[1,]]))
         Yld2 <- apply(Cy[,1,]*Wy[,1,], MARGIN=2, FUN="sum") 
         TAC[1,!is.na(tgt)] <- tgt[!is.na(tgt)]
@@ -446,20 +466,13 @@ eqsim_run <- function(fit,
       
       if (sum(is.na(tgt)) < Nmod) {
         
-        # Fmgmt[1,!is.na(tgt)] <- fFindF(N = Ny[,1,!is.na(tgt),drop=FALSE], CW = Wy[,1,!is.na(tgt),drop=FALSE], 
-        #                                SW = WSy[,1,!is.na(tgt),drop=FALSE], Mat = Mat[,rsam[1,!is.na(tgt)],drop=FALSE],
-        #                                M = M[,rsam[1,!is.na(tgt)],drop=FALSE], Sel = sel[,rsamsel[1,!is.na(tgt)],drop=FALSE], 
-        #                                tgt = tgt[!is.na(tgt)], type = 1, ages = ages, iters = sum(!is.na(tgt)))
-
         Fmgmt_err[1,!is.na(tgt)] <- fFindF(N = Ny[,1,!is.na(tgt),drop=FALSE], CW = Wy[,1,!is.na(tgt),drop=FALSE], 
-                                       SW = WSy[,1,!is.na(tgt),drop=FALSE], Mat = Mat[,rsam[1,!is.na(tgt)],drop=FALSE],
-                                       M = M[,rsam[1,!is.na(tgt)],drop=FALSE], Sel = sel[,rsamsel[1,!is.na(tgt)],drop=FALSE], 
-                                       tgt = tgt[!is.na(tgt)], type = 1, ages = ages, iters = sum(!is.na(tgt)))
+                                           SW = WSy[,1,!is.na(tgt),drop=FALSE], Mat = Mat[,rsam[1,!is.na(tgt)],drop=FALSE],
+                                           M = M[,rsam[1,!is.na(tgt)],drop=FALSE], Sel = simyear.sels[,!is.na(tgt),drop=FALSE],
+                                           tgt = tgt[!is.na(tgt)], type = 1, ages = ages, iters = sum(!is.na(tgt)))
         
-        #Fnext <- Fmgmt_err[1,] <- Fmgmt[1,]
         Fnext <- Fmgmt_err[1,]
-        
-        Fy[,1,] <- rep(Fnext, each = ages) * sel[,rsamsel[1,]]
+        Fy[,1,] <- rep(Fnext, each = ages) * simyear.sels
         Cy[,1,] <- Ny[,1,] * Fy[,1,] / (Fy[,1,] + M[,rsam[1,]]) * (1 - exp(-Fy[,1,] - M[,rsam[1,]]))
         Yld2 <- Yld2
         Yld3[!is.na(tgt)] <- apply(Cy[,1,!is.na(tgt)]*Wy[,1,!is.na(tgt)], MARGIN=2, FUN="sum") 
@@ -487,19 +500,13 @@ eqsim_run <- function(fit,
         icesTAF::msg(paste0("Catch constraint applied in year 1"))
         
         #catch constraint
-        # Fmgmt[1,] <- fFindF(N = Ny[,1,,drop=FALSE], CW = Wy[,1,,drop=FALSE], 
-        #                     SW = WSy[,1,,drop=FALSE], Mat = Mat[,rsam[1,],drop=FALSE], 
-        #                     M = M[,rsam[1,],drop=FALSE], Sel = sel[,rsamsel[1,],drop=FALSE], 
-        #                     tgt = tgt, type = 1, ages = ages, iters = sum(!is.na(tgt)))
-
         Fmgmt_err[1,] <- fFindF(N = Ny[,1,,drop=FALSE], CW = Wy[,1,,drop=FALSE], 
-                            SW = WSy[,1,,drop=FALSE], Mat = Mat[,rsam[1,],drop=FALSE], 
-                            M = M[,rsam[1,],drop=FALSE], Sel = sel[,rsamsel[1,],drop=FALSE], 
-                            tgt = tgt, type = 1, ages = ages, iters = sum(!is.na(tgt)))
+                                SW = WSy[,1,,drop=FALSE], Mat = Mat[,rsam[1,],drop=FALSE], 
+                                M = M[,rsam[1,],drop=FALSE], Sel = simyear.sels, 
+                                tgt = tgt, type = 1, ages = ages, iters = sum(!is.na(tgt)))
         
-        #Fnext <- Fmgmt_err[1,] <- Fmgmt[1,]
         Fnext <- Fmgmt_err[1,]
-        Fy[,1,] <- rep(Fnext, each = ages) * sel[,rsamsel[1,]]
+        Fy[,1,] <- rep(Fnext, each = ages) * simyear.sels
         Cy[,1,] <- Ny[,1,] * Fy[,1,] / (Fy[,1,] + M[,rsam[1,]]) * (1 - exp(-Fy[,1,] - M[,rsam[1,]]))
         Yld4 <- apply(Cy[,1,]*Wy[,1,], MARGIN=2, FUN="sum")
         TAC[1,!is.na(tgt)] <- tgt[!is.na(tgt)]
@@ -573,14 +580,21 @@ eqsim_run <- function(fit,
       Fnext <- Fbar
       
       #apply the HCR
+      #selections now iteration specific, put the selections for the current year in a temporary object simyear.sels
+      #with dimensions ages x iters
+      simyear.sels <- array(NA,c(ages,Nmod))
+      for(ii in 1:Nmod){
+        simyear.sels[,ii] <- sel[,rsamsel[j,ii]]        #assessment based selection
+        #simyear.sels[,ii] <- sels[,rsamsel[j,ii],ii]    #iteration based selection
+      }
+      
       Fmgmt[j,] <- do.call(fManagement, args=list(list("Fnext" = Fbar, "Btrigger" = Btrigger, "SSB" = ssby.obs, "Yr" = j, 
-                                                       "M" = M[,rsam[j,]], "sel" = sel[,rsamsel[j,]], "N" = Ny[,j,], 
+                                                       "M" = M[,rsam[j,]], "sel" = simyear.sels, "N" = Ny[,j,], 
                                                        "SW" = west[,rsam[j,]], "Mat" = Mat[,rsam[j,]], "Blim" = Blim)))
       
       #apply F error to get realised F from management F
       Fnext <- Fmgmt_err[j,] <- Fmgmt[j,]*exp(Ferr[j,])
-      
-      Fy[,j,] <- rep(Fnext, each = ages) * sel[,rsamsel[j,]]
+      Fy[,j,] <- rep(Fnext, each = ages) * simyear.sels
       Cy[,j,] <- Ny[,j,] * Fy[,j,] / (Fy[,j,] + M[,rsam[j,]]) * (1 - exp(-Fy[,j,] - M[,rsam[j,]]))
       Yld1 <- apply(Cy[,j,]*Wy[,j,], MARGIN=2, FUN="sum")
       TAC[j,] <- Yld1
@@ -604,23 +618,16 @@ eqsim_run <- function(fit,
         }
         
         if (sum(is.na(tgt)) < Nmod) {
-          
+  
           #calculate new F for those to be updated
-          # Fmgmt[j,!is.na(tgt)] <- fFindF(N = Ny[,j,!is.na(tgt),drop=FALSE], CW = Wy[,j,!is.na(tgt),drop=FALSE], 
-          #                                SW = WSy[,j,!is.na(tgt),drop=FALSE], Mat = Mat[,rsam[j,!is.na(tgt)],drop=FALSE],
-          #                                M = M[,rsam[j,!is.na(tgt)],drop=FALSE], Sel = sel[,rsamsel[j,!is.na(tgt)],drop=FALSE],
-          #                                tgt = tgt[!is.na(tgt)], type = 1, ages = ages, iters = sum(!is.na(tgt)))
-          # Fmgmt[j,is.na(tgt)] <- Fmgmt_err[j,is.na(tgt)]
-          
           Fmgmt_err[j,!is.na(tgt)] <- fFindF(N = Ny[,j,!is.na(tgt),drop=FALSE], CW = Wy[,j,!is.na(tgt),drop=FALSE], 
                                              SW = WSy[,j,!is.na(tgt),drop=FALSE], Mat = Mat[,rsam[j,!is.na(tgt)],drop=FALSE],
-                                             M = M[,rsam[j,!is.na(tgt)],drop=FALSE], Sel = sel[,rsamsel[j,!is.na(tgt)],drop=FALSE],
+                                             M = M[,rsam[j,!is.na(tgt)],drop=FALSE], Sel = simyear.sels[,!is.na(tgt),drop=FALSE],
                                              tgt = tgt[!is.na(tgt)], type = 1, ages = ages, iters = sum(!is.na(tgt)))
           
           
-          #Fnext <- Fmgmt_err[j,] <- Fmgmt[j,]
           Fnext <- Fmgmt_err[j,]
-          Fy[,j,] <- rep(Fnext, each = ages) * sel[,rsamsel[j,]]
+          Fy[,j,] <- rep(Fnext, each = ages) * simyear.sels
           Cy[,j,] <- Ny[,j,] * Fy[,j,] / (Fy[,j,] + M[,rsam[j,]]) * (1 - exp(-Fy[,j,] - M[,rsam[j,]]))
           Yld2 <- apply(Cy[,j,]*Wy[,j,], MARGIN=2, FUN="sum")
           TAC[j,!is.na(tgt)] <- tgt[!is.na(tgt)]
@@ -698,30 +705,20 @@ eqsim_run <- function(fit,
           
         }
         
-        #if (j==4){browser()}
-        
         #message
         icesTAF::msg(paste0(incs1,"/",decs1," IAV capped increases/decreases all SSB ",j))
         icesTAF::msg(paste0(incs,"/",decs," IAV capped increases/decreases set in year ",j))
         
-        #if (sum(is.na(tgt)) < Nmod) {
         if (sum(is.na(tgt)) < Nmod & sum(is.na(tgt))>0) {
           
           #find the new F for those targets to be adjusted
-          # Fmgmt[j,!is.na(tgt)] <- fFindF(N = Ny[,j,!is.na(tgt),drop=FALSE], CW = Wy[,j,!is.na(tgt),drop=FALSE], 
-          #                                SW = WSy[,j,!is.na(tgt),drop=FALSE], Mat = Mat[,rsam[j,!is.na(tgt)],drop=FALSE],
-          #                                M = M[,rsam[j,!is.na(tgt)],drop=FALSE], Sel = sel[,rsamsel[j,!is.na(tgt)],drop=FALSE], 
-          #                                tgt = tgt[!is.na(tgt)], type = 1, ages = ages, iters = sum(!is.na(tgt)))
-          # Fmgmt[j,is.na(tgt)] <- Fmgmt_err[j,is.na(tgt)]
-          
           Fmgmt_err[j,!is.na(tgt)] <- fFindF(N = Ny[,j,!is.na(tgt),drop=FALSE], CW = Wy[,j,!is.na(tgt),drop=FALSE], 
                                              SW = WSy[,j,!is.na(tgt),drop=FALSE], Mat = Mat[,rsam[j,!is.na(tgt)],drop=FALSE],
-                                             M = M[,rsam[j,!is.na(tgt)],drop=FALSE], Sel = sel[,rsamsel[j,!is.na(tgt)],drop=FALSE], 
+                                             M = M[,rsam[j,!is.na(tgt)],drop=FALSE], Sel = simyear.sels[,!is.na(tgt),drop=FALSE], 
                                              tgt = tgt[!is.na(tgt)], type = 1, ages = ages, iters = sum(!is.na(tgt)))
           
-          #Fnext <- Fmgmt_err[j,] <- Fmgmt[j,]
           Fnext <- Fmgmt_err[j,]
-          Fy[,j,] <- rep(Fnext, each = ages) * sel[,rsamsel[j,]]
+          Fy[,j,] <- rep(Fnext, each = ages) * simyear.sels
           Cy[,j,] <- Ny[,j,] * Fy[,j,] / (Fy[,j,] + M[,rsam[j,]]) * (1 - exp(-Fy[,j,] - M[,rsam[j,]]))
           Yld3 <- Yld2
           
@@ -754,19 +751,13 @@ eqsim_run <- function(fit,
           
           icesTAF::msg(paste0("Catch constraint applied in year ",j))
           
-          # Fmgmt[j,] <- fFindF(N = Ny[,j,,drop=FALSE], CW = Wy[,j,,drop=FALSE], 
-          #                     SW = WSy[,j,,drop=FALSE], Mat = Mat[,rsam[j,],drop=FALSE], 
-          #                     M = M[,rsam[j,],drop=FALSE], Sel = sel[,rsamsel[j,],drop=FALSE], 
-          #                     tgt = tgt, type = 1, ages = ages, iters = sum(!is.na(tgt)))
-          
           Fmgmt_err[j,] <- fFindF(N = Ny[,j,,drop=FALSE], CW = Wy[,j,,drop=FALSE], 
                                   SW = WSy[,j,,drop=FALSE], Mat = Mat[,rsam[j,],drop=FALSE], 
-                                  M = M[,rsam[j,],drop=FALSE], Sel = sel[,rsamsel[j,],drop=FALSE], 
+                                  M = M[,rsam[j,],drop=FALSE], Sel = simyear.sels, 
                                   tgt = tgt, type = 1, ages = ages, iters = sum(!is.na(tgt)))
           
-          #Fnext <- Fmgmt_err[j,] <- Fmgmt[j,]
           Fnext <- Fmgmt_err[j,]
-          Fy[,j,] <- rep(Fnext, each = ages) * sel[,rsamsel[j,]]
+          Fy[,j,] <- rep(Fnext, each = ages) * simyear.sels
           Cy[,j,] <- Ny[,j,] * Fy[,j,] / (Fy[,j,] + M[,rsam[j,]]) * (1 - exp(-Fy[,j,] - M[,rsam[j,]]))
           Yld4 <- apply(Cy[,j,]*Wy[,j,], MARGIN=2, FUN="sum")
           TAC[j,] <- tgt
