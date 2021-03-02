@@ -60,10 +60,10 @@ library(ggplot2)
 
 
 #computer specific locations
-# Drive    <- "C:"
-# Base.dir <- file.path(Drive,"Stocks","hom_27_2a4a5b6a7a-ce-k8","MP_MSE")
-Drive    <- "D:"
-Base.dir <- file.path(Drive,"GIT")
+Drive    <- "C:"
+Base.dir <- file.path(Drive,"Stocks","hom_27_2a4a5b6a7a-ce-k8","MP_MSE")
+#Drive    <- "D:"
+#Base.dir <- file.path(Drive,"GIT")
 
 #Basic MSE directory
 MSE.dir <- file.path(Base.dir,"wk_WKREBUILD","EqSimWHM")
