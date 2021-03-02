@@ -55,3 +55,59 @@ gSelHistatAge <- ggplot(data = dfSASelection, mapping = aes(Sel)) +
 
 
   
+
+#quick look at an ouput 
+load(file=file.path(Res.dir,"WHOM_SS3_OM2.2_MP5.23_1000_23","WHOM_SS3_OM2.2_MP5.23_1000_23_SimRuns.RData"))
+#const F
+load(file=file.path(Res.dir,"WHOM_SS3_OM2.2_MP5.00_1000_23","WHOM_SS3_OM2.2_MP5.00_1000_23_SimRuns.RData"))
+names(SimRuns)
+t<-SimRuns[[4]]$Sel  #target 0.075
+
+dim(t)
+#all iters, year 1
+plot(seq(0,15),t[,1,1], type="l")
+for (iter in seq(1,1000)) {lines(seq(0,15),t[,1,iter])}
+#all iters, year 2
+plot(seq(0,15),t[,2,1], type="l")
+for (iter in seq(1,1000)) {lines(seq(0,15),t[,2,iter])}
+#all years, iter 1 - this is the assessment output
+plot(seq(0,15),t[,1,1], type="l")
+for (yr in seq(1,23)) {lines(seq(0,15),t[,yr,1])}
+#all years, iter 2
+plot(seq(0,15),t[,1,2], type="l")
+for (yr in seq(1,23)) {lines(seq(0,15),t[,yr,2])}
+
+#catch weight
+tcw<-SimRuns[[4]]$catW
+dim(tcw)
+
+#10 iters, year 1
+plot(seq(0,15),tcw[,1,1], type="l")
+for (iter in seq(1,10)) {lines(seq(0,15),tcw[,1,iter])}
+#10 iters, year 2
+plot(seq(0,15),tcw[,2,1], type="l")
+for (iter in seq(1,10)) {lines(seq(0,15),tcw[,2,iter])}
+#all years, iter 1 - this is the assessment output
+plot(seq(0,15),tcw[,1,1], type="l")
+for (yr in seq(1,23)) {lines(seq(0,15),tcw[,yr,1])}
+#all years, iter 2 - this is the assessment output
+plot(seq(0,15),tcw[,1,2], type="l")
+for (yr in seq(1,23)) {lines(seq(0,15),tcw[,yr,2])}
+
+
+tsw<-SimRuns[[4]]$stkW
+dim(t)
+
+#10 iters, year 1
+plot(seq(0,15),tsw[,1,1], type="l")
+for (iter in seq(1,10)) {lines(seq(0,15),tsw[,1,iter])}
+
+#all iters, year 2
+plot(seq(0,15),tsw[,2,1], type="l")
+for (iter in seq(1,10)) {lines(seq(0,15),tsw[,2,iter])}
+#all years, iter 1 - this is the assessment output
+plot(seq(0,15),tsw[,1,1], type="l")
+for (yr in seq(1,23)) {lines(seq(0,15),tsw[,yr,1])}
+#all years, iter 2 - this is the assessment output
+plot(seq(0,15),tsw[,1,2], type="l")
+for (yr in seq(1,23)) {lines(seq(0,15),tsw[,yr,2])}

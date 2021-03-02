@@ -40,11 +40,8 @@ OM <- OM2.2   #WGWIDE SS 2019, stochastic weights, selection
 stock          <- "WHOM"
 assess         <- "SS3"
 FLStockfile    <- "WGWIDE19.RData"
-FLStockSimfile <- "WHOM_SS19_FLS_V1.RData"    #V1 iterations as single FLStock
-
-#FLStockSimfile <- "MSE_WGWIDE19_FLStocks_1k15PG.RData" 
-#FLStockSimfile <- "MSE_WGWIDE19_FLStocks_10k.RData"
-#FLStockSimfile <- "MSE_WGWIDE19_FLStocks_15PG.RData"
+#FLStockSimfile <- "WHOM_SS19_FLS_V1.RData"    #V1 iterations as single FLStock
+FLStockSimfile <- "WHOM_SS19_FLS_V2.RData"    #V2 new draw, contains variability in selection and weights
 
 #WHOM SAM
 #stock          <- "WHOM"
@@ -176,7 +173,8 @@ for (mp in c("MP5.00","MP5.01","MP5.03",
             "MP5.10","MP5.11","MP5.13",
             "MP5.20","MP5.21","MP5.23")) {
 
-#for (mp in c("MP5.23")) {
+#for (mp in c("MP5.00","MP5.23")) {
+  #mp <- "MP5.23"
     
   MP <- get(mp)
   
@@ -194,11 +192,21 @@ for (mp in c("MP5.00","MP5.01","MP5.03",
   simYears <- ac(seq(yStart,yEnd))
   
   #exploitation constraints
-  #2018 catch known, 2019 as assumed during WGWIDE 2019, 2020 as advised
-  dfExplConstraints <- data.frame("Type" = c("Catch","Catch","Catch"), 
-                                  "YearNum" = c("1","2","3"),
-                                  "Val" = c(101682,110381,83954), 
-                                  stringsAsFactors = FALSE)
+  if (OM$desc=="WGWIDE19") {
+    #2018 catch known, 2019 as assumed during WGWIDE 2019, 2020 as advised
+    dfExplConstraints <- data.frame("Type" = c("Catch","Catch","Catch"), 
+                                    "YearNum" = c("1","2","3"),
+                                    "Val" = c(101682,110381,83954), 
+                                    stringsAsFactors = FALSE)
+  }
+    
+  if (OM$desc=="WGWIDE20") {
+    #2019 catch known, 2020 as assumed during WGWIDE 2020, 2021 as advised
+    dfExplConstraints <- data.frame("Type" = c("Catch","Catch","Catch"), 
+                                    "YearNum" = c("1","2","3"),
+                                    "Val" = c(124947,69527,81376), 
+                                    stringsAsFactors = FALSE)
+  }
   
   #test for recruitment failure, keep exploration constant at 80kt (regardless of HCR) for first 10 years during which recruitment
   #failure is simulated (1/10 of normal). Then, all HCRs should start from same point
@@ -229,11 +237,6 @@ for (mp in c("MP5.00","MP5.01","MP5.03",
   #IAV
   if (!any(is.na(MP$TAC_IAV))) {
     if (length(MP$TAC_IAV)==2){
-      #  dfExplConstraints <- dplyr::bind_rows(dfExplConstraints,
-      #                                        data.frame("Type" = "IAV",
-      #                                                   "YearNum" = "all",
-      #                                                   "Val" = MP$TAC_IAV,
-      #                                                   stringsAsFactors = FALSE))
       dfExplConstraints <- dplyr::bind_rows(dfExplConstraints,
                                             data.frame("Type" = c("IAVInc","IAVDec"),
                                                        "YearNum" = c("all","all"),
@@ -267,30 +270,30 @@ for (mp in c("MP5.00","MP5.01","MP5.03",
   
   set.seed(1)
   
-  sim <- eqsim_run(fit = SRR, 
-                   bio.years = OM$BioYrs, 
-                   bio.const = OM$BioConst,
-                   sel.years = OM$SelYrs, 
-                   sel.const = OM$SelConst,
-                   Fscan = fGetValsScan(MP$F_target,OM$refPts), 
-                   Fcv = MP$Obs$cvF, 
-                   Fphi = MP$Obs$phiF,
-                   SSBcv = MP$Obs$cvSSB, 
-                   SSBphi = MP$Obs$phiSSB,
-                   Blim = OM$refPts$Blim,
-                   Nrun = nyr, 
-                   calc.RPs = FALSE,
-                   dfExplConstraints = dfExplConstraints, 
-                   Btrigger = fGetValsScan(MP$B_trigger,OM$refPts),
-                   HCRName = paste0("fHCR_",MP$HCRName))
-  
+  sim <- eqsim_run(fit = SRR,
+                  bio.years = OM$BioYrs,
+                  bio.const = OM$BioConst,
+                  sel.years = OM$SelYrs,
+                  sel.const = OM$SelConst,
+                  Fscan = fGetValsScan(MP$F_target,OM$refPts),
+                  Fcv = MP$Obs$cvF,
+                  Fphi = MP$Obs$phiF,
+                  SSBcv = MP$Obs$cvSSB,
+                  SSBphi = MP$Obs$phiSSB,
+                  Blim = OM$refPts$Blim,
+                  Nrun = nyr,
+                  calc.RPs = FALSE,
+                  dfExplConstraints = dfExplConstraints,
+                  Btrigger = fGetValsScan(MP$B_trigger,OM$refPts),
+                  HCRName = paste0("fHCR_",MP$HCRName))
+
   SimRuns <- sim$simStks
   
-  #save ouptut
+  #save output
   
   #create a folder for the output and save simRuns data
   dir.create(path = file.path(Res.dir,runName), showWarnings = TRUE, recursive = TRUE)
-  # save(SimRuns,file = file.path(Res.dir,runName,paste0(runName,"_SimRuns.RData")))
+  save(SimRuns,file = file.path(Res.dir,runName,paste0(runName,"_SimRuns.RData")))
   
   #Write the output to dropbox dir (necessary to save entire image?)
   #save.image(file = file.path(dropbox.dir,paste0(runName,"_Workspace.Rdata")))
@@ -499,6 +502,7 @@ for (mp in c("MP5.00","MP5.01","MP5.03",
   lStats <- list(stats = AllStats, runName = runName, lStatPer = lStatPer, 
                  OM = OM, MP = MP,
                  settings=settings, df=df)
+  dir.create(path = file.path(Res.dir,"Stats"), showWarnings = TRUE, recursive = TRUE)
   save(lStats,file = file.path(Res.dir,"Stats",paste0(runName,"_eqSim_Stats.Rdata")))
   
   # Save settings
