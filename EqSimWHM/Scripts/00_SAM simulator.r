@@ -277,29 +277,59 @@ while (i <= nsim) {
 
 
 
+spdir <- "//community.ices.dk@SSL/DavWWWRoot/ExpertGroups/wkwhmrp/2021 Meeting Docs/06. Data"
 
-dropboxdir <- file.path(get_dropbox(), "HOM FG", "05. Data", "WHOM_SAM20")
-
-df2020a <- as.data.frame(loadRData(file=file.path(dropboxdir, "run/WHOM_SAM20_FLS_all.RData")))  %>%  mutate(assess="SAM20a")
-df2020c <- as.data.frame(loadRData(file=file.path(dropboxdir, "run/WHOM_SAM20_FLS_converged.RData")))  %>%  mutate(assess="SAM20c")
+df2019a <- as.data.frame(loadRData(file=file.path(spdir, "WHOM_SAM19/run/WHOM_SAM19_FLS_all.RData")))  %>%  
+  mutate(assesstype="SAM", assessyear="2019", runs="all")
+df2019c <- as.data.frame(loadRData(file=file.path(spdir, "WHOM_SAM19/run/WHOM_SAM19_FLS_converged.RData")))  %>%  
+  mutate(assesstype="SAM", assessyear="2019", runs="converged")
+df2020a <- as.data.frame(loadRData(file=file.path(spdir, "WHOM_SAM20/run/WHOM_SAM20_FLS_all.RData")))  %>%  
+  mutate(assesstype="SAM", assessyear="2020", runs="all")
+df2020c <- as.data.frame(loadRData(file=file.path(spdir, "WHOM_SAM20/run/WHOM_SAM20_FLS_converged.RData")))  %>%  
+  mutate(assesstype="SAM", assessyear="2020", runs="converged")
 
 df <-
-  bind_rows(df2020a, df2020c) %>%
+  bind_rows(df2019a, df2019c, df2020a, df2020c) %>%
   filter(slot=="harvest", age >= minage, age <= maxage) %>%
-  group_by(assess, year, unit, season, area, iter) %>%
+  group_by(assesstype, assessyear, runs, year, unit, season, area, iter) %>%
   summarise(data = mean(data, na.rm=TRUE)) %>%
   mutate(
     slot="meanf",
     age ="1-10"
   ) %>%
-  bind_rows(df2020a, df2020c)
+  bind_rows(df2019a, df2019c, df2020a, df2020c) 
+
+a <-
+  df %>% 
+  filter(iter == "1", runs == "all") %>% 
+  mutate(year=factor(year)) %>% 
+  filter(slot %in% c("stock", "meanf")) 
 
 df %>%
   mutate(year=factor(year)) %>% 
-  filter(slot=="stock") %>%
-  ggplot(aes(year, data, fill=assess, colour=assess)) +
+  filter(slot %in% c("stock", "meanf")) %>%
+  filter(runs=="converged") %>% 
+  
+  ggplot(aes(year, data, fill=runs, colour=runs)) +
+  theme_publication() +
   theme(axis.text.x=element_text(angle =90, vjust = 0.5)) +
-  geom_boxplot(position=position_dodge())
+  geom_boxplot(position=position_dodge()) +
+  geom_line(data=a, aes(year, data), group=1, inherit.aes = FALSE, colour="black") +
+  labs(x="", y="") +
+  facet_grid(slot~assessyear, scales="free_y")
+
+
+a %>%
+  ungroup() %>% 
+  ggplot(aes(year, data)) +
+  theme_publication() +
+  theme(axis.text.x=element_text(angle =90, vjust = 0.5)) +
+  # geom_boxplot(position=position_dodge()) +
+  # geom_point(colour="black") +
+  geom_line(aes(colour=assessyear, group=assessyear)) +
+  labs(x="", y="") +
+  facet_wrap(~slot, scales="free_y")
+
 
 df %>%
   mutate(year=factor(year)) %>% 
