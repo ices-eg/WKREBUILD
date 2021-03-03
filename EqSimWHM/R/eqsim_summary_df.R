@@ -8,7 +8,7 @@
 # stats <- AllStats
 
 # run=runName
-# simRuns = simRuns
+# simRuns = SimRuns
 # Res.dir = Res.dir
 # Plot.dir = Plot.dir
 # lStatPer = lStatPer
@@ -59,15 +59,15 @@ fsummary_df <- function(runName, ftgt, simRuns,
   
   #units
   units <- data.frame(
-    PerfStat = c("TAC"   ,"SSB"   ,"CW"    ,"Harvest","Rec"     ,"IAV", "IAVUp","IAVDown", "pblim", "pbpa"),
-    unit     = c("tonnes","tonnes","tonnes","1/year" ,"Millions","perc","perc" ,"perc"   , "prob" , "prob"),
+    PerfStat = c("TAC"   ,"SSB"   ,"CW"    ,"Harvest","Rec"     ,"IAV", "IAVUp","IAVDown", "pblim", "pbpa", "catW"),
+    unit     = c("tonnes","tonnes","tonnes","1/year" ,"Millions","perc","perc" ,"perc"   , "prob" , "prob", "kg"),
     stringsAsFactors = FALSE
   )
   
-  # ftgt <- 0
+  # ftgt <- 0.1
   for (ftgt in an(names(SimRuns))){
     
-    cat("Ftgt: ", ftgt, "\n")
+    cat("Creating dataframe for run with f = ", ftgt, "\n")
     
     #simulation op
     t <- SimRuns[[ac(ftgt)]]
@@ -76,16 +76,19 @@ fsummary_df <- function(runName, ftgt, simRuns,
     # t2 <- lOp$stats[[ac(ftgt)]]
     # t2 <- stats[[ac(ftgt)]]
 
-    # TAC
-    dimnames(t$TAC)$year <- simYears
+    # dimnames
+    slots <- names(t)[!grepl("SimYears", names(t))]
+    for (n in slots) {dimnames(t[[n]])$year <- simYears}
     
     #catch numbers
     Cnum <- t[["C"]]
+    
     #catch weights
     Cwgt <- t[["catW"]]
+    
     #catch weight (tons)
-    CW <- apply(Cnum*Cwgt,2:3,sum)/1e3
-    dimnames(CW)$year <- simYears
+    CW <- apply(Cnum*Cwgt,2:3,sum)/1e3 
+    # dimnames(CW)$year <- simYears
     t$CW <- CW
 
     # IAV
@@ -106,21 +109,26 @@ fsummary_df <- function(runName, ftgt, simRuns,
     t$IAVDown <- IAVDown
     
     #F management
-    dimnames(t$Fmgmt)$year <- simYears
+    # dimnames(t$Fmgmt)$year <- simYears
     
     #harvest
     Harvest <- t[["F"]]
-    dimnames(Harvest)$year <- simYears
+    # dimnames(Harvest)$year <- simYears
     Harvest <- apply(Harvest[ac(Fbarrange[1]:Fbarrange[2]),,],2:3, mean)
     t$Harvest <- Harvest
     # dimnames(Harvest)
     
     #abundance
-    Abd <- t[["N"]]
+    # Abd <- t[["N"]]
+    
     #stock weights
-    SW <- t[["stkW"]]
+    # SW <- t[["stkW"]]
+    
     #maturity
-    Mat <- t[["Mat"]]
+    # Mat <- t[["Mat"]]
+    
+    #maturity
+    # Sel <- t[["Sel"]]
     
     #recruitment
     Rec <- t[["N"]][1,,]
@@ -164,17 +172,42 @@ fsummary_df <- function(runName, ftgt, simRuns,
     t$recovblim <- recov %>% dplyr::select(year, value=recovblim)
     t$recovbpa <- recov %>% dplyr::select(year, value=recovbpa)
     
-    # item <- "SSB"
+    # item <- "catW"
     # item <- "IAV"
     # item <- "pblim"
     # item <- "recovblim" 
-    for (item in c("SSB","CW", "Harvest", "Fmgmt","Rec",
+    for (item in c("stkW", "catW", "Sel", "N", "C", "F",
+                   "SSB","CW", "Harvest", "Fmgmt","Rec",
                    "IAV", "IAVUp", "IAVDown", "pblim", "pbpa",
                    "recovblim", "recovbpa")) {
       
       # cat(item, "\n")
       
-      if (item %in% c("SSB","CW", "Harvest", "Fmgmt","Rec",
+      if (item %in% c("N", "C", "F", "stkW", "catW", "Sel")) {
+        
+        x <- 
+          as.data.frame.table(t[[(item)]], responseName = "value", stringsAsFactors = FALSE) %>% 
+          # rownames_to_column(var="iter") %>% 
+          # pivot_longer(cols=2:(nrow(t[[(item)]])+1), 
+          #              names_to = "year", 
+          #              values_to = "value") %>% 
+          mutate(
+            PerfStat = item,
+            year     = an(year),
+            RunRef = runName,
+            Label = xlab,
+            Ftgt = ftgt) %>%
+          
+          left_join(years, by="year") %>% 
+          left_join(units, by="PerfStat") 
+        
+        # print(head(x))
+        
+        dfAll <- dplyr::bind_rows(dfAll,x)
+        
+      
+        } else if (item %in% c("SSB","CW",
+                      "Harvest", "Fmgmt","Rec",
                       "IAV", "IAVUp", "IAVDown")) {
         
         x <- 
