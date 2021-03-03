@@ -24,11 +24,12 @@ library(FLCore)
 library(Cairo)    #plotting
 library(devEMF)   
 library(officer)  #for op to word doc
+library(flextable)
 library(gplots)   #rich.colors
 library(dplyr)
 library(tidyr)
 library(ggplot2)
-
+library(icesTAF) # install.packages("icesTAF")
 #stop on warning
 #options(warn=2)
 
@@ -82,7 +83,7 @@ Plot.dir <- file.path(MSE.dir, "Plots")
 Source.dir <- file.path(MSE.dir,"R")              #R functions
 Scripts.dir <- file.path(MSE.dir, "Scripts")      #R scripts
 
-# Load OMs, MPs
+# Load OMs, MPs, utilities
 source(file = file.path(Scripts.dir,"OMs.R"))
 source(file = file.path(Scripts.dir,"MPs.R"))
 

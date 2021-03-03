@@ -33,17 +33,17 @@ per2 <- 5
 #OM <- OM2; MP <- MP2.0_10000
 #OM <- OM2; MP <- MP3.0
 #OM <- OM2.1   #WGWIDE 2019, const weights, selection
-#OM <- OM2.2   #WGWIDE SS 2019, stochastic weights, selection
+OM <- OM2.2   #WGWIDE SS 2019, stochastic weights, selection
 #OM <- OM2.3   #WGWIDE SS 2020, stochastic weights, selection
-OM <- OM2.4   #WGWIDE SAM 2019, stochastic weights, selection
+#OM <- OM2.4   #WGWIDE SAM 2019, stochastic weights, selection
 #OM <- OM2.5   #WGWIDE SAM 2020, stochastic weights, selection
 
 # WHOM SS
 stock          <- "WHOM"
 assess         <- "SS3"
 FLStockfile    <- "WGWIDE19.RData"
-#FLStockSimfile <- "WHOM_SS19_FLS_V1.RData"    #V1 iterations as single FLStock
-FLStockSimfile <- "WHOM_SS19_FLS_V2.RData"    #V2 new draw, contains variability in selection and weights
+FLStockSimfile <- "WHOM_SS19_FLS_V1.RData"    #V1 iterations as single FLStock
+#FLStockSimfile <- "WHOM_SS19_FLS_V2.RData"    #V2 new draw, contains variability in selection and weights
 
 #WHOM SAM
 #stock          <- "WHOM"
@@ -171,9 +171,10 @@ SRR$stks <- FLSs
 #MP <- MP98
 
 # for (mp in c("MP5.00","MP5.01","MP5.10","MP5.11","MP5.20","MP5.21")) {
-for (mp in c("MP5.00","MP5.01","MP5.03",
-            "MP5.10","MP5.11","MP5.13",
-            "MP5.20","MP5.21","MP5.23")) {
+for (mp in c("MP5.11")) {
+# for (mp in c("MP5.00","MP5.01","MP5.03",
+#             "MP5.10","MP5.11","MP5.13",
+#             "MP5.20","MP5.21","MP5.23")) {
 
 #for (mp in c("MP5.00","MP5.23")) {
   #mp <- "MP5.23"
@@ -194,7 +195,7 @@ for (mp in c("MP5.00","MP5.01","MP5.03",
   simYears <- ac(seq(yStart,yEnd))
   
   #exploitation constraints
-  if (OM$desc=="WGWIDE19") {
+  if (grepl("WGWIDE19",OM$desc)) {
     #2018 catch known, 2019 as assumed during WGWIDE 2019, 2020 as advised
     dfExplConstraints <- data.frame("Type" = c("Catch","Catch","Catch"), 
                                     "YearNum" = c("1","2","3"),
@@ -202,7 +203,7 @@ for (mp in c("MP5.00","MP5.01","MP5.03",
                                     stringsAsFactors = FALSE)
   }
     
-  if (OM$desc=="WGWIDE20") {
+  if (grepl("WGWIDE20",OM$desc)) {
     #2019 catch known, 2020 as assumed during WGWIDE 2020, 2021 as advised
     dfExplConstraints <- data.frame("Type" = c("Catch","Catch","Catch"), 
                                     "YearNum" = c("1","2","3"),
