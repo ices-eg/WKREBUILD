@@ -60,10 +60,10 @@ library(ggplot2)
 
 
 #computer specific locations
-Drive    <- "C:"
-Base.dir <- file.path(Drive,"Stocks","hom_27_2a4a5b6a7a-ce-k8","MP_MSE")
-#Drive    <- "D:"
-#Base.dir <- file.path(Drive,"GIT")
+# Drive    <- "C:"
+# Base.dir <- file.path(Drive,"Stocks","hom_27_2a4a5b6a7a-ce-k8","MP_MSE")
+Drive    <- "D:"
+Base.dir <- file.path(Drive,"GIT")
 
 #Basic MSE directory
 MSE.dir <- file.path(Base.dir,"wk_WKREBUILD","EqSimWHM")
@@ -89,5 +89,5 @@ source(file = file.path(Scripts.dir,"MPs.R"))
 #source all functions in source.dir
 sapply(list.files(path=file.path(Source.dir), pattern=".R", full.names=TRUE), source)
 
-# Get dropbox dir; for storing large RData files
-dropbox.dir <- file.path(get_dropbox(), "HOM FG", "05. Data","RData")
+# Get temp dir; for storing large RData files
+temp.dir <- "C:/TEMP"
