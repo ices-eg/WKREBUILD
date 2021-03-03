@@ -13,14 +13,14 @@
 # 01/07/2020 included additional features by Martin Pastoors
 # ================================================================================================================
 
-source(file.path(getwd(),"Scripts","01_EqSim_setup.R"))
+# source(file.path(getwd(),"Scripts","01_EqSim_setup.R"))
 
 #Note: niters and nyr could be included in the OM or MP definitions
 
 #basic simulation settings
 #niters <- 10000
 #niters <- 1000
-niters <- 1000
+niters <- 100
 nyr <- 23
 
 # simulation periods
@@ -33,26 +33,37 @@ per2 <- 5
 #OM <- OM2; MP <- MP2.0_10000
 #OM <- OM2; MP <- MP3.0
 #OM <- OM2.1   #WGWIDE 2019, const weights, selection
-OM <- OM2.2   #WGWIDE SS 2019, stochastic weights, selection
+OM <- OM2.2   #WGWIDE 2019, stochastic weights, selection
 #OM <- OM2.3   #WGWIDE SAM 2019, stochastic weights, selection
 
 # WHOM SS
 stock          <- "WHOM"
 assess         <- "SS3"
 FLStockfile    <- "WGWIDE19.RData"
-#FLStockSimfile <- "WHOM_SS19_FLS_V1.RData"    #V1 iterations as single FLStock
-FLStockSimfile <- "WHOM_SS19_FLS_V2.RData"    #V2 new draw, contains variability in selection and weights
+FLStockSimfile <- "MSE_WGWIDE19_FLStocks_1k15PG.RData"
 
-#WHOM SAM
-#stock          <- "WHOM"
-#assess         <- "SAM"
-#FLStockfile    <- "WGWIDE19_SAM.RData"
-#FLStockSimfile <- "MSE_WGWIDE19_FLStocks_SAM1000.RData" #"MSE_WGWIDE19_FLStocks_SAM.RData"
+# FLStockSimfile <- "MSE_WGWIDE19_FLStocks_10k.RData"
+# FLStockSimfile <- "MSE_WGWIDE19_FLStocks_15PG.RData"
+
+# WHOM SAM
+# stock          <- "WHOM"
+# assess         <- "SAM"
+# FLStockfile    <- "WGWIDE19_SAM.RData"
+# FLStockSimfile <- "MSE_WGWIDE19_FLStocks_SAM1000.RData" #"MSE_WGWIDE19_FLStocks_SAM.RData"
 
 #assessment FLStock
-FLS <-
-  loadRData(file.path(RData.dir,FLStockfile)) %>%
-  FLCore::setPlusGroup(., 15)
+FLS  <- loadRData(file.path(RData.dir,FLStockfile)) %>% FLCore::setPlusGroup(., 15)
+
+#assessment FLStocks object
+t    <- loadRData(file.path(RData.dir,FLStockSimfile))[1:niters] 
+FLSs <- propagate(FLS, length(t))
+for (i in 1:length(t)) {
+  print(i)
+  FLSs[,,,,,i] <- t[[i]]
+}
+
+minObsYear <- range(FLS)["minyear"]
+maxObsYear <- range(FLS)["maxyear"]
 
 #Blim <- min(ssb(FLS))
 #The IBP in 2019 selected SSB in 2003 as a proxy for Bpa and derived Blim from this (Bpa/1.4)
@@ -67,39 +78,42 @@ SegregBlim  <- function(ab, ssb) log(ifelse(ssb >= Blimloss, ab$a * Blimloss, ab
 set.seed(1)
 
 #segmented regression with breakpoint at Blim, from 1995 excluding terminal
-SRR <- eqsr_fit(window(FLS,1995,2018), remove.years = c(2018), nsamp=niters, models = c("SegregBlim"))
+# SRR <- eqsr_fit(window(FLS,1995,2018), remove.years = c(2018), nsamp=niters, models = c("SegregBlim"))
+SRR <- eqsr_fit(window(FLS,1995,maxObsYear-1), nsamp=niters, models = c("SegregBlim"))
 
-emf(file = file.path(Res.dir,"SRR.emf"), width = 7, height = 7)
-eqsr_plot(SRR)
-dev.off()
+# emf(file = file.path(Res.dir,"SRR.emf"), width = 7, height = 7)
+# eqsr_plot(SRR)
+# dev.off()
 
-# #stock/catch weights (SS3 models catch/stock weights at age as time invariant)
-# dfSW <- readr::read_delim(file = file.path(Data.dir,"StockWeights.dat"),delim=",")
-# dfCW <- readr::read_delim(file = file.path(Data.dir,"CatchWeights.dat"),delim=",")
-# 
-# dfWeights <- dplyr::left_join(
-#   dfSW %>% pivot_longer(cols = paste0("Age",seq(0,15)), names_to = "Age", values_to = "SW", names_prefix = "Age"),
-#   dfCW %>% pivot_longer(cols = paste0("Age",seq(0,15)), names_to = "Age", values_to = "CW", names_prefix = "Age"),
-#   by=c("Year","Age"))
-# 
-# dfWeights <- within(dfWeights, Age <- factor(Age, levels = as.character(seq(0,15))))
-# dfSAWeights = data.frame(Age = seq(0,15), CW = rowMeans(catch.wt(FLS)), SW = rowMeans(stock.wt(FLS)), stringsAsFactors = FALSE)
-# dfSAWeights <- within(dfSAWeights, Age <- factor(Age, levels = as.character(seq(0,15))))
-# 
-# #quick look, comparing with the assessment ouput
-# gCW <- ggplot(data = dfWeights, mapping = aes(x=Year,y=CW)) +
-#   geom_line(aes(group=Age)) +
-#   geom_hline(data = dfSAWeights, mapping=aes(yintercept=CW), col="red") + 
-#   facet_wrap(~Age) + ylab("Catch Weight")
-# 
-# # emf(file = file.path(Res.dir,"CW.emf"), width = 7, height = 7)
-# # print(gCW)
-# # dev.off()
-# 
-# gSW <- ggplot(data = dfWeights, mapping = aes(x=Year,y=SW)) +
-#   geom_line(aes(group=Age)) +
-#   geom_hline(data = dfSAWeights, mapping=aes(yintercept=SW), col="red") + 
-#   facet_wrap(~Age) + ylab("Stock Weight")
+#stock/catch weights (SS3 models catch/stock weights at age as time invariant)
+dfSW <- readr::read_delim(file = file.path(Data.dir,"StockWeights.dat"),delim=",")
+dfCW <- readr::read_delim(file = file.path(Data.dir,"CatchWeights.dat"),delim=",")
+
+dfWeights <- dplyr::left_join(
+  dfSW %>% pivot_longer(cols = paste0("Age",seq(0,15)), names_to = "Age", values_to = "SW", names_prefix = "Age"),
+  dfCW %>% pivot_longer(cols = paste0("Age",seq(0,15)), names_to = "Age", values_to = "CW", names_prefix = "Age"),
+  by=c("Year","Age"))
+
+dfWeights <- within(dfWeights, Age <- factor(Age, levels = as.character(seq(0,15))))
+dfSAWeights = data.frame(Age = seq(0,15), CW = rowMeans(catch.wt(FLS)), SW = rowMeans(stock.wt(FLS)), stringsAsFactors = FALSE)
+dfSAWeights <- within(dfSAWeights, Age <- factor(Age, levels = as.character(seq(0,15))))
+
+#quick look, comparing with the assessment ouput
+gCW <- 
+  ggplot(data = dfWeights, mapping = aes(x=Year,y=CW)) +
+  geom_line(aes(group=Age)) +
+  geom_hline(data = dfSAWeights, mapping=aes(yintercept=CW), col="red") + 
+  facet_wrap(~Age) + ylab("Catch Weight")
+
+# emf(file = file.path(Res.dir,"CW.emf"), width = 7, height = 7)
+# print(gCW)
+# dev.off()
+
+gSW <- 
+  ggplot(data = dfWeights, mapping = aes(x=Year,y=SW)) +
+  geom_line(aes(group=Age)) +
+  geom_hline(data = dfSAWeights, mapping=aes(yintercept=SW), col="red") + 
+  facet_wrap(~Age) + ylab("Stock Weight")
 
 # emf(file = file.path(Res.dir,"SW.emf"), width = 7, height = 7)
 # print(gSW)
@@ -120,22 +134,21 @@ dev.off()
 # sapply(list.files(path=file.path(Res.dir), pattern=".emf", full.names=TRUE), file.remove)
 
 #assign the stock and catch weights into the assessment FLStock object
-#tSW <- FLQuant(t(dfSW[,-1]), dim=dim(stock.wt(FLS)), dimnames=dimnames(stock.wt(FLS)))
-#tCW <- FLQuant(t(dfCW[,-1]), dim=dim(catch.wt(FLS)), dimnames=dimnames(catch.wt(FLS)))
+tSW <- FLQuant(t(dfSW[,-1]), dim=dim(stock.wt(FLS)), dimnames=dimnames(stock.wt(FLS)))
+tCW <- FLQuant(t(dfCW[,-1]), dim=dim(catch.wt(FLS)), dimnames=dimnames(catch.wt(FLS)))
 
 #remove the weights assignment for now until further investigated
 #stock.wt(FLS) <- tSW
 #catch.wt(FLS) <- tCW
 
 #reassign FLStock object with updated weights into stk slot of SRR 
-SRR$stk <- FLS
+# SRR$stk <- FLS
 
 #start with simulated initial populations
 FLSs <- loadRData(file.path(RData.dir,FLStockSimfile))
 
 #add required number of stochastic FLStocks to FIT object
-#SRR$stks <- FLSs[(length(FLSs)-niters+1):(length(FLSs))]
-SRR$stks <- FLSs
+SRR$stks <- FLSs[(length(FLSs)-niters+1):(length(FLSs))]
 
 # Define MP ================================================================================================================
 #MP <- MP1.0   #baseline, constant F harvest rule, no IAV control, no minimum TAC, no assessment/advice error
@@ -168,14 +181,12 @@ SRR$stks <- FLSs
 #MP <- MP99
 #MP <- MP98
 
+for (mp in c("MP5.23","MP5.23b")) {
 # for (mp in c("MP5.00","MP5.01","MP5.10","MP5.11","MP5.20","MP5.21")) {
-for (mp in c("MP5.00","MP5.01","MP5.03",
-            "MP5.10","MP5.11","MP5.13",
-            "MP5.20","MP5.21","MP5.23")) {
+# for (mp in c("MP5.00","MP5.01","MP5.03",
+#              "MP5.10","MP5.11","MP5.13",
+#              "MP5.20","MP5.21","MP5.23")) {
 
-#for (mp in c("MP5.00","MP5.23")) {
-  #mp <- "MP5.23"
-    
   MP <- get(mp)
   
   invisible(gc())
@@ -192,21 +203,11 @@ for (mp in c("MP5.00","MP5.01","MP5.03",
   simYears <- ac(seq(yStart,yEnd))
   
   #exploitation constraints
-  if (OM$desc=="WGWIDE19") {
-    #2018 catch known, 2019 as assumed during WGWIDE 2019, 2020 as advised
-    dfExplConstraints <- data.frame("Type" = c("Catch","Catch","Catch"), 
-                                    "YearNum" = c("1","2","3"),
-                                    "Val" = c(101682,110381,83954), 
-                                    stringsAsFactors = FALSE)
-  }
-    
-  if (OM$desc=="WGWIDE20") {
-    #2019 catch known, 2020 as assumed during WGWIDE 2020, 2021 as advised
-    dfExplConstraints <- data.frame("Type" = c("Catch","Catch","Catch"), 
-                                    "YearNum" = c("1","2","3"),
-                                    "Val" = c(124947,69527,81376), 
-                                    stringsAsFactors = FALSE)
-  }
+  #2018 catch known, 2019 as assumed during WGWIDE 2019, 2020 as advised
+  dfExplConstraints <- data.frame("Type" = c("Catch","Catch","Catch"), 
+                                  "YearNum" = c("1","2","3"),
+                                  "Val" = c(101682,110381,83954), 
+                                  stringsAsFactors = FALSE)
   
   #test for recruitment failure, keep exploration constant at 80kt (regardless of HCR) for first 10 years during which recruitment
   #failure is simulated (1/10 of normal). Then, all HCRs should start from same point
@@ -237,6 +238,11 @@ for (mp in c("MP5.00","MP5.01","MP5.03",
   #IAV
   if (!any(is.na(MP$TAC_IAV))) {
     if (length(MP$TAC_IAV)==2){
+      #  dfExplConstraints <- dplyr::bind_rows(dfExplConstraints,
+      #                                        data.frame("Type" = "IAV",
+      #                                                   "YearNum" = "all",
+      #                                                   "Val" = MP$TAC_IAV,
+      #                                                   stringsAsFactors = FALSE))
       dfExplConstraints <- dplyr::bind_rows(dfExplConstraints,
                                             data.frame("Type" = c("IAVInc","IAVDec"),
                                                        "YearNum" = c("all","all"),
@@ -270,30 +276,30 @@ for (mp in c("MP5.00","MP5.01","MP5.03",
   
   set.seed(1)
   
-  sim <- eqsim_run(fit = SRR,
-                  bio.years = OM$BioYrs,
-                  bio.const = OM$BioConst,
-                  sel.years = OM$SelYrs,
-                  sel.const = OM$SelConst,
-                  Fscan = fGetValsScan(MP$F_target,OM$refPts),
-                  Fcv = MP$Obs$cvF,
-                  Fphi = MP$Obs$phiF,
-                  SSBcv = MP$Obs$cvSSB,
-                  SSBphi = MP$Obs$phiSSB,
-                  Blim = OM$refPts$Blim,
-                  Nrun = nyr,
-                  calc.RPs = FALSE,
-                  dfExplConstraints = dfExplConstraints,
-                  Btrigger = fGetValsScan(MP$B_trigger,OM$refPts),
-                  HCRName = paste0("fHCR_",MP$HCRName))
-
+  sim <- eqsim_run(fit = SRR, 
+                   bio.years = OM$BioYrs, 
+                   bio.const = OM$BioConst,
+                   sel.years = OM$SelYrs, 
+                   sel.const = OM$SelConst,
+                   Fscan = fGetValsScan(MP$F_target,OM$refPts), 
+                   Fcv = MP$Obs$cvF, 
+                   Fphi = MP$Obs$phiF,
+                   SSBcv = MP$Obs$cvSSB, 
+                   SSBphi = MP$Obs$phiSSB,
+                   Blim = OM$refPts$Blim,
+                   Nrun = nyr, 
+                   calc.RPs = FALSE,
+                   dfExplConstraints = dfExplConstraints, 
+                   Btrigger = fGetValsScan(MP$B_trigger,OM$refPts),
+                   HCRName = paste0("fHCR_",MP$HCRName))
+  
   SimRuns <- sim$simStks
   
-  #save output
+  #save ouptut
   
   #create a folder for the output and save simRuns data
   dir.create(path = file.path(Res.dir,runName), showWarnings = TRUE, recursive = TRUE)
-  save(SimRuns,file = file.path(Res.dir,runName,paste0(runName,"_SimRuns.RData")))
+  # save(SimRuns,file = file.path(Res.dir,runName,paste0(runName,"_SimRuns.RData")))
   
   #Write the output to dropbox dir (necessary to save entire image?)
   #save.image(file = file.path(dropbox.dir,paste0(runName,"_Workspace.Rdata")))
@@ -502,8 +508,9 @@ for (mp in c("MP5.00","MP5.01","MP5.03",
   lStats <- list(stats = AllStats, runName = runName, lStatPer = lStatPer, 
                  OM = OM, MP = MP,
                  settings=settings, df=df)
-  dir.create(path = file.path(Res.dir,"Stats"), showWarnings = TRUE, recursive = TRUE)
   save(lStats,file = file.path(Res.dir,"Stats",paste0(runName,"_eqSim_Stats.Rdata")))
+  
+  save(FLSs, file=file.path(dropbox.dir,"_SS3_FLSs.Rdata"))
   
   # Save settings
   # settings <- fGetSettings(lStats, SimRuns, FLStockfile = FLStockfile,FLStockSimfile = FLStockSimfile,OM=OM, MP=MP, niters=niters, nyr=nyr)

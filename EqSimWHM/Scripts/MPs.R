@@ -191,7 +191,20 @@ MP2.2 <- list("code" = "MP2.2",
               "Obs" = list("cvF" = 0.3, "phiF" = 0.3, "cvSSB" = 0, "phiSSB" = 0))
 #              "Obs" = list("cvF" = 0.22, "phiF" = 0.03, "cvSSB" = 0.36, "phiSSB" = 0.51))
 
- 
+#ICES HCR, with IAV control, no minimum TAC, with default assessment/advice error
+MP2.3 <- list("code" = "MP2.3",
+              "desc" = "ICESHCR with IAV",
+              "xlab" = "ICES AR with IAV",
+              "HCRName" = "ICES",
+              "F_target" = seq(0,0.2,0.025),
+              # "F_target" = c(0,0.05,0.074,0.1,0.115,0.2,0.3),
+              "B_trigger" = "MSYBtrigger",
+              "minTAC" = NA,
+              "maxTAC" = NA,
+              "TAC_IAV" = c(0.20, 0.25),
+              "Obs" = list("cvF" = 0.212, "phiF" = 0.423, "cvSSB" = 0.28, "phiSSB" = 0.8))
+#              "Obs" = list("cvF" = 0.22, "phiF" = 0.03, "cvSSB" = 0.36, "phiSSB" = 0.51))
+
 # ==========================================================================================================================================
 
 # #NFD rule No further decline
@@ -371,6 +384,18 @@ MP5.23 <- list("code" = "MP5.23",
                "maxTAC" = NA,
                "TAC_IAV" = c(0.2,0.2),
                "Obs" = Uncertainties)
+
+MP5.23b <- list("code" = "MP5.23b",
+               "desc" = "Double BP HCR",
+               "xlab" = "Double BP IAVBtrig",
+               "HCRName" = "DoubleBP",
+               "F_target" = F_targets,
+               "B_trigger" = "MSYBtrigger",
+               "minTAC" = NA,
+               "maxTAC" = NA,
+               "TAC_IAV" = c(0.2,0.2),
+               "Obs" = list("cvF" = 0.212, "phiF" = 0.423, "cvSSB" = 0.28, "phiSSB" = 0.58))
+
 
 # ===========================================================================
 # Basic Test

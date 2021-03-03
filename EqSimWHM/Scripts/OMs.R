@@ -34,28 +34,55 @@ OM2.1 <- list("code" = "OM2.1",
             "pBlim" = 0.05)
 
 #WGWIDE2019 Update assessment, IBPWHM reference points, stochastic bio and selection
-OM2.2 <- list("code" = "OM2.2",
-            "desc" = "WGWIDE19",
-            "IM" = NA,
-            "SRR" = "SRR.WG19.SegReg_Blim.exterm", "RecAR" = TRUE, maxRecRes = c(3,-3),
-            "BioYrs" = c(2008,2017), "BioConst" = FALSE, 
-            "SelYrs" = c(2008,2017), "SelConst" = FALSE,
-            "Obs" = NA,
-            refPts = list("Fpa" = 0.074, "Flim" = 0.103, "Fmsy" = 0.074, "Bpa" = 1168272,
-                          "Blim" = 834480, "MSYBtrigger" = 1168272, "Bloss" = 761613),
-            "pBlim" = 0.05)
+OM2.2 <- list(
+                "code" = "OM2.2",
+                "desc" = "WGWIDE19",
+                "IM" = NA,
+                "SRR" = "SRR.WG19.SegReg_Blim.exterm", 
+                "RecAR" = TRUE, 
+                maxRecRes = c(3,-3),
+                "BioYrs" = c(2008,2017), 
+                "BioConst" = FALSE, 
+                "SelYrs" = c(2008,2017), 
+                "SelConst" = FALSE,
+                "Obs" = NA,
+                refPts = list("Fpa" = 0.074, "Flim" = 0.103, "Fmsy" = 0.074, "Bpa" = 1168272,
+                              "Blim" = 834480, "MSYBtrigger" = 1168272, "Bloss" = 761613),
+                "pBlim" = 0.05)
 
 #WGWIDE2020 Update assessment, IBPWHM reference points, stochastic bio and selection
-OM2.3 <- list("code" = "OM2.3",
-              "desc" = "WGWIDE20",
-              "IM" = NA,
-              "SRR" = "SRR.WG20.SegReg_Blim.exterm", "RecAR" = TRUE, maxRecRes = c(3,-3),
-              "BioYrs" = c(2009,2018), "BioConst" = FALSE, 
-              "SelYrs" = c(2009,2018), "SelConst" = FALSE,
-              "Obs" = NA,
-              refPts = list("Fpa" = 0.074, "Flim" = 0.103, "Fmsy" = 0.074, "Bpa" = 1168272,
-                            "Blim" = 834480, "MSYBtrigger" = 1168272, "Bloss" = 761613),
-              "pBlim" = 0.05)
+OM2.2_2020 <- list(
+                "code" = "OM2.2_2020",
+                "desc" = "WGWIDE20",
+                "IM" = NA,
+                "SRR" = "SRR.WG20.SegReg_Blim.exterm", 
+                "RecAR" = TRUE, 
+                maxRecRes = c(3,-3),
+                "BioYrs" = c(2008,2017), 
+                "BioConst" = FALSE, 
+                "SelYrs" = c(2008,2017), 
+                "SelConst" = FALSE,
+                "Obs" = NA,
+                refPts = list("Fpa" = 0.074, "Flim" = 0.103, "Fmsy" = 0.074, "Bpa" = 1168272,
+                              "Blim" = 834480, "MSYBtrigger" = 1168272, "Bloss" = 761613),
+                "pBlim" = 0.05)
+
+#WGWIDE2019 Update assessment, SAM reference points, stochastic bio and selection
+OM2.2_samrefpoints <- list(
+                "code" = "OM2.2_samrefpoints",
+                "desc" = "WGWIDE19",
+                "IM" = NA,
+                "SRR" = "SRR.WG19.SegReg_Blim.exterm", 
+                "RecAR" = TRUE, 
+                maxRecRes = c(3,-3),
+                "BioYrs" = c(2008,2017), 
+                "BioConst" = FALSE, 
+                "SelYrs" = c(2008,2017), 
+                "SelConst" = FALSE,
+                "Obs" = NA,
+                refPts = list("Fpa" = 0.115, "Flim" = 0.161, "Fmsy" = 0.115, "Bpa" = 856540,
+                              "Blim" = 611814, "MSYBtrigger" = 856540, "Bloss" = 604476),
+                "pBlim" = 0.05)
 
 #WGWIDE2019 SAM assessment, IBPWHM method for reference points, stochastic bio and selection
 OM2.3 <- list("code" = "OM2.3",
@@ -69,15 +96,37 @@ OM2.3 <- list("code" = "OM2.3",
                             "Blim" = 611814, "MSYBtrigger" = 856540, "Bloss" = 604476),
               "pBlim" = 0.05)
 
-#WGWIDE2019 SAM assessment, IBPWHM method for reference points, stochastic bio and selection
-OM2.2mac <- list("code" = "OM2.2_mac",
-                 "desc" = "WGWIDE19_mackerel",
-                 "IM" = NA,
-                 "SRR" = "SRR.WG19.SegReg_Blim.exterm", "RecAR" = TRUE, maxRecRes = c(3,-3),
-                 "BioYrs" = c(2008,2017), "BioConst" = FALSE, 
-                 "SelYrs" = c(2008,2017), "SelConst" = FALSE,
-                 "Obs" = NA,
-                 refPts = list("Fpa" = 0.37, "Flim" = 0.46, "Fmsy" = 0.23, 
-                               "Bpa" = 2500000, "Blim" = 1990000, 
-                               "MSYBtrigger" = 2500000, "Bloss" = 2047874),
-                 "pBlim" = 0.05)
+
+#WGWIDE2020 SAM assessment, IBPWHM method for reference points, stochastic bio and selection
+OM2.3_2020 <- list(
+              "code" = "OM2.3_2020",
+              "desc" = "WGWIDE20_sam",
+              "IM" = NA,
+              "SRR" = "SRR.WG20.SegReg_Blim.exterm", 
+              "RecAR" = TRUE, 
+              maxRecRes = c(3,-3),
+              "BioYrs" = c(2008,2017), 
+              "BioConst" = FALSE, 
+              "SelYrs" = c(2008,2017), 
+              "SelConst" = FALSE,
+              "Obs" = NA,
+              refPts = list("Fpa" = 0.115, "Flim" = 0.161, "Fmsy" = 0.115, "Bpa" = 856540,
+                            "Blim" = 611814, "MSYBtrigger" = 856540, "Bloss" = 604476),
+              "pBlim" = 0.05)
+
+#WGWIDE2020 SAM assessment, IBPWHM method for reference points, stochastic bio and selection
+OM2.3_ssrefpoints <- list(
+              "code" = "OM2.3_ssrefpoints",
+              "desc" = "WGWIDE19_ssrefpoints",
+              "IM" = NA,
+              "SRR" = "SRR.WG19.SegReg_Blim.exterm", 
+              "RecAR" = TRUE, 
+              maxRecRes = c(3,-3),
+              "BioYrs" = c(2008,2017), 
+              "BioConst" = FALSE, 
+              "SelYrs" = c(2008,2017), 
+              "SelConst" = FALSE,
+              "Obs" = NA,
+              refPts = list("Fpa" = 0.074, "Flim" = 0.103, "Fmsy" = 0.074, "Bpa" = 1168272,
+                            "Blim" = 834480, "MSYBtrigger" = 1168272, "Bloss" = 761613),
+              "pBlim" = 0.05)

@@ -15,7 +15,8 @@ output:
 ################################################################################
 
 require("knitr")
-knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, crop = TRUE, comment = "")
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, crop = TRUE, 
+                      comment = "")
 knitr::opts_chunk$set(fig.width=10) 
 
 rm(list=ls())
@@ -26,14 +27,15 @@ library(tidyverse)
 #computer specific locations
 Drive    <- "D:"
 Base.dir <- file.path(Drive,"GIT")
-MSE.dir <- file.path(Base.dir,"wk_WKREBUILD","EqSimWHM")
+MSE.dir <- file.path(Base.dir,"wk_WKREBUILD","EqSimWHMupd")
 Res.dir <- file.path(MSE.dir, "Results")
 stats.dir <- file.path(Res.dir, "Stats")
 
 # Get dropbox dir; for storing large RData files
-source("../R/get_dropbox.R")
-source("../R/utilities.R")
-dropbox.dir <- file.path(get_dropbox(), "HOM FG", "05. Data","RData")
+source("../../EqSimWHM/R/get_dropbox.R")
+source("../../EqSimWHM/R/utilities.R")
+dropbox.dir <- file.path(get_dropbox(), "HOM FG", "05. Data","RData","upd")
+
 
 # ==================================================================================
 
@@ -42,11 +44,13 @@ niters <- 1000
 maxyr <- 2040
 
 
+FLSs <- loadRData(file.path(dropbox.dir,"_SS3_FLSs.Rdata"))
+
 # Read the results files
 # i <- 2
 
-filelist <- list.files(path=stats.dir, pattern="^WHOM|^sam", full.names=TRUE)
- 
+# filelist <- list.files(path=stats.dir, pattern="^WHOM|^sam", full.names=TRUE)
+#  
 # df <- worms <- data.frame(stringsAsFactors = FALSE)
 # for (i in 1:length(filelist)) {
 # 
@@ -114,6 +118,33 @@ filelist <- list.files(path=stats.dir, pattern="^WHOM|^sam", full.names=TRUE)
 
 load(file = file.path(dropbox.dir,paste0("df.Rdata")))
 load(file = file.path(dropbox.dir,paste0("worms.Rdata")))
+
+# calculate 3 years above threshold
+# t <-
+#   worms %>% 
+#   filter(perfstat=="ssb") %>% 
+#   group_by(om, mp, assess, ftgt, perfstat, iter) %>% 
+#   mutate(
+#     recovBlim = ifelse(value >= blim & lag(value,n=1) >= blim & lag(value, n=2)>= blim, 
+#                        TRUE,
+#                        FALSE),
+#     recovBpa  = ifelse(value >= bpa & lag(value,n=1) >= bpa & lag(value, n=2)>= bpa, 
+#                        TRUE,
+#                        FALSE)
+#   ) %>% 
+#   group_by(om, mp, assess, ftgt, perfstat, year) %>%
+#   add_tally() %>% 
+#   summarise(
+#     recovBlim = sum(recovBlim == TRUE)/n,
+#     recovBpa  = sum(recovBpa == TRUE)/n,
+#   ) 
+
+# t %>% 
+#   pivot_longer(names_to="var", values_to = "value", recovBlim:recovBpa) %>% 
+#   ggplot(aes(x=year, y=value)) +
+#   theme_publication() +
+#   geom_line(aes(colour=var)) +
+#   facet_grid(mp~ftgt)
 
 periods <-
   df %>% 
@@ -198,7 +229,7 @@ plotvar <- function(myruns =  c("WHOM_SS3_OM2.2_MP5.03_1000_23",
 
 &nbsp;  
 
-**Evaluation of rebuilding plans for Western horse mackerel**
+**Evaluation of rebuilding plans for Western horse mackerel (update)**
 
 &nbsp;  
 
@@ -229,79 +260,34 @@ The approach to evaluate potential harvest control rules (HCR) for western horse
 
 ## EqSim and Stock Synthesis
 
-### Constant F strategy
-
-MP5.00 constant F; MP5.01 constant F with minimum TAC of 50kT; MP5.03 constant F with 20% IAV constraint above Btrigger. 
-
-```{r echo=FALSE, fig.align="center", fig.asp=0.45, message=FALSE, warning=FALSE}
-
-plotvar(myruns =  c("WHOM_SS3_OM2.2_MP5.00_1000_23", 
-                    "WHOM_SS3_OM2.2_MP5.01_1000_23",
-                    "WHOM_SS3_OM2.2_MP5.03_1000_23"),
-        myftgt = c(0.0, 0.05, 0.075, 0.10, 0.125, 0.15),
-        myperfstat = "ssb", mycolour   = "blue", myyintercept = 834000, myvalue="median")
-
-plotvar(myruns =  c("WHOM_SS3_OM2.2_MP5.00_1000_23", 
-                    "WHOM_SS3_OM2.2_MP5.01_1000_23",
-                    "WHOM_SS3_OM2.2_MP5.03_1000_23"),
-        myftgt = c(0.0, 0.05, 0.075, 0.10, 0.125, 0.15),
-        myperfstat = "catch", mycolour   = "purple", myyintercept = as.numeric(NA), myvalue="median")
-
-plotvar(myruns =  c("WHOM_SS3_OM2.2_MP5.00_1000_23", 
-                    "WHOM_SS3_OM2.2_MP5.01_1000_23",
-                    "WHOM_SS3_OM2.2_MP5.03_1000_23"),
-        myftgt = c(0.0, 0.05, 0.075, 0.10, 0.125, 0.15),
-        myperfstat = "pblim", mycolour   = "red", myyintercept = 0.05, myvalue="median")
-
-```
-
-### ICES advice rule
-
-MP5.10 ICES AR; MP5.11 ICES AR with minimum TAC of 50kT; MP5.13 ICES AR with 20% IAV constraint above Btrigger. 
-
-```{r echo=FALSE, fig.align="center", fig.asp=0.45, message=FALSE, warning=FALSE}
-
-plotvar(myruns =  c("WHOM_SS3_OM2.2_MP5.10_1000_23", 
-                    "WHOM_SS3_OM2.2_MP5.11_1000_23",
-                    "WHOM_SS3_OM2.2_MP5.13_1000_23"),
-        myftgt = c(0.0, 0.05, 0.075, 0.10, 0.125, 0.15),
-        myperfstat = "ssb", mycolour   = "blue", myyintercept = 834000, myvalue="median")
-
-plotvar(myruns =  c("WHOM_SS3_OM2.2_MP5.10_1000_23", 
-                    "WHOM_SS3_OM2.2_MP5.11_1000_23",
-                    "WHOM_SS3_OM2.2_MP5.13_1000_23"),
-        myftgt = c(0.0, 0.05, 0.075, 0.10, 0.125, 0.15),
-        myperfstat = "catch", mycolour   = "purple", myyintercept = as.numeric(NA), myvalue="median")
-
-plotvar(myruns =  c("WHOM_SS3_OM2.2_MP5.10_1000_23", 
-                    "WHOM_SS3_OM2.2_MP5.11_1000_23",
-                    "WHOM_SS3_OM2.2_MP5.13_1000_23"),
-        myftgt = c(0.0, 0.05, 0.075, 0.10, 0.125, 0.15),
-        myperfstat = "pblim", mycolour   = "red", myyintercept = 0.05, myvalue="median")
-
-```
-
 ### Double breakpoint rule
 
 MP5.20 Double BP; MP5.11 Double BP with minimum TAC of 50kT; MP5.13 Doubl BP with 20% IAV constraint above Btrigger. Minimum F in Double BP is 20% of Fmsy. 
 
 ```{r echo=FALSE, fig.align="center", fig.asp=0.45, message=FALSE, warning=FALSE}
 
-plotvar(myruns =  c("WHOM_SS3_OM2.2_MP5.20_1000_23", 
-                    "WHOM_SS3_OM2.2_MP5.21_1000_23",
-                    "WHOM_SS3_OM2.2_MP5.23_1000_23"),
+plotvar(myruns =  c("WHOM_SS3_OM2.2_MP5.23_1000_23",
+                    "WHOM_SS3_OM2.2_MP5.23b_1000_23"),
+        myftgt = c(0.0, 0.05, 0.075, 0.10, 0.125, 0.15),
+        myperfstat = "rec", mycolour   = "red", myyintercept = as.numeric(NA), myvalue="median")
+
+plotvar(myruns =  c("WHOM_SS3_OM2.2_MP5.23_1000_23",
+                    "WHOM_SS3_OM2.2_MP5.23b_1000_23"),
         myftgt = c(0.0, 0.05, 0.075, 0.10, 0.125, 0.15),
         myperfstat = "ssb", mycolour   = "blue", myyintercept = 834000, myvalue="median")
 
-plotvar(myruns =  c("WHOM_SS3_OM2.2_MP5.20_1000_23", 
-                    "WHOM_SS3_OM2.2_MP5.21_1000_23",
-                    "WHOM_SS3_OM2.2_MP5.23_1000_23"),
+plotvar(myruns =  c("WHOM_SS3_OM2.2_MP5.23_1000_23",
+                    "WHOM_SS3_OM2.2_MP5.23b_1000_23"),
+        myftgt = c(0.0, 0.05, 0.075, 0.10, 0.125, 0.15),
+        myperfstat = "harvest", mycolour   = "purple", myyintercept = as.numeric(NA), myvalue="median")
+
+plotvar(myruns =  c("WHOM_SS3_OM2.2_MP5.23_1000_23",
+                    "WHOM_SS3_OM2.2_MP5.23b_1000_23"),
         myftgt = c(0.0, 0.05, 0.075, 0.10, 0.125, 0.15),
         myperfstat = "catch", mycolour   = "purple", myyintercept = as.numeric(NA), myvalue="median")
 
-plotvar(myruns =  c("WHOM_SS3_OM2.2_MP5.20_1000_23", 
-                    "WHOM_SS3_OM2.2_MP5.21_1000_23",
-                    "WHOM_SS3_OM2.2_MP5.23_1000_23"),
+plotvar(myruns =  c("WHOM_SS3_OM2.2_MP5.23_1000_23",
+                    "WHOM_SS3_OM2.2_MP5.23b_1000_23"),
         myftgt = c(0.0, 0.05, 0.075, 0.10, 0.125, 0.15),
         myperfstat = "pblim", mycolour   = "red", myyintercept = 0.05, myvalue="median")
 
@@ -386,11 +372,14 @@ plotvar(myruns =  c("WHOM_SAM_OM2.3_MP5.10_1000_23",
         myftgt = c(0.0, 0.05, 0.075, 0.10, 0.125, 0.15),
         myperfstat = "catch", mycolour   = "purple", myyintercept = as.numeric(NA), myvalue="median")
 
+
 plotvar(myruns =  c("WHOM_SAM_OM2.3_MP5.10_1000_23", 
                     "WHOM_SAM_OM2.3_MP5.11_1000_23",
                     "WHOM_SAM_OM2.3_MP5.13_1000_23"),
         myftgt = c(0.0, 0.05, 0.075, 0.10, 0.125, 0.15),
         myperfstat = "pblim", mycolour   = "red", myyintercept = 0.05, myvalue="median")
+
+unique(df$perfstat)
 
 ```
 
