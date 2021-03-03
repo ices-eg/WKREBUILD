@@ -64,8 +64,18 @@ fsummary_df <- function(runName, ftgt, simRuns,
     stringsAsFactors = FALSE
   )
   
+  stock  <- stringr::word(runName,1,sep="_")
+  assess <- stringr::word(runName,2,sep="_")
+  OMname <- stringr::word(runName,3,sep="_")
+  MPname <- stringr::word(runName,4,sep="_")
+  niters <- stringr::word(runName,5,sep="_")
+  nyrs   <- stringr::word(runName,6,sep="_")
+  
+  
   # ftgt <- 0.1
   for (ftgt in an(names(SimRuns))){
+    
+    invisible(gc())
     
     cat("Creating dataframe for run with f = ", ftgt, "\n")
     
@@ -119,16 +129,13 @@ fsummary_df <- function(runName, ftgt, simRuns,
     # dimnames(Harvest)
     
     #abundance
-    # Abd <- t[["N"]]
+    Abd <- t[["N"]]
     
     #stock weights
-    # SW <- t[["stkW"]]
+    SW <- t[["stkW"]]
     
     #maturity
-    # Mat <- t[["Mat"]]
-    
-    #maturity
-    # Sel <- t[["Sel"]]
+    Mat <- t[["Mat"]]
     
     #recruitment
     Rec <- t[["N"]][1,,]
@@ -195,6 +202,12 @@ fsummary_df <- function(runName, ftgt, simRuns,
             PerfStat = item,
             year     = an(year),
             RunRef = runName,
+            stock    = stock,
+            assess   = assess,
+            OM       = OMname,
+            MP       = MPname, 
+            niters   = niters,
+            nyrs     = nyrs,
             Label = xlab,
             Ftgt = ftgt) %>%
           
@@ -220,9 +233,20 @@ fsummary_df <- function(runName, ftgt, simRuns,
             PerfStat = item,
             year     = an(year),
             RunRef = runName,
+            stock    = stock,
+            assess   = assess,
+            OM       = OMname,
+            MP       = MPname, 
+            niters   = niters,
+            nyrs     = nyrs,
             Label = xlab,
             Ftgt = ftgt) %>%
           
+          tidyr::separate(RunRef, 
+                          into=c("stock","assess", "OM","MP","niters","nyrs"), 
+                          sep="_",
+                          remove = FALSE) %>% 
+        
           left_join(years, by="year") %>% 
           left_join(units, by="PerfStat") 
         
@@ -238,9 +262,15 @@ fsummary_df <- function(runName, ftgt, simRuns,
           mutate(
             PerfStat = item,
             year     = years$year,
-            RunRef = runName,
-            Label = xlab,
-            Ftgt = ftgt) %>%
+            RunRef   = runName,
+            stock    = stock,
+            assess   = assess,
+            OM       = OMname,
+            MP       = MPname, 
+            niters   = niters,
+            nyrs     = nyrs,
+            Label    = xlab,
+            Ftgt     = ftgt) %>%
           
           left_join(years, by="year") %>% 
           left_join(units, by="PerfStat") 
@@ -257,6 +287,12 @@ fsummary_df <- function(runName, ftgt, simRuns,
           mutate(
             PerfStat = item,
             RunRef = runName,
+            stock    = stock,
+            assess   = assess,
+            OM       = OMname,
+            MP       = MPname, 
+            niters   = niters,
+            nyrs     = nyrs,
             Label = xlab,
             Ftgt = ftgt) %>%
           
@@ -274,12 +310,12 @@ fsummary_df <- function(runName, ftgt, simRuns,
 
   } # end of for loop: ftgt
     
-  dfAll <-
-    dfAll %>% 
-    tidyr::separate(RunRef, 
-                    into=c("stock","assess", "OM","MP","niters","nyrs"), 
-                    sep="_",
-                    remove = FALSE) 
+  # dfAll <-
+  #   dfAll %>% 
+  #   tidyr::separate(RunRef, 
+  #                   into=c("stock","assess", "OM","MP","niters","nyrs"), 
+  #                   sep="_",
+  #                   remove = FALSE) 
     
   dfAll
   
