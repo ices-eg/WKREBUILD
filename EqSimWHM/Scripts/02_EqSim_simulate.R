@@ -13,7 +13,7 @@
 # 01/07/2020 included additional features by Martin Pastoors
 # ================================================================================================================
 
-source(file.path(getwd(),"Scripts","01_EqSim_setup.R"))
+# source(file.path(getwd(),"Scripts","01_EqSim_setup.R"))
 
 #Note: niters and nyr could be included in the OM or MP definitions
 
@@ -33,8 +33,10 @@ per2 <- 5
 #OM <- OM2; MP <- MP2.0_10000
 #OM <- OM2; MP <- MP3.0
 #OM <- OM2.1   #WGWIDE 2019, const weights, selection
-OM <- OM2.2   #WGWIDE SS 2019, stochastic weights, selection
-#OM <- OM2.3   #WGWIDE SAM 2019, stochastic weights, selection
+#OM <- OM2.2   #WGWIDE SS 2019, stochastic weights, selection
+#OM <- OM2.3   #WGWIDE SS 2020, stochastic weights, selection
+OM <- OM2.4   #WGWIDE SAM 2019, stochastic weights, selection
+#OM <- OM2.5   #WGWIDE SAM 2020, stochastic weights, selection
 
 # WHOM SS
 stock          <- "WHOM"
