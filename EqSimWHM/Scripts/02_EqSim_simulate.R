@@ -506,6 +506,8 @@ for (mp in c("MP5.11")) {
                  OM = OM, MP = MP,
                  settings=settings, df=df)
   dir.create(path = file.path(Res.dir,"Stats"), showWarnings = TRUE, recursive = TRUE)
+  
+  cat("Saving eqSim Stats RData file", "\n")
   save(lStats,file = file.path(Res.dir,"Stats",paste0(runName,"_eqSim_Stats.Rdata")))
   
   # Save settings
@@ -513,8 +515,13 @@ for (mp in c("MP5.11")) {
   # save(settings,file = file.path(Res.dir,runName,paste0(runName,"_eqSim_Settings.Rdata")))
   
   #generate the stock/stat trajectories
+  cat("Saving fPlotTraj files", "\n")
   fPlotTraj(sim = lStats, plot.dir = file.path(Res.dir,runName), lStatPer = lStatPer)
+  
+  cat("Saving fPlotSummary files", "\n")
   suppressWarnings(fPlotSummary(sim = lStats, plot.dir = Res.dir, lStatPer = lStatPer, FtoPlot=fGetValsScan(MP$F_target,OM$refPts)))
+  
+  cat("Saving fTabulateStats", "\n")
   fTabulateStats(sim = lStats, setting= settings, plot.dir = Res.dir)
   
 } # end of for loop MPs
