@@ -13,7 +13,7 @@
 # 01/07/2020 included additional features by Martin Pastoors
 # ================================================================================================================
 
-# source(file.path(getwd(),"Scripts","01_EqSim_setup.R"))
+source(file.path(getwd(),"Scripts","01_EqSim_setup.R"))
 
 #Note: niters and nyr could be included in the OM or MP definitions
 
@@ -33,17 +33,19 @@ per2 <- 5
 #OM <- OM2; MP <- MP2.0_10000
 #OM <- OM2; MP <- MP3.0
 #OM <- OM2.1   #WGWIDE 2019, const weights, selection
-OM <- OM2.2   #WGWIDE SS 2019, stochastic weights, selection
-#OM <- OM2.3   #WGWIDE SS 2020, stochastic weights, selection
+#OM <- OM2.2   #WGWIDE SS 2019, stochastic weights, selection
+OM <- OM2.3   #WGWIDE SS 2020, stochastic weights, selection
 #OM <- OM2.4   #WGWIDE SAM 2019, stochastic weights, selection
 #OM <- OM2.5   #WGWIDE SAM 2020, stochastic weights, selection
 
 # WHOM SS
 stock          <- "WHOM"
 assess         <- "SS3"
-FLStockfile    <- "WGWIDE19.RData"
-FLStockSimfile <- "WHOM_SS19_FLS_V1.RData"    #V1 iterations as single FLStock
+#FLStockfile    <- "WGWIDE19.RData"
+#FLStockSimfile <- "WHOM_SS19_FLS_V1.RData"    #V1 iterations as single FLStock
 #FLStockSimfile <- "WHOM_SS19_FLS_V2.RData"    #V2 new draw, contains variability in selection and weights
+FLStockfile    <- "WGWIDE20.RData"
+FLStockSimfile <- "WHOM_SS20_FLS_V2.RData"
 
 #WHOM SAM
 #stock          <- "WHOM"
@@ -69,65 +71,12 @@ SegregBlim  <- function(ab, ssb) log(ifelse(ssb >= Blimloss, ab$a * Blimloss, ab
 set.seed(1)
 
 #segmented regression with breakpoint at Blim, from 1995 excluding terminal
-SRR <- eqsr_fit(window(FLS,1995,2018), remove.years = c(2018), nsamp=niters, models = c("SegregBlim"))
+if (grepl("WGWIDE19",OM$desc)) {SRR <- eqsr_fit(window(FLS,1995,2018), remove.years = c(2018), nsamp=niters, models = c("SegregBlim"))}
+if (grepl("WGWIDE20",OM$desc)) {SRR <- eqsr_fit(window(FLS,1995,2019), remove.years = c(2019), nsamp=niters, models = c("SegregBlim"))}
 
-emf(file = file.path(Res.dir,"SRR.emf"), width = 7, height = 7)
+emf(file = file.path(Res.dir,paste0(OM$desc,"_SRR.emf")), width = 7, height = 7)
 eqsr_plot(SRR)
 dev.off()
-
-# #stock/catch weights (SS3 models catch/stock weights at age as time invariant)
-# dfSW <- readr::read_delim(file = file.path(Data.dir,"StockWeights.dat"),delim=",")
-# dfCW <- readr::read_delim(file = file.path(Data.dir,"CatchWeights.dat"),delim=",")
-# 
-# dfWeights <- dplyr::left_join(
-#   dfSW %>% pivot_longer(cols = paste0("Age",seq(0,15)), names_to = "Age", values_to = "SW", names_prefix = "Age"),
-#   dfCW %>% pivot_longer(cols = paste0("Age",seq(0,15)), names_to = "Age", values_to = "CW", names_prefix = "Age"),
-#   by=c("Year","Age"))
-# 
-# dfWeights <- within(dfWeights, Age <- factor(Age, levels = as.character(seq(0,15))))
-# dfSAWeights = data.frame(Age = seq(0,15), CW = rowMeans(catch.wt(FLS)), SW = rowMeans(stock.wt(FLS)), stringsAsFactors = FALSE)
-# dfSAWeights <- within(dfSAWeights, Age <- factor(Age, levels = as.character(seq(0,15))))
-# 
-# #quick look, comparing with the assessment ouput
-# gCW <- ggplot(data = dfWeights, mapping = aes(x=Year,y=CW)) +
-#   geom_line(aes(group=Age)) +
-#   geom_hline(data = dfSAWeights, mapping=aes(yintercept=CW), col="red") + 
-#   facet_wrap(~Age) + ylab("Catch Weight")
-# 
-# # emf(file = file.path(Res.dir,"CW.emf"), width = 7, height = 7)
-# # print(gCW)
-# # dev.off()
-# 
-# gSW <- ggplot(data = dfWeights, mapping = aes(x=Year,y=SW)) +
-#   geom_line(aes(group=Age)) +
-#   geom_hline(data = dfSAWeights, mapping=aes(yintercept=SW), col="red") + 
-#   facet_wrap(~Age) + ylab("Stock Weight")
-
-# emf(file = file.path(Res.dir,"SW.emf"), width = 7, height = 7)
-# print(gSW)
-# dev.off()
-
-# read_docx() %>%
-#   body_add("Catch Weights") %>%
-#   body_add_img(src = file.path(Res.dir,"CW.emf"), width = 7, height = 7) %>% 
-#   body_add_break() %>%
-#   body_add("Stock Weights") %>%
-#   body_add_img(src = file.path(Res.dir,"SW.emf"), width = 7, height = 7) %>% 
-#   body_add_break() %>%
-#   body_add("Stock Weights") %>%
-#   body_add_img(src = file.path(Res.dir,"SRR.emf"), width = 7, height = 7) %>% 
-#   print(target = file.path(Res.dir,"Graphics.docx"))
-
-#remove temp graphics
-# sapply(list.files(path=file.path(Res.dir), pattern=".emf", full.names=TRUE), file.remove)
-
-#assign the stock and catch weights into the assessment FLStock object
-#tSW <- FLQuant(t(dfSW[,-1]), dim=dim(stock.wt(FLS)), dimnames=dimnames(stock.wt(FLS)))
-#tCW <- FLQuant(t(dfCW[,-1]), dim=dim(catch.wt(FLS)), dimnames=dimnames(catch.wt(FLS)))
-
-#remove the weights assignment for now until further investigated
-#stock.wt(FLS) <- tSW
-#catch.wt(FLS) <- tCW
 
 #reassign FLStock object with updated weights into stk slot of SRR 
 SRR$stk <- FLS
@@ -171,10 +120,10 @@ SRR$stks <- FLSs
 #MP <- MP98
 
 # for (mp in c("MP5.00","MP5.01","MP5.10","MP5.11","MP5.20","MP5.21")) {
-for (mp in c("MP5.11")) {
-# for (mp in c("MP5.00","MP5.01","MP5.03",
-#             "MP5.10","MP5.11","MP5.13",
-#             "MP5.20","MP5.21","MP5.23")) {
+#for (mp in c("MP5.11")) {
+for (mp in c("MP5.00","MP5.01","MP5.03",
+            "MP5.10","MP5.11","MP5.13",
+            "MP5.20","MP5.21","MP5.23")) {
 
 #for (mp in c("MP5.00","MP5.23")) {
   #mp <- "MP5.23"
