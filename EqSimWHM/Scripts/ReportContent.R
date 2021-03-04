@@ -26,11 +26,15 @@ sapply(list.files(path=file.path(Source.dir), pattern=".R", full.names=TRUE), so
 
 #recruitment modelling
 #historic data (assessments)
+WG17 <- loadRData(file.path(RData.dir,"WGWIDE17.RData")) %>% FLCore::setPlusGroup(., 15)
+name(WG17) <- "Western Horse Mackerel, WGWIDE17 SS Assessment"
+WG18 <- loadRData(file.path(RData.dir,"WGWIDE18.RData")) %>% FLCore::setPlusGroup(., 15)
+name(WG18) <- "Western Horse Mackerel, WGWIDE18 SS Assessment"
 WG19 <- loadRData(file.path(RData.dir,"WGWIDE19.RData")) %>% FLCore::setPlusGroup(., 15)
-WG20 <- loadRData(file.path(RData.dir,"WGWIDE20.RData")) %>% FLCore::setPlusGroup(., 15)
-
 name(WG19) <- "Western Horse Mackerel, WGWIDE19 SS Assessment"
+WG20 <- loadRData(file.path(RData.dir,"WGWIDE20.RData")) %>% FLCore::setPlusGroup(., 15)
 name(WG20) <- "Western Horse Mackerel, WGWIDE20 SS Assessment"
+
 png(filename = file.path(Rep.dir,"WGWIDE19_Final_SS_Assessment_Summary.png"),
     width = 600, height = 600)
 plot(WG19)
@@ -41,22 +45,36 @@ plot(WG20)
 dev.off()
 
 
-#construct a data frame with the 2019 & 2020 assessment output
-dfAssessments <- data.frame(WG = rep("WG19",dim(WG19)[2]),
-                            Mod = rep("SS3",dim(WG19)[2]),
-                            Yr = seq(range(WG19)["minyear"],range(WG19)["maxyear"]),
-                            SSB = as.numeric(FLCore::ssb(WG19)),
-                            FBar = as.numeric(fbar(WG19)),
-                            Rec = as.numeric(rec(WG19)))
+#construct a data frame with the historical assessment outputs
+dfWHMAssess <- data.frame(WG = c(), Mod = c(), Yr = c(), SSB = c(), FBar = c(), Rec = c())
+dfWHMAssess <- dplyr::bind_rows(dfWHMAssess,data.frame(WG = rep("WG17",dim(WG17)[2]),Mod = rep("SS3",dim(WG17)[2]),
+                                                       Yr = seq(range(WG17)["minyear"],range(WG17)["maxyear"]), SSB = as.numeric(FLCore::ssb(WG17)), 
+                                                       FBar = as.numeric(fbar(WG17)), Rec = as.numeric(rec(WG17))))
+dfWHMAssess <- dplyr::bind_rows(dfWHMAssess,data.frame(WG = rep("WG18",dim(WG18)[2]),Mod = rep("SS3",dim(WG18)[2]),
+                                                       Yr = seq(range(WG18)["minyear"],range(WG18)["maxyear"]), SSB = as.numeric(FLCore::ssb(WG18)), 
+                                                       FBar = as.numeric(fbar(WG18)), Rec = as.numeric(rec(WG18))))
+dfWHMAssess <- dplyr::bind_rows(dfWHMAssess,data.frame(WG = rep("WG19",dim(WG19)[2]),Mod = rep("SS3",dim(WG19)[2]),
+                                                       Yr = seq(range(WG19)["minyear"],range(WG19)["maxyear"]), SSB = as.numeric(FLCore::ssb(WG19)), 
+                                                       FBar = as.numeric(fbar(WG19)), Rec = as.numeric(rec(WG19))))
+dfWHMAssess <- dplyr::bind_rows(dfWHMAssess,data.frame(WG = rep("WG20",dim(WG20)[2]),Mod = rep("SS3",dim(WG20)[2]),
+                                                       Yr = seq(range(WG20)["minyear"],range(WG20)["maxyear"]), SSB = as.numeric(FLCore::ssb(WG20)), 
+                                                       FBar = as.numeric(fbar(WG20)), Rec = as.numeric(rec(WG20))))
+table(dfWHMAssess$WG)
 
-dfAssessments <- dplyr::bind_rows(dfAssessments,
-                            data.frame(WG = rep("WG20",dim(WG20)[2]),
-                            Mod = rep("SS3",dim(WG20)[2]),
-                            Yr = seq(range(WG20)["minyear"],range(WG20)["maxyear"]),
-                            SSB = as.numeric(FLCore::ssb(WG20)),
-                            FBar = as.numeric(fbar(WG20)),
-                            Rec = as.numeric(rec(WG20))))
+#some plot limits
+x.mult <- 1.1
+y.mult <- 1.4
+minSSB <- min(dfWHMAssess$SSB, max(dfWHMAssess$SSB) * 0.0125)
+maxSSB <- max(dfWHMAssess$SSB) * x.mult
+maxrec <- max(dfWHMAssess$SSB) * y.mult
 
+ssb_eval <- seq(minSSB, maxSSB, length.out = 100)
+n_mods <- 2000
+
+sample_rec <- function(i) {
+  FUN <-  match.fun(modset$model[i])
+  exp(FUN(modset[i,], ssb_eval) + stats::rnorm(length(ssb_eval), sd = modset $ cv[i]) )
+}
 
 
 OM_WGWIDE19 <- OM2.2
@@ -72,21 +90,6 @@ eqsr_plot(SRR_WGWIDE19)
 dev.off()
 
 #ecdf - code to generate draws borrowed from eqsr
-
-x.mult <- 1.1
-y.mult <- 1.4
-minSSB <- min(dfAssessments$SSB, max(dfAssessments$SSB) * 0.0125)
-maxSSB <- max(dfAssessments$SSB) * x.mult
-maxrec <- max(dfAssessments$SSB) * y.mult
-
-ssb_eval <- seq(minSSB, maxSSB, length.out = 100)
-n_mods <- 2000
-
-sample_rec <- function(i) {
-  FUN <-  match.fun(modset$model[i])
-  exp(FUN(modset[i,], ssb_eval) + stats::rnorm(length(ssb_eval), sd = modset $ cv[i]) )
-}
-
 modset <- SRR_WGWIDE19$sr.sto
 ids <- sample(1:nrow(modset), n_mods, replace = TRUE)
 rec_sim <- sapply(ids, sample_rec)
@@ -100,7 +103,7 @@ out <- data.frame(grp = rep(1:length(ssb_eval), n_mods),
 #model vs obs
 ggRec_WG19 <- ggplot(data = out, mapping = aes(x=rec)) +
   stat_ecdf(geom = "line", pad=FALSE) + xlim(0,1.5e7) +
-  stat_ecdf(data = filter(dfAssessments,WG=="WG19" & Yr>=1995 & Yr<=2018), 
+  stat_ecdf(data = filter(dfWHMAssess,WG=="WG19" & Yr>=1995 & Yr<=2018), 
             mapping = aes(x=Rec), geom="point", pad=FALSE) +
   xlab("Recruits") + ylab("Cumulative Dist") + ggtitle("ECDF Recruitment, SS WGWIDE 19 (1995-2017)")
 
@@ -123,21 +126,6 @@ dev.off()
 
 
 #ecdf - code to generate draws borrowed from eqsr
-
-x.mult <- 1.1
-y.mult <- 1.4
-minSSB <- min(dfAssessments$SSB, max(dfAssessments$SSB) * 0.0125)
-maxSSB <- max(dfAssessments$SSB) * x.mult
-maxrec <- max(dfAssessments$SSB) * y.mult
-
-ssb_eval <- seq(minSSB, maxSSB, length.out = 100)
-n_mods <- 2000
-
-sample_rec <- function(i) {
-  FUN <-  match.fun(modset$model[i])
-  exp(FUN(modset[i,], ssb_eval) + stats::rnorm(length(ssb_eval), sd = modset $ cv[i]) )
-}
-
 modset <- SRR_WGWIDE20$sr.sto
 ids <- sample(1:nrow(modset), n_mods, replace = TRUE)
 rec_sim <- sapply(ids, sample_rec)
@@ -151,7 +139,7 @@ out <- data.frame(grp = rep(1:length(ssb_eval), n_mods),
 #model vs obs
 ggRec_WG20 <- ggplot(data = out, mapping = aes(x=rec)) +
   stat_ecdf(geom = "line", pad=FALSE) + xlim(0,1.5e7) +
-  stat_ecdf(data = filter(dfAssessments,WG=="WG20" & Yr>=1995 & Yr<=2019), 
+  stat_ecdf(data = filter(dfWHMAssess,WG=="WG20" & Yr>=1995 & Yr<=2019), 
             mapping = aes(x=Rec), geom="point", pad=FALSE) +
   xlab("Recruits") + ylab("Cumulative Dist") + ggtitle("ECDF Recruitment, SS WGWIDE20 (1995-2018)")
 
@@ -159,32 +147,23 @@ png(filename = file.path(Rep.dir,"ECDF_SS_WGWIDE20.png"), width = 600, height = 
 print(ggRec_WG20)
 dev.off()
 
+ggHistRec <- ggplot(data = filter(dfWHMAssess, Yr>=1985) %>% select(Year=Yr,Assessment=WG,Rec), 
+                    mapping = aes(x=Year, y=Rec/1e6, group = Assessment, col=Assessment)) + 
+  geom_line(lwd=1) + ylab("Recruits (billions)") + xlab("Year") + theme(legend.position = "top") +
+  ggtitle("WGWIDE 2017-2020::WHM Recruitment Estimates, 1995 onwards")
 
+png(filename = file.path(Rep.dir,"WGRecruitments.png"), width = 600, height = 400)
+print(ggHistRec)
+dev.off()
 
+ggHistSSB <- ggplot(data = filter(dfWHMAssess) %>% select(Year=Yr,Assessment=WG,SSB), 
+                    mapping = aes(x=Year, y=SSB/1e6, group = Assessment, col=Assessment)) + 
+  geom_line(lwd=1) + ylab("SSB (Mt)") + xlab("Year") + theme(legend.position = "top") +
+  ggtitle("WGWIDE 2017-2020::WHM SSB Estimates")
 
-
-
-
-
-
-
-#some line plots of recruitment
-
-if (OM$desc=="WGWIDE20"){SRR <- eqsr_fit(window(FLS,1995,2019), remove.years = c(2019), nsamp=niters, models = c("SegregBlim"))}
-
-
-simRuns <- loadRData(file=file.path(Res.dir))
-
-ggSSB <- ggplot(data = dfAssessments, mapping = aes(x=Yr, y=SSB/1e6, group=WG)) +
-  geom_line() + ylim(0,6) + ylab("SSB (Mt)")
-
-ggRecWG19 <- ggplot(data = filter(dfAssessments,WG=="WG19" & Yr>=1995 & Yr<=2018), mapping = aes(x=Rec)) +
-  stat_ecdf(geom="point", pad=FALSE) + xlim(0,1.5e7)
-
-ggRecWG20 <- ggplot(data = filter(dfAssessments,WG=="WG20" & Yr>=1995 & Yr<=2019), mapping = aes(x=Rec)) +
-  stat_ecdf(geom="point", pad=FALSE) + xlim(0,1.5e7)
-
-
+png(filename = file.path(Rep.dir,"WGSSB.png"), width = 600, height = 400)
+print(ggHistSSB)
+dev.off()
 
 #catch opportunity histograms
 
