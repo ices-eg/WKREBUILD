@@ -61,13 +61,13 @@ library(icesTAF) # install.packages("icesTAF")
 
 
 #computer specific locations
-Drive    <- "C:"
-Base.dir <- file.path(Drive,"Stocks","hom_27_2a4a5b6a7a-ce-k8","MP_MSE")
-#Drive    <- "D:"
-#Base.dir <- file.path(Drive,"GIT")
+# Drive    <- "C:"
+# Base.dir <- file.path(Drive,"Stocks","hom_27_2a4a5b6a7a-ce-k8","MP_MSE")
+# Drive    <- "D:"
+Base.dir <- getwd()
 
 #Basic MSE directory
-MSE.dir <- file.path(Base.dir,"wk_WKREBUILD","EqSimWHM")
+MSE.dir <- file.path(Base.dir,"EqSimWHM")
 #this is where the results of the 1000 assessment runs for initialisation of the MSE are saved
 Data.dir <- file.path(MSE.dir,"Data")              
 #any useful stuff contained in RData files
@@ -90,5 +90,3 @@ source(file = file.path(Scripts.dir,"MPs.R"))
 #source all functions in source.dir
 sapply(list.files(path=file.path(Source.dir), pattern=".R", full.names=TRUE), source)
 
-# Get temp dir; for storing large RData files
-#temp.dir <- "C:/TEMP"
