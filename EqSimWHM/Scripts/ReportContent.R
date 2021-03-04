@@ -35,6 +35,10 @@ name(WG19) <- "Western Horse Mackerel, WGWIDE19 SS Assessment"
 WG20 <- loadRData(file.path(RData.dir,"WGWIDE20.RData")) %>% FLCore::setPlusGroup(., 15)
 name(WG20) <- "Western Horse Mackerel, WGWIDE20 SS Assessment"
 
+#1000 iterations
+FLSs_WG19 <- loadRData(file=file.path(RData.dir,"WHOM_SS19_FLS_V2.RData"))
+FLSs_WG20 <- loadRData(file=file.path(RData.dir,"WHOM_SS20_FLS_V2.RData"))
+
 png(filename = file.path(Rep.dir,"WGWIDE19_Final_SS_Assessment_Summary.png"),
     width = 600, height = 600)
 plot(WG19)
@@ -164,6 +168,56 @@ ggHistSSB <- ggplot(data = filter(dfWHMAssess) %>% select(Year=Yr,Assessment=WG,
 png(filename = file.path(Rep.dir,"WGSSB.png"), width = 600, height = 400)
 print(ggHistSSB)
 dev.off()
+
+#Selections
+fGetFLStockSelection <- function(stk){
+  sel <- matrix(FLCore::harvest(stk), ncol = dim(stk)[2])
+  Fbar <- matrix(FLCore::fbar(stk), ncol = dim(stk)[2])
+  sel <- sweep(sel, 2, Fbar, "/")
+  sel <- sel/max(sel[,seq(dim(sel)[2]-10,dim(sel)[2])])  #last 10 years to avoid noise at start
+}
+
+ages <- seq(0,15)
+nAges <- length(ages)
+iters <- seq(1,1000)
+nits <- 1000
+yrs <- seq(dims(WG19)$minyear,dims(WG19)$maxyear)
+nYrs <- length(yrs)
+
+sels <- array(NA, dim=c(nAges,nYrs,nits), dimnames=list(age=ages,yr=yrs,iter=iters))
+for (i in iters){sels[,,ac(i)] <- fGetFLStockSelection(FLSs_WG19[,,,,,i])}
+
+
+
+#extract selection info from each iteration
+Sels <- lapply(FLSs_WG19,fGetFLStockSelection)
+iSel <- matrix(unlist(Sels),nrow=nAges,ncol=length(FLSs),dimnames=list(age=ac(ages),iter=seq(1,length(FLSs))))
+
+dfSASelection = data.frame(Age = ages, iter=0, Sel = rowMeans(fGetFLStockSelection(WG19)), stringsAsFactors = FALSE)
+dfSASelection <- within(dfSASelection, Age <- factor(Age, levels = ac(ages)))
+
+dfSASelection <- dplyr::bind_rows(dfSASelection,data.frame(Age = ac(ages), iter=rep(seq(1,length(FLSs)),each=nAges), Sel = c(iSel)))
+#make Age a factor so plot order appropriate
+dfSASelection <- within(dfSASelection, Age <- factor(Age, levels = ac(ages)))
+
+#selection patterns
+
+#data, assessment point estimates and range of values from 1000 iters
+gSelProfs <- ggplot(data = dfSASelection) + geom_line(aes(x=Age,y=Sel,group=iter)) +
+  geom_line(filter(dfSASelection,iter==0),mapping=aes(x=Age,y=Sel,group=1),col="red",lwd=1)
+
+
+#distributions of selection@age
+#distribution of values from 1000 iterations, point estimates from assessment
+#sort stupid long x ais labels
+gSelHistatAge <- ggplot(data = dfSASelection, mapping = aes(Sel)) + 
+  geom_bar() + scale_x_binned(n.breaks=15, nice.breaks=FALSE) +
+  theme(text = element_text(size=10), axis.text.x = element_text(angle=45, hjust=1)) +
+  geom_vline(xintercept=c(0.25,0.5,0.75), col="grey", lwd=1, lty=2) +
+  facet_wrap(~Age) + ylab("Count") +
+  theme(axis.text.x=element_blank())
+
+
 
 #catch opportunity histograms
 
