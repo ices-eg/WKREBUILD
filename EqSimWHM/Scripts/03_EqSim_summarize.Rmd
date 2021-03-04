@@ -18,105 +18,167 @@ require("knitr")
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, crop = TRUE, comment = "")
 knitr::opts_chunk$set(fig.width=10) 
 
-rm(list=ls())
+options(dplyr.summarise.inform = FALSE)
+
+# rm(list=ls())
 invisible(gc())
 
 library(tidyverse)
 
 #computer specific locations
-Drive    <- "D:"
-Base.dir <- file.path(Drive,"GIT")
-MSE.dir <- file.path(Base.dir,"wk_WKREBUILD","EqSimWHM")
-Res.dir <- file.path(MSE.dir, "Results")
 stats.dir <- file.path(Res.dir, "Stats")
-
-# Get dropbox dir; for storing large RData files
-source("../R/get_dropbox.R")
-source("../R/utilities.R")
-dropbox.dir <- file.path(get_dropbox(), "HOM FG", "05. Data","RData")
 
 # ==================================================================================
 
 #basic display setting
-niters <- 1000
-maxyr <- 2040
+# niters <- 1000
+nworm  <- 5
+maxyr <- yEnd
+
+FLSs@stock  <- ssb(FLSs)
+
+dfhistfbar <- as.data.frame(fbar(FLSs)) %>% mutate(slot="fbar")
+dfhistrec  <- as.data.frame(rec(FLSs)) %>% mutate(slot="rec", age=as.character(age))
+dfhistpblim <- 
+  as.data.frame(ssb(FLSs)) %>% 
+  mutate(perfstat = "pblim") %>% 
+  mutate(period = "HI") %>% 
+  dplyr::select(perfstat, age, year, period, value=data) %>%
+  group_by(perfstat, age, year, period ) %>%
+  summarize(mean   = sum((value< OM[["refPts"]][["Blim"]])) / niters) 
+  
+dfhist <- 
+  as.data.frame(FLSs) %>% 
+  bind_rows(dfhistfbar) %>% 
+  bind_rows(dfhistrec) %>% 
+  mutate(period = "HI") %>% 
+  dplyr::select(perfstat=slot, age, year, period, value=data) %>%
+  
+  # filter(perfstat=="stock") %>% View()
+
+  group_by(perfstat, age, year, period ) %>%
+  summarize(mean   = mean(value, na.rm=TRUE),
+            median = median(value, na.rm=TRUE),
+            upper  = quantile(value, probs=0.975, na.rm=TRUE),
+            lower  = quantile(value, probs=0.025, na.rm=TRUE)) %>%
+  
+  bind_rows(dfhistpblim) %>% 
+  
+  mutate(method = "EqSim") %>%
+  mutate(niters = as.numeric(niters)) %>%
+  mutate(nyrs   = as.numeric(nyrs)) %>%
+  mutate(blim = OM[["refPts"]][["Blim"]]) %>%
+  mutate(bpa = OM[["refPts"]][["Bpa"]]) %>% 
+  ungroup()
+
+wormhist <- 
+  as.data.frame(FLSs) %>% 
+  bind_rows(dfhistfbar) %>% 
+  bind_rows(dfhistrec) %>% 
+  # mutate(iter = as.numeric(iter)) %>% 
+  filter(as.numeric(iter) <= nworm) %>% 
+  mutate(period = "HI") %>% 
+  dplyr::select(perfstat=slot, age, year, period, iter, value=data)  %>%
+  mutate(method = "EqSim") %>%
+  mutate(niters = as.numeric(niters)) %>%
+  mutate(nyrs   = as.numeric(nyrs)) %>%
+  mutate(blim = OM[["refPts"]][["Blim"]]) %>%
+  mutate(bpa = OM[["refPts"]][["Bpa"]]) %>% 
+  ungroup()
 
 
 # Read the results files
-# i <- 2
-
-filelist <- list.files(path=stats.dir, pattern="^WHOM|^sam", full.names=TRUE)
+filelist <- list.files(path=stats.dir, pattern="^WHOM", full.names=TRUE)
  
-# df <- worms <- data.frame(stringsAsFactors = FALSE)
-# for (i in 1:length(filelist)) {
-# 
-#   invisible(gc())
-#   cat(filelist[i],"\n")
-# 
-#   if(grepl("^sam", basename(filelist[i]))) {
-# 
-#     # sam hcr files
-#     x <-
-#       loadRData(filelist[i]) %>%
-#       lowcase() %>%
-#       mutate(perfstat = tolower(perfstat)) %>%
-#       mutate(perfstat = ifelse(perfstat == "fbar", "harvest", perfstat)) %>%
-#       mutate(label = as.character(NA))
-# 
-#   } else {
-# 
-#     # eqsim files
-#     OM <- loadRData(filelist[i])[["OM"]]
-#     MP <- loadRData(filelist[i])[["MP"]]
-#     x <-
-#       loadRData(filelist[i])[["df"]] %>%
-#       lowcase() %>%
-#       mutate(perfstat = tolower(perfstat)) %>%
-#       mutate(perfstat = ifelse(perfstat == "cw", "catch", perfstat)) %>%
-#       mutate(method = "EqSim") %>%
-#       mutate(iter   = as.numeric(iter)) %>%
-#       mutate(niters = as.numeric(niters)) %>%
-#       mutate(nyrs   = as.numeric(nyrs)) %>%
-#       mutate(blim = OM[["refPts"]][["Blim"]]) %>%
-#       mutate(bpa = OM[["refPts"]][["Bpa"]])
-# 
-#   }
-# 
-# 
-#     # summarize the dataframe for this run
-#   summ <-
-#     x %>%
-#     group_by(runref, assess, method, om, mp, niters, nyrs, label, ftgt, perfstat, unit, blim, bpa,
-#              period, year) %>%
-#     mutate(value = ifelse(perfstat=="iav" & ftgt==0, NA, value)) %>%
-#     summarize(mean = mean(value, na.rm=TRUE),
-#               median = median(value, na.rm=TRUE),
-#               upper = quantile(value, probs=0.975, na.rm=TRUE),
-#               lower = quantile(value, probs=0.025, na.rm=TRUE)) %>%
-#     ungroup()
-# 
-#   df    <- bind_rows(df, summ)
-# 
-#   # add the worms of this run
-#   y <-
-#     x %>%
-#     group_by(runref, assess, method, om, mp, niters, nyrs, label, ftgt, perfstat, unit, blim, bpa,
-#              period, year) %>%
-#     filter(row_number() <= 5) %>%
-#     ungroup()
-# 
-#   worms <- bind_rows(worms, y)
-# 
-# }
-# 
-# save(df,file = file.path(dropbox.dir,paste0("df.Rdata")))
-# save(worms,file = file.path(dropbox.dir,paste0("worms.Rdata")))
+df <- worms <- data.frame(stringsAsFactors = FALSE)
 
-load(file = file.path(dropbox.dir,paste0("df.Rdata")))
-load(file = file.path(dropbox.dir,paste0("worms.Rdata")))
+# x <-
+#       loadRData(filelist[1])[["df"]] %>%
+#       lowcase()
+
+# i <- 1
+for (i in 1:length(filelist)) {
+
+  invisible(gc())
+  cat(filelist[i],"\n")
+
+  if(grepl("^sam", basename(filelist[i]))) {
+
+    # sam hcr files
+    x <-
+      loadRData(filelist[i]) %>%
+      lowcase() %>%
+      mutate(perfstat = tolower(perfstat)) %>%
+      mutate(perfstat = ifelse(perfstat == "fbar", "harvest", perfstat)) %>%
+      mutate(label = as.character(NA))
+
+  } else {
+
+    # eqsim files
+    # OM <- loadRData(filelist[i])[["OM"]]
+    # MP <- loadRData(filelist[i])[["MP"]]
+    x <-
+      loadRData(filelist[i])[["df"]] %>%
+      lowcase() %>%
+      mutate(perfstat = tolower(perfstat)) %>%
+      mutate(method = "EqSim") %>%
+      mutate(iter   = as.numeric(iter)) %>%
+      mutate(niters = as.numeric(niters)) %>%
+      mutate(nyrs   = as.numeric(nyrs)) %>%
+      mutate(blim = OM[["refPts"]][["Blim"]]) %>%
+      mutate(bpa = OM[["refPts"]][["Bpa"]])
+
+  }
+
+
+    # summarize the dataframe for this run
+  summ <-
+    x %>%
+    group_by(runref, assess, method, om, mp, niters, nyrs, label, ftgt, perfstat, unit, blim, bpa,
+             period, year) %>%
+    mutate(value = ifelse(perfstat=="iav" & ftgt==0, NA, value)) %>%
+    summarize(mean = mean(value, na.rm=TRUE),
+              median = median(value, na.rm=TRUE),
+              upper = quantile(value, probs=0.975, na.rm=TRUE),
+              lower = quantile(value, probs=0.025, na.rm=TRUE)) %>%
+    ungroup()
+
+  df    <- bind_rows(df, summ)
+
+  # add the worms of this run
+  y <-
+    x %>%
+    group_by(runref, assess, method, om, mp, niters, nyrs, label, ftgt, perfstat, unit, blim, bpa,
+             period, year) %>%
+    filter(row_number() <= nworm) %>%
+    ungroup()
+
+  worms <- bind_rows(worms, y)
+
+}
+
+save(dfhist,file = file.path(temp.dir,paste0("dfhist.Rdata")))
+save(wormhist,file = file.path(temp.dir,paste0("wormhist.Rdata")))
+
+# df <- 
+#   df %>% 
+#   mutate(
+#     mean = ifelse(perfstat == "catch", 1000*mean, mean),
+#     median = ifelse(perfstat == "catch", 1000*median, median),
+#     upper = ifelse(perfstat == "catch", 1000*upper, upper),
+#     lower = ifelse(perfstat == "catch", 1000*lower, lower))
+# worms <- worms %>% mutate(value = ifelse(perfstat == "catch", 1000*value, value))
+
+save(df,file = file.path(temp.dir,paste0("df.Rdata")))
+save(worms,file = file.path(temp.dir,paste0("worms.Rdata")))
+
+# load(file = file.path(temp.dir,paste0("df.Rdata")))
+# load(file = file.path(temp.dir,paste0("worms.Rdata")))
+
+# unique(df$perfstat)
 
 periods <-
-  df %>% 
+  bind_rows(df, dfhist) %>% 
   distinct(period,year) 
 
 periods2 <-
@@ -235,23 +297,50 @@ MP5.00 constant F; MP5.01 constant F with minimum TAC of 50kT; MP5.03 constant F
 
 ```{r echo=FALSE, fig.align="center", fig.asp=0.45, message=FALSE, warning=FALSE}
 
-plotvar(myruns =  c("WHOM_SS3_OM2.2_MP5.00_1000_23", 
-                    "WHOM_SS3_OM2.2_MP5.01_1000_23",
-                    "WHOM_SS3_OM2.2_MP5.03_1000_23"),
-        myftgt = c(0.0, 0.05, 0.075, 0.10, 0.125, 0.15),
-        myperfstat = "ssb", mycolour   = "blue", myyintercept = 834000, myvalue="median")
+# myperfstat <- "catch"
+# myperfstat <- "stock"
+# myperfstat <- "fbar"
+# myperfstat <- "rec"
+myperfstat <- "pblim"
 
-plotvar(myruns =  c("WHOM_SS3_OM2.2_MP5.00_1000_23", 
-                    "WHOM_SS3_OM2.2_MP5.01_1000_23",
-                    "WHOM_SS3_OM2.2_MP5.03_1000_23"),
-        myftgt = c(0.0, 0.05, 0.075, 0.10, 0.125, 0.15),
-        myperfstat = "catch", mycolour   = "purple", myyintercept = as.numeric(NA), myvalue="median")
+df %>% 
+  filter(perfstat==myperfstat) %>% 
+  ggplot(aes(x=year, y=mean)) +
+  theme_publication() +
+  theme(axis.text.x = element_text(angle = 90, vjust=0.5)) +
+  theme( panel.grid.major.x = element_blank()) +
+  theme(legend.position = "none") +
+  
+  geom_line(data=filter(wormhist, 
+                        perfstat %in% myperfstat), 
+            aes(x=year, y=value, group=iter),
+            size=0.5, colour="gray", inherit.aes = FALSE) +
+  
+  geom_ribbon(data=filter(dfhist, perfstat == myperfstat), 
+              aes(ymin=lower, ymax=upper), alpha=0.2, fill="blue") +
+  geom_line(data=filter(dfhist, perfstat == myperfstat), colour="blue") +
+  
+  geom_line(data=filter(worms, 
+                        perfstat %in% myperfstat), 
+            aes(x=year, y=value, group=iter),
+            size=0.5, colour="gray", inherit.aes = FALSE) +
+  
+  geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.2, fill="red") +
+  geom_line(colour="red") +
+  
+  geom_vline(xintercept=periods2$year[1], linetype="dotted") +
+  geom_vline(xintercept=periods2$year[2], linetype="dotted") +
+  geom_vline(xintercept=periods2$year[3], linetype="dotted") +
+  geom_vline(xintercept=periods2$year[4], linetype="dotted") +
+  
+  expand_limits(y=0) +
+  labs(y=myperfstat) +
+  facet_wrap(~ftgt)
 
-plotvar(myruns =  c("WHOM_SS3_OM2.2_MP5.00_1000_23", 
-                    "WHOM_SS3_OM2.2_MP5.01_1000_23",
-                    "WHOM_SS3_OM2.2_MP5.03_1000_23"),
-        myftgt = c(0.0, 0.05, 0.075, 0.10, 0.125, 0.15),
-        myperfstat = "pblim", mycolour   = "red", myyintercept = 0.05, myvalue="median")
+  
+  
+
+
 
 ```
 
