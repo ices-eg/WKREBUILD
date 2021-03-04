@@ -97,7 +97,7 @@ fsummary_df <- function(runName, ftgt, simRuns,
     Cwgt <- t[["catW"]]
     
     #catch weight (tons)
-    CW <- apply(Cnum*Cwgt,2:3,sum)/1e3 
+    CW <- apply(Cnum*Cwgt,2:3,sum) 
     # dimnames(CW)$year <- simYears
     t$CW <- CW
 
@@ -122,10 +122,10 @@ fsummary_df <- function(runName, ftgt, simRuns,
     # dimnames(t$Fmgmt)$year <- simYears
     
     #harvest
-    Harvest <- t[["F"]]
+    Fbar <- t[["F"]]
     # dimnames(Harvest)$year <- simYears
-    Harvest <- apply(Harvest[ac(Fbarrange[1]:Fbarrange[2]),,],2:3, mean)
-    t$Harvest <- Harvest
+    Fbar <- apply(Fbar[ac(Fbarrange[1]:Fbarrange[2]),,],2:3, mean)
+    t$Fbar <- Fbar
     # dimnames(Harvest)
     
     #abundance
@@ -179,12 +179,14 @@ fsummary_df <- function(runName, ftgt, simRuns,
     t$recovblim <- recov %>% dplyr::select(year, value=recovblim)
     t$recovbpa <- recov %>% dplyr::select(year, value=recovbpa)
     
+    # item <- "C"
+    # item <- "SSB"
     # item <- "catW"
     # item <- "IAV"
     # item <- "pblim"
     # item <- "recovblim" 
     for (item in c("stkW", "catW", "Sel", "N", "C", "F",
-                   "SSB","CW", "Harvest", "Fmgmt","Rec",
+                   "SSB","CW", "Harvest", "Fbar", "Fmgmt","Rec",
                    "IAV", "IAVUp", "IAVDown", "pblim", "pbpa",
                    "recovblim", "recovbpa")) {
       
@@ -201,7 +203,7 @@ fsummary_df <- function(runName, ftgt, simRuns,
           mutate(
             PerfStat = item,
             year     = an(year),
-            RunRef = runName,
+            RunRef   = runName,
             stock    = stock,
             assess   = assess,
             OM       = OMname,
@@ -212,7 +214,15 @@ fsummary_df <- function(runName, ftgt, simRuns,
             Ftgt = ftgt) %>%
           
           left_join(years, by="year") %>% 
-          left_join(units, by="PerfStat") 
+          left_join(units, by="PerfStat") %>% 
+          mutate(PerfStat = case_when(
+            PerfStat == "C"     ~ "catch.n",
+            PerfStat == "N"     ~ "stock.n",
+            PerfStat == "F"     ~ "harvest",
+            PerfStat == "stkW"  ~ "stock.wt", 
+            PerfStat == "catW"  ~ "catch.wt", 
+            PerfStat == "Sel"   ~ "sel",
+            TRUE    ~ PerfStat))
         
         # print(head(x))
         
@@ -220,7 +230,7 @@ fsummary_df <- function(runName, ftgt, simRuns,
         
       
         } else if (item %in% c("SSB","CW",
-                      "Harvest", "Fmgmt","Rec",
+                      "Fbar", "Fmgmt","Rec",
                       "IAV", "IAVUp", "IAVDown")) {
         
         x <- 
@@ -242,13 +252,12 @@ fsummary_df <- function(runName, ftgt, simRuns,
             Label = xlab,
             Ftgt = ftgt) %>%
           
-          tidyr::separate(RunRef, 
-                          into=c("stock","assess", "OM","MP","niters","nyrs"), 
-                          sep="_",
-                          remove = FALSE) %>% 
-        
           left_join(years, by="year") %>% 
-          left_join(units, by="PerfStat") 
+          left_join(units, by="PerfStat") %>% 
+          mutate(PerfStat = case_when(
+            PerfStat == "SSB"   ~ "stock",
+            PerfStat == "CW"    ~ "catch",
+            TRUE    ~ PerfStat))
         
         # print(head(x))
         
