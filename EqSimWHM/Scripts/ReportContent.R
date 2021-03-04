@@ -1,15 +1,6 @@
 #Report plots
 
 #code to generate plots for the evaluation report
-
-# ================================================================================================================
-# 03 EqSim summarize
-# 
-# Summarize results of EqSim simulations
-#
-# 06/07/2020 tested on 1000 iters of SAM assessment
-# ================================================================================================================
-
 rm(list=ls())
 gc()
 
@@ -27,8 +18,10 @@ Res.dir <- file.path(MSE.dir, "Results")
 stats.dir <- file.path(Res.dir, "Stats")
 Scripts.dir <- file.path(MSE.dir, "Scripts")
 Source.dir <- file.path(MSE.dir,"R")
+Rep.dir <- file.path(MSE.dir,"ReportGraphics")
 
 source(file.path(MSE.dir,"R","utilities.R"))
+source(file = file.path(Scripts.dir,"OMs.R"))
 sapply(list.files(path=file.path(Source.dir), pattern=".R", full.names=TRUE), source)
 
 #recruitment modelling
@@ -36,6 +29,19 @@ sapply(list.files(path=file.path(Source.dir), pattern=".R", full.names=TRUE), so
 WG19 <- loadRData(file.path(RData.dir,"WGWIDE19.RData")) %>% FLCore::setPlusGroup(., 15)
 WG20 <- loadRData(file.path(RData.dir,"WGWIDE20.RData")) %>% FLCore::setPlusGroup(., 15)
 
+name(WG19) <- "Western Horse Mackerel, WGWIDE19 SS Assessment"
+name(WG20) <- "Western Horse Mackerel, WGWIDE20 SS Assessment"
+png(filename = file.path(Rep.dir,"WGWIDE19_Final_SS_Assessment_Summary.png"),
+    width = 600, height = 600)
+plot(WG19)
+dev.off()
+png(filename = file.path(Rep.dir,"WGWIDE20_Final_SS_Assessment_Summary.png"),
+    width = 600, height = 600)
+plot(WG20)
+dev.off()
+
+
+#construct a data frame with the 2019 & 2020 assessment output
 dfAssessments <- data.frame(WG = rep("WG19",dim(WG19)[2]),
                             Mod = rep("SS3",dim(WG19)[2]),
                             Yr = seq(range(WG19)["minyear"],range(WG19)["maxyear"]),
@@ -52,14 +58,20 @@ dfAssessments <- dplyr::bind_rows(dfAssessments,
                             Rec = as.numeric(rec(WG20))))
 
 
-source(file = file.path(Scripts.dir,"OMs.R"))
-OM_WGWIDE19 <- OM2.2
-OM_WGWIDE20 <- OM2.3
 
+OM_WGWIDE19 <- OM2.2
+
+#SRR fit for WGWIDE 2019
 Blimloss <- OM_WGWIDE19$refPts$Blim
 SegregBlim  <- function(ab, ssb) log(ifelse(ssb >= Blimloss, ab$a * Blimloss, ab$a * ssb))
 set.seed(1)
-SRR <- eqsr_fit(window(WG19,1995,2018), remove.years = c(2018), nsamp=1000, models = c("SegregBlim"))
+SRR_WGWIDE19 <- eqsr_fit(window(WG19,1995,2018), remove.years = c(2018), nsamp=1000, models = c("SegregBlim"))
+
+png(filename = file.path(Rep.dir,"EqSim_SRR_SS_WGWIDE19.png"), width = 600, height = 400)
+eqsr_plot(SRR_WGWIDE19)
+dev.off()
+
+#ecdf - code to generate draws borrowed from eqsr
 
 x.mult <- 1.1
 y.mult <- 1.4
@@ -75,7 +87,7 @@ sample_rec <- function(i) {
   exp(FUN(modset[i,], ssb_eval) + stats::rnorm(length(ssb_eval), sd = modset $ cv[i]) )
 }
 
-modset <- SRR$sr.sto
+modset <- SRR_WGWIDE19$sr.sto
 ids <- sample(1:nrow(modset), n_mods, replace = TRUE)
 rec_sim <- sapply(ids, sample_rec)
 
@@ -86,9 +98,74 @@ out <- data.frame(grp = rep(1:length(ssb_eval), n_mods),
                   model = rep(modset[ids,"model"], each = length(ssb_eval)))
 
 #model vs obs
-ggRec <- ggplot(data = out, mapping = aes(x=rec)) +
+ggRec_WG19 <- ggplot(data = out, mapping = aes(x=rec)) +
   stat_ecdf(geom = "line", pad=FALSE) + xlim(0,1.5e7) +
-  stat_ecdf(data = filter(dfAssessments,WG=="WG19" & Yr>=1995 & Yr<=2018), mapping = aes(x=Rec), geom="point", pad=FALSE)
+  stat_ecdf(data = filter(dfAssessments,WG=="WG19" & Yr>=1995 & Yr<=2018), 
+            mapping = aes(x=Rec), geom="point", pad=FALSE) +
+  xlab("Recruits") + ylab("Cumulative Dist") + ggtitle("ECDF Recruitment, SS WGWIDE 19 (1995-2017)")
+
+png(filename = file.path(Rep.dir,"ECDF_SS_WGWIDE19.png"), width = 600, height = 400)
+print(ggRec_WG19)
+dev.off()
+
+
+#WGWIDE 2020
+OM_WGWIDE20 <- OM2.3
+
+Blimloss <- OM_WGWIDE20$refPts$Blim
+SegregBlim  <- function(ab, ssb) log(ifelse(ssb >= Blimloss, ab$a * Blimloss, ab$a * ssb))
+set.seed(1)
+SRR_WGWIDE20 <- eqsr_fit(window(WG20,1995,2019), remove.years = c(2019), nsamp=1000, models = c("SegregBlim"))
+
+png(filename = file.path(Rep.dir,"EqSim_SRR_SS_WGWIDE20.png"), width = 600, height = 400)
+eqsr_plot(SRR_WGWIDE20)
+dev.off()
+
+
+#ecdf - code to generate draws borrowed from eqsr
+
+x.mult <- 1.1
+y.mult <- 1.4
+minSSB <- min(dfAssessments$SSB, max(dfAssessments$SSB) * 0.0125)
+maxSSB <- max(dfAssessments$SSB) * x.mult
+maxrec <- max(dfAssessments$SSB) * y.mult
+
+ssb_eval <- seq(minSSB, maxSSB, length.out = 100)
+n_mods <- 2000
+
+sample_rec <- function(i) {
+  FUN <-  match.fun(modset$model[i])
+  exp(FUN(modset[i,], ssb_eval) + stats::rnorm(length(ssb_eval), sd = modset $ cv[i]) )
+}
+
+modset <- SRR_WGWIDE20$sr.sto
+ids <- sample(1:nrow(modset), n_mods, replace = TRUE)
+rec_sim <- sapply(ids, sample_rec)
+
+out <- data.frame(grp = rep(1:length(ssb_eval), n_mods),
+                  mid.grp = rep(ssb_eval, n_mods),
+                  ssb = jitter(rep(ssb_eval, n_mods), 2), # jitter for nices plotting
+                  rec = c(rec_sim),
+                  model = rep(modset[ids,"model"], each = length(ssb_eval)))
+
+#model vs obs
+ggRec_WG20 <- ggplot(data = out, mapping = aes(x=rec)) +
+  stat_ecdf(geom = "line", pad=FALSE) + xlim(0,1.5e7) +
+  stat_ecdf(data = filter(dfAssessments,WG=="WG20" & Yr>=1995 & Yr<=2019), 
+            mapping = aes(x=Rec), geom="point", pad=FALSE) +
+  xlab("Recruits") + ylab("Cumulative Dist") + ggtitle("ECDF Recruitment, SS WGWIDE20 (1995-2018)")
+
+png(filename = file.path(Rep.dir,"ECDF_SS_WGWIDE20.png"), width = 600, height = 400)
+print(ggRec_WG20)
+dev.off()
+
+
+
+
+
+
+
+
 
 
 #some line plots of recruitment

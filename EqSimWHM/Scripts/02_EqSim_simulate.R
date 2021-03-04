@@ -74,9 +74,9 @@ set.seed(1)
 if (grepl("WGWIDE19",OM$desc)) {SRR <- eqsr_fit(window(FLS,1995,2018), remove.years = c(2018), nsamp=niters, models = c("SegregBlim"))}
 if (grepl("WGWIDE20",OM$desc)) {SRR <- eqsr_fit(window(FLS,1995,2019), remove.years = c(2019), nsamp=niters, models = c("SegregBlim"))}
 
-emf(file = file.path(Res.dir,paste0(OM$desc,"_SRR.emf")), width = 7, height = 7)
-eqsr_plot(SRR)
-dev.off()
+#emf(file = file.path(Res.dir,paste0(OM$desc,"_SRR.emf")), width = 7, height = 7)
+#eqsr_plot(SRR)
+#dev.off()
 
 #reassign FLStock object with updated weights into stk slot of SRR 
 SRR$stk <- FLS
