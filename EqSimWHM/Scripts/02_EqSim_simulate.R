@@ -13,7 +13,7 @@
 # 01/07/2020 included additional features by Martin Pastoors
 # ================================================================================================================
 
-source(file.path(getwd(),"Scripts","01_EqSim_setup.R"))
+# source(file.path(getwd(),"Scripts","01_EqSim_setup.R"))
 
 #Note: niters and nyr could be included in the OM or MP definitions
 
@@ -41,6 +41,7 @@ OM <- OM2.3   #WGWIDE SS 2020, stochastic weights, selection
 # WHOM SS
 stock          <- "WHOM"
 assess         <- "SS3"
+assessyear     <- "2020"
 #FLStockfile    <- "WGWIDE19.RData"
 #FLStockSimfile <- "WHOM_SS19_FLS_V1.RData"    #V1 iterations as single FLStock
 #FLStockSimfile <- "WHOM_SS19_FLS_V2.RData"    #V2 new draw, contains variability in selection and weights
@@ -132,7 +133,7 @@ for (mp in c("MP5.00","MP5.01","MP5.03",
   
   invisible(gc())
   
-  runName <- paste(stock,assess,OM$code,MP$code,niters,nyr,sep="_")
+  runName <- paste(stock,assess,assessyear, OM$code,MP$code,niters,nyr,sep="_")
   
   #start,end,vectors of observation and simulation years
   #simulation starts in assessment terminal year
