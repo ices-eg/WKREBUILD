@@ -5,3 +5,6 @@
 wk_WKREBUILD.Rproj
 *.RData
 *.Rdata
+!WGWIDE20.RData
+!WGWIDE19.RData
+
