@@ -1,27 +1,136 @@
 #eqsim_summary_df
 # Explort a single run into a df
 
-# runName <- c("WHOM_SS_OM2.2_MP2.1_1000_20")
-# lStatPer = lStatPer
-# Blim <- OM$refPts$Blim
-# Fbarrange=c(1,10)
-# stats <- AllStats
-
 # run=runName
-# simRuns = SimRuns
-# Res.dir = Res.dir
-# Plot.dir = Plot.dir
-# lStatPer = lStatPer
-# simYears = simYears
-# xlab = MP$xlab
+# FLSs = FLSs
 # OM = OM
-# Fbarrange=c(range(FLS)[["minfbar"]], range(FLS)[["maxfbar"]])
+# numWorm = numWorm
 
-fsummary_df <- function(runName, ftgt, simRuns,
+fassess_df <- function(runName, FLSs, OM, numWorm=5){
+  
+  #produces a dataframe
+
+  require(tidyverse)
+  options(dplyr.summarise.inform = FALSE)
+  
+  stock      <- stringr::word(runName,1,sep="_")
+  assess     <- stringr::word(runName,2,sep="_")
+  assessyear <- stringr::word(runName,3,sep="_")
+  OMname     <- stringr::word(runName,4,sep="_")
+  niters     <- an(stringr::word(runName,6,sep="_"))
+  nyrs       <- an(stringr::word(runName,7,sep="_"))
+  Blim       <- OM$refPts$Blim
+  Bpa        <- OM$refPts$Bpa
+  
+
+  # historical assessment
+  dfhistfbar <- 
+    as.data.frame(fbar(FLSs)) %>% 
+    mutate(slot="fbar") %>% 
+    mutate_if(is.factor, as.character) 
+  
+  dfhistrec  <- 
+    as.data.frame(rec(FLSs)) %>% 
+    mutate(slot="rec", age=as.character(age)) %>% 
+    mutate_if(is.factor, as.character) 
+  
+  
+  dfhistpblim <- 
+    as.data.frame(ssb(FLSs)) %>% 
+    mutate(perfstat = "pblim") %>% 
+    mutate(period = "HI") %>% 
+    mutate_if(is.factor, as.character) %>% 
+    dplyr::select(perfstat, age, year, period, value=data) %>%
+    group_by(perfstat, age, year, period ) %>%
+    summarize(mean   = sum((value< OM[["refPts"]][["Blim"]])) / niters) 
+  
+  x <-
+    as.data.frame(FLSs) %>% 
+    bind_rows(dfhistfbar) %>% 
+    bind_rows(dfhistrec) %>% 
+    mutate(period = "HI") 
+  
+  wormiters <-
+    x %>% 
+    distinct(iter) %>% 
+    # arrange(iter) %>% 
+    filter(row_number() <= 5)
+  
+  dfhist <- 
+    x %>% 
+    dplyr::select(perfstat=slot, age, year, period, value=data) %>%
+    
+    # filter(perfstat=="stock") %>% View()
+    
+    group_by(perfstat, age, year, period ) %>%
+    summarize(mean   = mean(value, na.rm=TRUE),
+              median = median(value, na.rm=TRUE),
+              upper  = quantile(value, probs=0.975, na.rm=TRUE),
+              lower  = quantile(value, probs=0.025, na.rm=TRUE)) %>%
+    
+    bind_rows(dfhistpblim) %>% 
+    
+    mutate(method = "EqSim") %>%
+    mutate(
+      runname   = runName,
+      stock    = stock,
+      assess   = assess,
+      assessyear = assessyear,
+      om       = OMname,
+      niters   = niters,
+      nyrs     = nyrs,
+      blim     = Blim,
+      bpa      = Bpa) %>%
+    
+    ungroup()
+  
+  wormhist <- 
+    x %>% 
+    filter(iter %in% wormiters$iter) %>% 
+    dplyr::select(perfstat=slot, age, year, period, iter, value=data)  %>%
+    mutate(method = "EqSim") %>%
+    mutate(
+      runname   = runName,
+      stock    = stock,
+      assess   = assess,
+      assessyear = assessyear,
+      om       = OMname,
+      niters   = niters,
+      nyrs     = nyrs,
+      blim     = Blim,
+      bpa      = Bpa) %>%
+    
+    ungroup()
+  
+  bind_rows(dfhist, wormhist)
+  
+} # end of fassess_df function
+
+
+
+
+# ==========================================================================================================
+
+
+runName=runName
+simRuns = SimRuns
+FLSs = FLSs
+Res.dir = Res.dir
+Plot.dir = Plot.dir
+lStatPer = lStatPer
+simYears = simYears
+xlab = MP$xlab
+OM = OM
+Fbarrange=c(range(FLS)[["minfbar"]], range(FLS)[["maxfbar"]])
+numWorm = numWorm
+dfassess = dfassess
+
+fsummary_df <- function(runName, simRuns, FLSs, 
                         Res.dir, Plot.dir, 
                         lStatPer, OM,  
                         simYears, xlab, 
-                        Fbarrange=c(1,10)){
+                        Fbarrange=c(1,10),
+                        numWorm=5, dfassess){
 
   #produces a dataframe
   #comparing the supplied performance statistic for ST,MT and LT for each runName
@@ -30,23 +139,23 @@ fsummary_df <- function(runName, ftgt, simRuns,
   require(tidyverse)
   options(dplyr.summarise.inform = FALSE)
   
-  dfAll <- data.frame(stringsAsFactors = FALSE)
-
+  stock  <- stringr::word(runName,1,sep="_")
+  assess <- stringr::word(runName,2,sep="_")
+  assessyear <- stringr::word(runName,3,sep="_")
+  OMname <- stringr::word(runName,4,sep="_")
+  MPname <- stringr::word(runName,5,sep="_")
+  niters <- an(stringr::word(runName,6,sep="_"))
+  nyrs   <- an(stringr::word(runName,7,sep="_"))
   Blim = OM$refPts$Blim
   Bpa  = OM$refPts$Bpa
   
-  #get the data
-  # run <- "OM2.2_MP2.1_1000_20"
-  # cat(run,"\n")
-  
-  #load the output of the simulation and the summary statistics
-  # load(file = file.path(Res.dir,run,paste0(run,"_SimRuns.RData")))
-  # load(file = file.path(Res.dir,run,paste0(run,"_eqSim_Stats.RData")))
-  
   years <-
-    data.frame(period="CU", year=seq(an(lStatPer$CU[1]),
-                                     an(lStatPer$CU[2])),
+    data.frame(period="HI", year=seq(an(lStatPer$HI[1]),
+                                     an(lStatPer$HI[2])),
                stringsAsFactors = FALSE) %>% 
+    bind_rows(data.frame(period="CU", year=seq(an(lStatPer$CU[1]),
+                                               an(lStatPer$CU[2])),
+                         stringsAsFactors = FALSE)) %>% 
     bind_rows(data.frame(period="ST", year=seq(an(lStatPer$ST[1]),
                                                an(lStatPer$ST[2])),
                          stringsAsFactors = FALSE)) %>% 
@@ -60,20 +169,20 @@ fsummary_df <- function(runName, ftgt, simRuns,
   
   #units
   units <- data.frame(
-    PerfStat = c("TAC"   ,"SSB"   ,"CW"    ,"Harvest","Rec"     ,"IAV", "IAVUp","IAVDown", "pblim", "pbpa", "catW"),
+    perfstat = c("TAC"   ,"SSB"   ,"CW"    ,"Harvest","Rec"     ,"IAV", "IAVUp","IAVDown", "pblim", "pbpa", "catW"),
     unit     = c("tonnes","tonnes","tonnes","1/year" ,"Millions","perc","perc" ,"perc"   , "prob" , "prob", "kg"),
     stringsAsFactors = FALSE
   )
   
-  stock  <- stringr::word(runName,1,sep="_")
-  assess <- stringr::word(runName,2,sep="_")
-  OMname <- stringr::word(runName,3,sep="_")
-  MPname <- stringr::word(runName,4,sep="_")
-  niters <- stringr::word(runName,5,sep="_")
-  nyrs   <- stringr::word(runName,6,sep="_")
+  dfall <- df <- worms <- data.frame(stringsAsFactors = FALSE)
+  
+  # Find out how to use the stock units
+  # l <-
+  #   units(FLSs) %>% 
+  #   data.frame(t(matrix(unlist(l), ncol=length(l), byrow=FALSE)))
   
   
-  # ftgt <- 0.1
+  # ftgt <- 0.0
   for (ftgt in an(names(SimRuns))){
     
     invisible(gc())
@@ -179,6 +288,14 @@ fsummary_df <- function(runName, ftgt, simRuns,
     
     t$recovblim <- recov %>% dplyr::select(year, value=recovblim)
     t$recovbpa <- recov %>% dplyr::select(year, value=recovbpa)
+
+    wormiters <-
+      as.data.frame.table(t[[("C")]], responseName = "value", stringsAsFactors = FALSE) %>% 
+      distinct(iter) %>% 
+      mutate(iter=as.numeric(iter)) %>% 
+      arrange(iter) %>% 
+      filter(row_number() <= 5) %>% 
+      mutate(iter=as.character(iter))
     
     # item <- "C"
     # item <- "SSB"
@@ -202,38 +319,40 @@ fsummary_df <- function(runName, ftgt, simRuns,
           #              names_to = "year", 
           #              values_to = "value") %>% 
           mutate(
-            PerfStat = item,
-            year     = an(year),
-            RunRef   = runName,
-            stock    = stock,
-            assess   = assess,
-            OM       = OMname,
-            MP       = MPname, 
-            niters   = niters,
-            nyrs     = nyrs,
-            Label = xlab,
-            Ftgt = ftgt) %>%
-          
+            perfstat   = item,
+            year       = an(year),
+            runname    = runName,
+            stock      = stock,
+            assess     = assess,
+            assessyear = assessyear,
+            method     = "EqSim",
+            om         = OMname,
+            mp         = MPname, 
+            niters     = niters,
+            nyrs       = nyrs,
+            label      = xlab,
+            ftgt       = ftgt,
+            blim       = Blim,
+            bpa        = Bpa) %>%
+
           left_join(years, by="year") %>% 
-          left_join(units, by="PerfStat") %>% 
-          mutate(PerfStat = case_when(
-            PerfStat == "C"     ~ "catch.n",
-            PerfStat == "N"     ~ "stock.n",
-            PerfStat == "F"     ~ "harvest",
-            PerfStat == "stkW"  ~ "stock.wt", 
-            PerfStat == "catW"  ~ "catch.wt", 
-            PerfStat == "Sel"   ~ "sel",
-            TRUE    ~ PerfStat))
+          left_join(units, by="perfstat") %>% 
+          mutate(perfstat = case_when(
+            perfstat == "C"     ~ "catch.n",
+            perfstat == "N"     ~ "stock.n",
+            perfstat == "F"     ~ "harvest",
+            perfstat == "stkW"  ~ "stock.wt", 
+            perfstat == "catW"  ~ "catch.wt", 
+            perfstat == "Sel"   ~ "sel",
+            TRUE    ~ perfstat))
         
         # print(head(x))
         
-        dfAll <- dplyr::bind_rows(dfAll,x)
+        df <- dplyr::bind_rows(df,x)
         
       
-        } else if (item %in% c("SSB","CW",
-                      "Fbar", "Fmgmt","Rec",
-                      "IAV", "IAVUp", "IAVDown")) {
-        
+        } else if (item %in% c("SSB","CW","Fbar", "Fmgmt","Rec","IAV", "IAVUp", "IAVDown")) {
+        # item <- "SSB"        
         x <- 
           as.data.frame(t(t[[(item)]])) %>% 
           rownames_to_column(var="iter") %>% 
@@ -241,104 +360,163 @@ fsummary_df <- function(runName, ftgt, simRuns,
                        names_to = "year", 
                        values_to = "value") %>% 
           mutate(
-            PerfStat = item,
-            year     = an(year),
-            RunRef = runName,
-            stock    = stock,
-            assess   = assess,
-            OM       = OMname,
-            MP       = MPname, 
-            niters   = niters,
-            nyrs     = nyrs,
-            Label = xlab,
-            Ftgt = ftgt) %>%
+            perfstat   = item,
+            year       = an(year),
+            runname    = runName,
+            stock      = stock,
+            assess     = assess,
+            assessyear = assessyear,
+            method     = "EqSim",
+            om         = OMname,
+            mp         = MPname, 
+            niters     = niters,
+            nyrs       = nyrs,
+            label      = xlab,
+            ftgt       = ftgt,
+            blim       = Blim,
+            bpa        = Bpa) %>%
           
           left_join(years, by="year") %>% 
-          left_join(units, by="PerfStat") %>% 
-          mutate(PerfStat = case_when(
-            PerfStat == "SSB"   ~ "stock",
-            PerfStat == "CW"    ~ "catch",
-            TRUE    ~ PerfStat))
+          left_join(units, by="perfstat") %>% 
+          mutate(perfstat = case_when(
+            perfstat == "SSB"   ~ "stock",
+            perfstat == "CW"    ~ "catch",
+            perfstat == "Fbar"  ~ "fbar",
+            perfstat == "Fmgmt" ~ "fmgmt",
+            perfstat == "Rec"  ~ "rec",
+            perfstat == "IAV"  ~ "iav", 
+            perfstat == "IAVUp"  ~ "iavup", 
+            perfstat == "IAVDown"  ~ "iavdown",
+            TRUE    ~ perfstat))
         
         # print(head(x))
         
-        dfAll <- dplyr::bind_rows(dfAll,x)
+        df <- dplyr::bind_rows(df,x)
         
       } else if (item %in% c("pblim","pba")) {
+        
+        # item <- "pblim"        
         
         x <- 
           as.data.frame(t[[(item)]]) %>% 
           setNames("value") %>% 
           mutate(
-            PerfStat = item,
-            year     = years$year,
-            RunRef   = runName,
-            stock    = stock,
-            assess   = assess,
-            OM       = OMname,
-            MP       = MPname, 
-            niters   = niters,
-            nyrs     = nyrs,
-            Label    = xlab,
-            Ftgt     = ftgt) %>%
+            perfstat   = item,
+            year       = lStatPer[["CU"]][1]:lStatPer[["LT"]][2],
+            runname    = runName,
+            stock      = stock,
+            assess     = assess,
+            assessyear = assessyear,
+            method     = "EqSim",
+            om         = OMname,
+            mp         = MPname, 
+            niters     = niters,
+            nyrs       = nyrs,
+            label      = xlab,
+            ftgt       = ftgt,
+            blim       = Blim,
+            bpa        = Bpa) %>%
           
           left_join(years, by="year") %>% 
-          left_join(units, by="PerfStat") 
+          left_join(units, by="perfstat") 
         
         # print(head(x))
         
-        dfAll <- dplyr::bind_rows(dfAll,x)
+        df <- dplyr::bind_rows(df,x)
         
       } else if (item %in% c("recovblim","recovbpa")){
         
+        # item <- "recovblim"
+        
         x <- 
           t[[(item)]] %>% 
-          mutate(year = an(year)) %>% 
           mutate(
-            PerfStat = item,
-            RunRef = runName,
-            stock    = stock,
-            assess   = assess,
-            OM       = OMname,
-            MP       = MPname, 
-            niters   = niters,
-            nyrs     = nyrs,
-            Label = xlab,
-            Ftgt = ftgt) %>%
+            perfstat   = item,
+            year       = an(year),
+            runname    = runName,
+            stock      = stock,
+            assess     = assess,
+            assessyear = assessyear,
+            method     = "EqSim",
+            om         = OMname,
+            mp         = MPname, 
+            niters     = niters,
+            nyrs       = nyrs,
+            label      = xlab,
+            ftgt       = ftgt,
+            blim       = Blim,
+            bpa        = Bpa) %>%
           
           left_join(years, by="year") %>% 
-          left_join(units, by="PerfStat") 
+          left_join(units, by="perfstat") 
         
         # print(head(x))
         
-        dfAll <- dplyr::bind_rows(dfAll,x)
+        df <- dplyr::bind_rows(df,x)
         
-      }
-        # end of if statement
+      } # end of if statement
 
     } # end of for loop (item)
 
+    worms <-
+      bind_rows(filter(df, iter %in% wormiters$iter)) 
+
+    df <-
+      df %>% 
+      group_by(perfstat, age, year, period ) %>%
+      summarize(mean   = mean(value, na.rm=TRUE),
+                median = median(value, na.rm=TRUE),
+                upper  = quantile(value, probs=0.975, na.rm=TRUE),
+                lower  = quantile(value, probs=0.025, na.rm=TRUE)) %>%
+      mutate(method = "EqSim") %>%
+      mutate(
+        runname   = runName,
+        stock    = stock,
+        assess   = assess,
+        assessyear = assessyear,
+        om       = OMname,
+        mp       = MPname, 
+        niters   = niters,
+        nyrs     = nyrs,
+        label    = xlab,
+        ftgt     = ftgt,
+        blim     = Blim,
+        bpa      = Bpa) 
+      
+    dfall <-
+      dfall %>% 
+      
+      # add history
+      bind_rows(mutate(dfassess, ftgt=ftgt)) %>% 
+      
+      # add worms
+      bind_rows(worms) %>% 
+      
+      # add summaries
+      bind_rows(df)
+    
   } # end of for loop: ftgt
     
   # dfAll <-
   #   dfAll %>% 
-  #   tidyr::separate(RunRef, 
+  #   tidyr::separate(runname, 
   #                   into=c("stock","assess", "OM","MP","niters","nyrs"), 
   #                   sep="_",
   #                   remove = FALSE) 
-    
-  dfAll
+  
+  
+  dfall
   
 } # end of function
 
 # dfAll %>% 
-#   filter(PerfStat == "Yield") %>% 
-#   mutate(Ftgt = as.numeric(Ftgt)) %>% 
+#   filter(perfstat == "Yield") %>% 
+#   mutate(ftgt = as.numeric(ftgt)) %>% 
 #   mutate(Period = factor(Period, levels=c("ST","MT","LT"))) %>% 
-#   ggplot(aes(x=Ftgt, y=Val, group=Period)) +
+#   ggplot(aes(x=ftgt, y=Val, group=Period)) +
 #   theme_bw() +
 #   geom_bar(stat="identity") +
-#   facet_grid(RunRef ~ Period)
+#   facet_grid(runname ~ Period)
 
 
 

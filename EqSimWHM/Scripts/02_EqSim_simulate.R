@@ -83,7 +83,8 @@ if (grepl("WGWIDE20",OM$desc)) {SRR <- eqsr_fit(window(FLS,1995,2019), remove.ye
 SRR$stk <- FLS
 
 #start with simulated initial populations
-FLSs <- loadRData(file.path(RData.dir,FLStockSimfile))
+FLSs        <- loadRData(file.path(RData.dir,FLStockSimfile))
+FLSs@stock  <- ssb(FLSs)
 
 #add required number of stochastic FLStocks to FIT object
 #SRR$stks <- FLSs[(length(FLSs)-niters+1):(length(FLSs))]
@@ -97,47 +98,22 @@ obsYears <- ac(seq(minObsYear,maxObsYear))
 yStart <- as.numeric(maxObsYear)
 yEnd <- yStart + nyr - 1
 simYears <- ac(seq(yStart,yEnd))
+numWorm <- 5
 
-# Define MP ================================================================================================================
-#MP <- MP1.0   #baseline, constant F harvest rule, no IAV control, no minimum TAC, no assessment/advice error
-#MP <- MP1.1   #baseline, constant F harvest rule, no IAV control, 80kt minimum TAC, no assessment/advice error
-#MP <- MP1.2   #baseline, constant F harvest rule, no IAV control, 150kt maximum TAC, no assessment/advice error
-#MP <- MP1.3   #baseline, constant F harvest rule, no IAV control, 80kt min TAC, 150kt max TAC, no assessment/advice error
-#MP <- MP1.4   #baseline, constant F harvest rule, no IAV control, no min/max TAC, includes assessment/advice error
-#MP <- MP1.5   #20% IAV Test
-#MP <- MP1.6   #30% IAV Test
-#MP <- MP1.7   #10% IAV Test
-#MP <- MP1.8   #10%/20% asymmetric IAV Test
-#MP <- MP1.9   #0%/10% asymmetric IAV Test
+# assessment dataframe
+runName   <- paste(stock,assess,assessyear, OM$code,niters,nyr,sep="_")
+dfassess  <- fassess_df(runName=runName, FLSs=FLSs, OM = OM, numWorm = numWorm) 
 
-#MP <- MP5.00    #Constant F
-#MP <- MP5.01   #Const , min TAC = 50kt
-#MP <- MP5.02   #Const , 20% IAV
-#MP <- MP5.03   #Const , 20% IAV, only above Btrigger
-
-#MP <- MP5.1    #ICES AR
-#MP <- MP5.11   #ICES AR, min TAC = 50kt
-#MP <- MP5.12   #ICES AR, 20% IAV
-#MP <- MP5.13   #ICES AR, 20% IAV, only above Btrigger
-
-#MP <- MP5.2    #Double BP
-#MP <- MP5.21   #Double BP, min TAC = 50kt
-#MP <- MP5.22   #Double BP, 20% IAV
-#MP <- MP5.23   #Double BP, 20% IAV, only above Btrigger
-
-#test
-#MP <- MP99
-#MP <- MP98
-
+# Loop over management procedures
 # for (mp in c("MP5.00","MP5.01","MP5.10","MP5.11","MP5.20","MP5.21")) {
-#for (mp in c("MP5.11")) {
-for (mp in c("MP5.00","MP5.01","MP5.03",
-            "MP5.10","MP5.11","MP5.13",
-            "MP5.20","MP5.21","MP5.23")) {
-
 #for (mp in c("MP5.00","MP5.23")) {
-  #mp <- "MP5.23"
-    
+# for (mp in c("MP5.00","MP5.01","MP5.03",
+#             "MP5.10","MP5.11","MP5.13",
+#             "MP5.20","MP5.21","MP5.23")) {
+
+mp <- c("MP5.11")
+  
+
   MP <- get(mp)
   
   invisible(gc())
@@ -221,6 +197,7 @@ for (mp in c("MP5.00","MP5.01","MP5.03",
   lStatPer2[['ST']] <- c(yStart+yConstraints+1,yStart+yConstraints+(per1-1))
   lStatPer[['MT']] <- lStatPer2[['MT']] <- c(yStart+yConstraints+per1,yStart+yConstraints+(per1+per2-1))
   lStatPer[['LT']] <- lStatPer2[['LT']] <- c(yStart+yConstraints+per1+per2,yStart+nyr-1)
+  lStatPer[['HI']] <- c(range(FLSs)[["minyear"]], lStatPer[['CU']][1]-1)
   
   set.seed(1)
   
@@ -255,7 +232,6 @@ for (mp in c("MP5.00","MP5.01","MP5.03",
   
   #Percentiles to report, number of worm lines for plots
   percentiles = c(0.025,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.975)
-  numWorm <- 40
   
   #Create list objects to store stocks, stats
   Stocks <- AllStats <- list()
@@ -446,11 +422,12 @@ for (mp in c("MP5.00","MP5.01","MP5.03",
   # save(settings,file = file.path(Res.dir,runName,paste0(runName,"_eqSim_Settings.Rdata")))
   
   df  <- fsummary_df(
-    run=runName, simRuns = simRuns,
+    run=runName, simRuns = simRuns, FLSs=FLSs,
     Res.dir = Res.dir, Plot.dir = Plot.dir,
     lStatPer = lStatPer, simYears = simYears, xlab = MP$xlab,
     OM = OM, 
-    Fbarrange=c(range(FLS)[["minfbar"]], range(FLS)[["maxfbar"]])) 
+    Fbarrange=c(range(FLS)[["minfbar"]], range(FLS)[["maxfbar"]]),
+    numWorm = numWorm, dfassess=dfassess) 
   
   ## Save data
   lStats <- list(stats = AllStats, runName = runName, lStatPer = lStatPer, 
