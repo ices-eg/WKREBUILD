@@ -37,13 +37,14 @@ nass.yrs <- length(ass.yrs)
 #terminal assessment year
 tyr <- dims(FLS)$maxyear
 
-#original list object - for a comparative run with new FLStock-based code
-load(file=file.path(getwd(),Base,"oMSE_WGWIDE19_FLStocks_10k15PG.RData"))
-source(file=file.path(getwd(),"origIters.R"))
+#original list object and selected iterations (used in initial simulations)
+#create a new FLStock-based object & save
+#load(file=file.path(getwd(),Base,"RData","MSE_WGWIDE19_FLStocks_10k15PG_V1.RData"))
+#source(file=file.path(getwd(),"origIters.R"))
 #create FLStock with 1000 iterations
-FLSs.1k <- FLCore::propagate(FLS,1000)
-for (ii in seq(1,1000)){FLSs.1k[,,,,,ii]<-lWHM[[orig.iters[ii]]]}
-save(FLSs.1k,file = file.path(getwd(),Base,paste0("WHOM_SS",substr(Base,7,8),"_FLS_orig.RData")))
+#FLSs.1k <- FLCore::propagate(FLS,1000)
+#for (ii in seq(1,1000)){FLSs.1k[,,,,,ii]<-lWHM[[orig.iters[ii]]]}
+#save(FLSs.1k,file = file.path(getwd(),Base,paste0("WHOM_SS",substr(Base,7,8),"_FLS_orig.RData")))
 
 
 # #1000 iterations at a time (perf)
@@ -64,10 +65,11 @@ save(FLSs.1k,file = file.path(getwd(),Base,paste0("WHOM_SS",substr(Base,7,8),"_F
 # save(FLSs,file = file.path(getwd(),Base,paste0("MSE_",Base,"FLStocks_10k15PG.RData")))
 
 #or read in if already done
-load(file = file.path(getwd(),Base,paste0("MSE_",Base,"_FLStocks_10k15PG.RData")))
+load(file = file.path(getwd(),Base,"RData",paste0("MSE_",Base,"_FLStocks_10k15PG.RData")))
 dim(FLSs)
 
-#select 1000 iterations for the MSE.
+
+#select 1000 iterations for the MSE#########################################################################
 
 if (Base=="WGWIDE19") {
   #WGWIDE 2019 (Low-High is 95%)
@@ -118,8 +120,22 @@ for(bin in seq(1,length(bks)-1)){
 length(sel.iters)
 sum(is.na(sel.iters))
 
-hist(dfSSB$SSB[sel.iters],main=Base)
+save(sel.iters,file=file.path(getwd(),Base,"RData",paste0("IterationNos_",Base,".RData")))
+
+png(filename = file.path(getwd(),"..","EqSimWHM","ReportGraphics",paste0("InitialSSB_",Base,".png")), width = 600, height = 600)
+h <- hist(dfSSB$SSB[sel.iters]/1e6,breaks=12,main=paste0("Distribution of initial SSB (",Base,")"), xlab=paste0("SSB ",tyr," (Mt)"),axes=F,ylab="")
+axis(side=1)
+abline(v=as.numeric(ssb(FLS)[,ac(tyr)])/1e6,lwd=2,lty=2)
+abline(v=c(WGWIDE.tSSB.Lo,WGWIDE.tSSB.Hi)/1e6,lwd=2,lty=2)
+abline(v=quantile(dfSSB$SSB[sel.iters],probs=c(0.025,0.5,0.975))/1e6,lwd=2,lty=2,col="red")
 quantile(dfSSB$SSB[sel.iters],probs=c(0.025,0.5,0.975))
+
+x <- seq(0,2,by=0.01)
+y <- dnorm(x, mean = WGWIDE.tSSB/1e6, sd = WGWIDE.tSSB.SD/1e6)
+y <- max(h$counts)*y/max(y)
+lines(x,y)
+dev.off()
+
 
 #WGWIDE2019
 #2.5%       50%     97.5% 
@@ -135,6 +151,9 @@ FLSs.1k <- FLSs[,,,,,sel.iters]
 #replace first iteration with the assessment output
 FLSs.1k[,,,,,1] <- FLS
 
+
+#plot of selected iters 
+
 plot(FLSs.1k,main=Base)
 #check first iter (should match assessment)
 ssb(FLSs.1k[,,,,,1])/ssb(FLS)
@@ -142,24 +161,34 @@ fbar(FLSs.1k[,,,,,1])/fbar(FLS)
 rec(FLSs.1k[,,,,,1])/rec(FLS)
 
 #intermediate save of 1000 iterations
-#save(FLSs.1k,file = file.path(getwd(),Base,paste0("MSE_",Base,"_FLStocks_1k15PG.RData")))
-save(FLSs.1k,file = file.path(getwd(),Base,paste0("WHOM_SS",substr(Base,7,8),"_FLS.RData")))
-
-#load(file = file.path(getwd(),Base,paste0("MSE_",Base,"_FLStocks_1k15PG.RData")))
+#save(FLSs.1k,file = file.path(getwd(),Base,"RData",paste0("WHOM_SS",substr(Base,7,8),"_FLS.RData")))
+load(file = file.path(getwd(),Base,"RData",paste0("WHOM_SS",substr(Base,7,8),"_FLS.RData")))
 
 #qqplot of terminal year SSB
 ggplot(data = data.frame(SSB=as.numeric(ssb(FLSs.1k[,as.character(tyr)]))), aes(sample=SSB)) + 
   stat_qq() + stat_qq_line() + ggtitle(Base)
 
 #distribution of abundances@age in starting year
+png(filename = file.path(getwd(),"..","EqSimWHM","ReportGraphics",paste0("InitialAbd_",Base,".png")), width = 600, height = 600)
 ggplot(data = data.frame(data.frame(age = as.numeric(rep(dimnames(FLSs.1k)$age,dim(FLSs.1k)[6])),
                                     abd = as.numeric(FLCore::stock.n(FLSs.1k[,as.character(tyr)]))/1e6)),
        aes(abd)) +
   geom_histogram() +
   geom_vline(data = data.frame(age=seq(0,15),abd=as.numeric(stock.n(FLS[,as.character(tyr)]))/1e6), 
              aes(xintercept = abd), colour="red", lwd=1) +
-  facet_wrap(~age, scales="free") +
-  ggtitle(Base)
+  facet_wrap(~age, labeller = labeller(age = c("0" = "Age 0", "1" = "Age 1", "2" = "Age 2", "3" = "Age 3",
+                                               "4" = "Age 4", "5" = "Age 5", "6" = "Age 6", "7" = "Age 7",
+                                               "8" = "Age 8", "9" = "Age 9", "10" = "Age 10", "11" = "Age 11",
+                                               "12" = "Age 12", "13" = "Age 13", "14" = "Age 14", "15" = "Age 15+")), scales="free") +
+  ggtitle(Base) + theme(axis.title.x = element_blank(),
+                        axis.title.y = element_blank(),
+                        axis.ticks.x = element_blank(),
+                        axis.text.x = element_blank(),
+                        axis.text.y = element_blank(),
+                        axis.ticks.y = element_blank()) +
+  ggtitle(paste0("Distributions of initial abundance at age (",Base,")"))
+dev.off()
+
 
 
 #create a second dataset with a larger SSB SD, assessment often considered to underestimate uncertainty

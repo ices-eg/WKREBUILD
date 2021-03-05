@@ -32,8 +32,8 @@ source('FUN_Random_population.R')
 
 #base assessment
 #Base <- "WGWIDE2018"
-Base <- "WGWIDE19"
-#Base <- "WGWIDE20"
+#Base <- "WGWIDE19"
+Base <- "WGWIDE20"
 
 #inpDir <- file.path(mainDir,"WGWIDE2018"); last.obs.year <- 2017
 inpDir <- file.path(mainDir,Base); last.obs.year <- 2018    #2019 assessment
