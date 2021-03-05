@@ -89,6 +89,15 @@ FLSs <- loadRData(file.path(RData.dir,FLStockSimfile))
 #SRR$stks <- FLSs[(length(FLSs)-niters+1):(length(FLSs))]
 SRR$stks <- FLSs
 
+#start,end,vectors of observation and simulation years
+#simulation starts in assessment terminal year
+minObsYear <- range(SRR$stk)["minyear"]
+maxObsYear <- range(SRR$stk)["maxyear"]
+obsYears <- ac(seq(minObsYear,maxObsYear))
+yStart <- as.numeric(maxObsYear)
+yEnd <- yStart + nyr - 1
+simYears <- ac(seq(yStart,yEnd))
+
 # Define MP ================================================================================================================
 #MP <- MP1.0   #baseline, constant F harvest rule, no IAV control, no minimum TAC, no assessment/advice error
 #MP <- MP1.1   #baseline, constant F harvest rule, no IAV control, 80kt minimum TAC, no assessment/advice error
@@ -135,15 +144,7 @@ for (mp in c("MP5.00","MP5.01","MP5.03",
   
   runName <- paste(stock,assess,assessyear, OM$code,MP$code,niters,nyr,sep="_")
   
-  #start,end,vectors of observation and simulation years
-  #simulation starts in assessment terminal year
-  minObsYear <- range(SRR$stk)["minyear"]
-  maxObsYear <- range(SRR$stk)["maxyear"]
-  obsYears <- ac(seq(minObsYear,maxObsYear))
-  yStart <- as.numeric(maxObsYear)
-  yEnd <- yStart + nyr - 1
-  simYears <- ac(seq(yStart,yEnd))
-  
+
   #exploitation constraints
   if (grepl("WGWIDE19",OM$desc)) {
     #2018 catch known, 2019 as assumed during WGWIDE 2019, 2020 as advised

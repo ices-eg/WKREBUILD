@@ -28,6 +28,7 @@ fsummary_df <- function(runName, ftgt, simRuns,
   #grouped by runName
   
   require(tidyverse)
+  options(dplyr.summarise.inform = FALSE)
   
   dfAll <- data.frame(stringsAsFactors = FALSE)
 
