@@ -5,6 +5,7 @@ rm(list=ls())
 gc()
 
 library(tidyverse)
+library(FLCore)
 
 #computer specific locations
 #Drive    <- "D:"
@@ -24,7 +25,13 @@ source(file.path(MSE.dir,"R","utilities.R"))
 source(file = file.path(Scripts.dir,"OMs.R"))
 sapply(list.files(path=file.path(Source.dir), pattern=".R", full.names=TRUE), source)
 
-#recruitment modelling
+ages <- seq(0,15)
+nAges <- length(ages)
+iters <- seq(1,1000)
+nits <- 1000
+
+##############################DATA################################################################
+
 #historic data (assessments)
 WG17 <- loadRData(file.path(RData.dir,"WGWIDE17.RData")) %>% FLCore::setPlusGroup(., 15)
 name(WG17) <- "Western Horse Mackerel, WGWIDE17 SS Assessment"
@@ -39,6 +46,91 @@ name(WG20) <- "Western Horse Mackerel, WGWIDE20 SS Assessment"
 FLSs_WG19 <- loadRData(file=file.path(RData.dir,"WHOM_SS19_FLS_V2.RData"))
 FLSs_WG20 <- loadRData(file=file.path(RData.dir,"WHOM_SS20_FLS_V2.RData"))
 
+#weight at age data
+dfWeights <- data.frame(WG=c(),Year=c(),Age=c(),Var=c(),Wgt=c())
+
+for (ass in c("WGWIDE19","WGWIDE20")){
+  dfWeights <- dplyr::bind_rows(dfWeights,
+  readr::read_delim(file = file.path(getwd(),"..","MSEInitialisation",ass,"StockWeights.dat"),delim=",") %>%
+    pivot_longer(cols = paste0("Age",seq(0,15)), names_to = "Age", values_to = "Wgt", names_prefix = "Age") %>%
+    mutate(WG = ass, Var="SW") %>%
+    select(WG,Year,Age,Var,Wgt))
+  dfWeights <- dplyr::bind_rows(dfWeights,
+    readr::read_delim(file = file.path(getwd(),"..","MSEInitialisation",ass,"CatchWeights.dat"),delim=",") %>%
+    pivot_longer(cols = paste0("Age",seq(0,15)), names_to = "Age", values_to = "Wgt", names_prefix = "Age") %>%
+    mutate(WG = ass, Var="CW") %>%
+    select(WG,Year,Age,Var,Wgt))
+}
+dfWeights <- within(dfWeights, Age <- factor(Age, levels = ac(ages)))
+
+#assessment weights at age (from the 1000 replicates)
+dfSAWeights <- data.frame(WG=c(),Iter=c(),Age=c(),Var=c(),Wgt=c())
+for (i in seq(1,1000)){
+  SW <- as.numeric(FLCore::stock.wt(FLSs_WG19[,1,,,,i]))
+  CW <- as.numeric(FLCore::catch.wt(FLSs_WG19[,1,,,,i]))
+  dfSAWeights <- dplyr::bind_rows(dfSAWeights,data.frame(WG="WGWIDE19",Iter=i,Age=seq(0,15),Var="SW",Wgt=SW))
+  dfSAWeights <- dplyr::bind_rows(dfSAWeights,data.frame(WG="WGWIDE19",Iter=i,Age=seq(0,15),Var="CW",Wgt=CW))
+  SW <- as.numeric(FLCore::stock.wt(FLSs_WG20[,1,,,,i]))
+  CW <- as.numeric(FLCore::catch.wt(FLSs_WG20[,1,,,,i]))
+  dfSAWeights <- dplyr::bind_rows(dfSAWeights,data.frame(WG="WGWIDE20",Iter=i,Age=seq(0,15),Var="SW",Wgt=SW))
+  dfSAWeights <- dplyr::bind_rows(dfSAWeights,data.frame(WG="WGWIDE20",Iter=i,Age=seq(0,15),Var="CW",Wgt=CW))
+}
+dfSAWeights <- within(dfSAWeights, Age <- factor(Age, levels = ac(ages)))
+
+#generate some future weights (mimicking EqSim)
+ass.yrs <- seq(dims(FLSs_WG19)$minyear,dims(FLSs_WG19)$maxyear)
+nass.yrs <- length(ass.yrs)
+tyr <- dims(FLSs_WG19)$maxyear
+ages <- seq(0,15)
+nages <- length(ages)
+Nrun <- 23
+Nmod <- 1000
+histYears <- seq(tyr-10,tyr-1)
+nhistYears <- length(histYears)
+fYears <- seq(tyr,tyr+Nrun-1)
+nfYears <- length(fYears)
+
+#iteration stock/catch weights from last 10 years
+iSW <- array(as.numeric(stock.wt(FLSs_WG19[,ac(histYears),,,,])),dim=c(nages,nhistYears,Nmod), 
+             dimnames=list(Age = ages,Year = histYears, Iter = seq(1,Nmod)))
+iCW <- array(as.numeric(catch.wt(FLSs_WG19[,ac(histYears),,,,])),dim=c(nages,nhistYears,Nmod), 
+             dimnames=list(Age = ages,Year = histYears, Iter = seq(1,Nmod)))
+
+#random sample from last 10 (same for each iteration)
+rsam <- sample(histYears,Nrun,replace=TRUE)
+
+#future weights
+ifSW <- ifCW <- array(NA,dim = c(nages,nfYears,Nmod), dimnames = list(Age = ages,Year = fYears, Iter = seq(1,Nmod)))
+for(iii in seq(1,Nmod)){
+  ifSW[,,iii] <- iSW[,c(as.character(rsam)),iii]
+  ifCW[,,iii] <- iCW[,c(as.character(rsam)),iii]
+}
+
+dfSimWeights <- dplyr::bind_rows(
+  data.frame(Age=rep(ages,nfYears), Year=rep(fYears,each=nages), Var="SW",
+             Lo=rep(NA,nages*nfYears),Md=rep(NA,nages*nfYears),Hi=rep(NA,nages*nfYears)),
+  data.frame(Age=rep(ages,nfYears), Year=rep(fYears,each=nages), Var="CW",
+             Lo=rep(NA,nages*nfYears),Md=rep(NA,nages*nfYears),Hi=rep(NA,nages*nfYears)))
+
+for(aa in ages){
+  for (y in fYears){
+    cond1 <- dfSimWeights$Age==aa & dfSimWeights$Year==y
+    cond2 <- dfSimWeights$Var=="SW"
+    dfSimWeights$Lo[cond1 & cond2] <- quantile(ifSW[as.character(aa),as.character(y),],0.05)
+    dfSimWeights$Md[cond1 & cond2] <- quantile(ifSW[as.character(aa),as.character(y),],0.5)
+    dfSimWeights$Hi[cond1 & cond2] <- quantile(ifSW[as.character(aa),as.character(y),],0.95)
+    cond2 <- dfSimWeights$Var=="CW"
+    dfSimWeights$Lo[cond1 & cond2] <- quantile(ifCW[as.character(aa),as.character(y),],0.05)
+    dfSimWeights$Md[cond1 & cond2] <- quantile(ifCW[as.character(aa),as.character(y),],0.5)
+    dfSimWeights$Hi[cond1 & cond2] <- quantile(ifCW[as.character(aa),as.character(y),],0.95)
+  }
+}
+
+dfSimWeights <- within(dfSimWeights, Age <- factor(Age, levels = ac(ages)))
+
+##############################PLOTS################################################################
+
+#assessment summary plots
 png(filename = file.path(Rep.dir,"WGWIDE19_Final_SS_Assessment_Summary.png"),
     width = 600, height = 600)
 plot(WG19)
@@ -177,10 +269,6 @@ fGetFLStockSelection <- function(stk){
   sel <- sel/max(sel[,seq(dim(sel)[2]-10,dim(sel)[2])])  #last 10 years to avoid noise at start
 }
 
-ages <- seq(0,15)
-nAges <- length(ages)
-iters <- seq(1,1000)
-nits <- 1000
 yrs <- seq(dims(WG19)$minyear,dims(WG19)$maxyear)
 nYrs <- length(yrs)
 
@@ -218,9 +306,68 @@ gSelHistatAge <- ggplot(data = dfSASelection, mapping = aes(Sel)) +
   theme(axis.text.x=element_blank())
 
 
+################Stock and Catch Weights##################################################################
+
+png(filename = file.path(Rep.dir,"SW_WG19.png"), width = 600, height = 600)
+ggplot(data = filter(dfWeights,WG=="WGWIDE19" & Var=="SW"), mapping = aes(x=Year,y=Wgt)) +
+  geom_line(aes(group=Age)) +
+  geom_segment(data = filter(dfSAWeights,WG=="WGWIDE19" & Iter==1 & Var=="SW") %>% mutate(x1=dims(WG19)$minyear,x2=dims(WG19)$maxyear), 
+               mapping = aes(x = x1, y = Wgt, xend = x2, yend = Wgt), col="red") +
+  geom_segment(filter(dfSAWeights,WG=="WGWIDE19" & Var=="SW") %>%
+                 group_by(Age) %>% summarise(y1 = quantile(Wgt,0.95),y2 = quantile(Wgt,0.95)) %>%
+                 mutate(x1=dims(WG19)$minyear,x2=dims(WG19)$maxyear), mapping = aes(x = x1, y = y1, xend = x2, yend = y2), col = "red", lty = 2) +
+  geom_segment(filter(dfSAWeights,WG=="WGWIDE19" & Var=="SW") %>%
+                 group_by(Age) %>% summarise(y1 = quantile(Wgt,0.05),y2 = quantile(Wgt,0.05)) %>%
+                 mutate(x1=dims(WG19)$minyear,x2=dims(WG19)$maxyear), mapping = aes(x = x1, y = y1, xend = x2, yend = y2), col = "red", lty = 2) +
+  facet_wrap(~Age, labeller = labeller(Age = c("0" = "Age 0", "1" = "Age 1", "2" = "Age 2", "3" = "Age 3",
+                                               "4" = "Age 4", "5" = "Age 5", "6" = "Age 6", "7" = "Age 7",
+                                               "8" = "Age 8", "9" = "Age 9", "10" = "Age 10", "11" = "Age 11",
+                                               "12" = "Age 12", "13" = "Age 13", "14" = "Age 14", "15" = "Age 15+"))) +
+  geom_line(data=filter(dfSimWeights,Var=="SW"), mapping = aes(x=Year,y=Hi), col = "blue", lty=2) +
+  geom_line(data=filter(dfSimWeights,Var=="SW"), mapping = aes(x=Year,y=Lo), col = "blue", lty=2) +
+  geom_line(data=filter(dfSimWeights,Var=="SW"), mapping = aes(x=Year,y=Md), col = "blue") +
+  geom_line(data = data.frame(Age = factor(rep(ages,nfYears),levels=ac(ages)), Year = rep(fYears, each=nAges), W = as.numeric(ifSW[,,601])), mapping = aes(x=Year,y=W), col="grey") +
+  geom_line(data = data.frame(Age = factor(rep(ages,nfYears),levels=ac(ages)), Year = rep(fYears, each=nAges), W = as.numeric(ifSW[,,724])), mapping = aes(x=Year,y=W), col="grey") +
+  ylab("Stock Weight (kg)") + theme(axis.text.x = element_text(angle = 45, hjust=1))
+dev.off()
+
+png(filename = file.path(Rep.dir,"CW_WG19.png"), width = 600, height = 600)
+ggplot(data = filter(dfWeights,WG=="WGWIDE19" & Var=="CW"), mapping = aes(x=Year,y=Wgt)) +
+  geom_line(aes(group=Age)) +
+  geom_segment(data = filter(dfSAWeights,WG=="WGWIDE19" & Iter==1 & Var=="CW") %>% mutate(x1=dims(WG19)$minyear,x2=dims(WG19)$maxyear), 
+               mapping = aes(x = x1, y = Wgt, xend = x2, yend = Wgt), col="red") +
+  geom_segment(filter(dfSAWeights,WG=="WGWIDE19" & Var=="CW") %>%
+                 group_by(Age) %>% summarise(y1 = quantile(Wgt,0.95),y2 = quantile(Wgt,0.95)) %>%
+                 mutate(x1=dims(WG19)$minyear,x2=dims(WG19)$maxyear), mapping = aes(x = x1, y = y1, xend = x2, yend = y2), col = "red", lty = 2) +
+  geom_segment(filter(dfSAWeights,WG=="WGWIDE19" & Var=="CW") %>%
+                 group_by(Age) %>% summarise(y1 = quantile(Wgt,0.05),y2 = quantile(Wgt,0.05)) %>%
+                 mutate(x1=dims(WG19)$minyear,x2=dims(WG19)$maxyear), mapping = aes(x = x1, y = y1, xend = x2, yend = y2), col = "red", lty = 2) +
+  facet_wrap(~Age, labeller = labeller(Age = c("0" = "Age 0", "1" = "Age 1", "2" = "Age 2", "3" = "Age 3",
+                                               "4" = "Age 4", "5" = "Age 5", "6" = "Age 6", "7" = "Age 7",
+                                               "8" = "Age 8", "9" = "Age 9", "10" = "Age 10", "11" = "Age 11",
+                                               "12" = "Age 12", "13" = "Age 13", "14" = "Age 14", "15" = "Age 15+"))) +
+  geom_line(data=filter(dfSimWeights,Var=="CW"), mapping = aes(x=Year,y=Hi), col = "blue", lty=2) +
+  geom_line(data=filter(dfSimWeights,Var=="CW"), mapping = aes(x=Year,y=Lo), col = "blue", lty=2) +
+  geom_line(data=filter(dfSimWeights,Var=="CW"), mapping = aes(x=Year,y=Md), col = "blue") +
+  geom_line(data = data.frame(Age = factor(rep(ages,nfYears),levels=ac(ages)), Year = rep(fYears, each=nAges), W = as.numeric(ifCW[,,601])), mapping = aes(x=Year,y=W), col="grey") +
+  geom_line(data = data.frame(Age = factor(rep(ages,nfYears),levels=ac(ages)), Year = rep(fYears, each=nAges), W = as.numeric(ifCW[,,724])), mapping = aes(x=Year,y=W), col="grey") +
+  ylab("Catch Weight (kg)") + theme(axis.text.x = element_text(angle = 45, hjust=1))
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #catch opportunity histograms
-
 dfCatchOps <- data.frame(Year=rep(seq(2016,2020),each=100),
                           catch = rnorm(500))
 
