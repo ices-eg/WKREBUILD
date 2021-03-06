@@ -120,7 +120,8 @@ for(bin in seq(1,length(bks)-1)){
 length(sel.iters)
 sum(is.na(sel.iters))
 
-save(sel.iters,file=file.path(getwd(),Base,"RData",paste0("IterationNos_",Base,".RData")))
+#save(sel.iters,file=file.path(getwd(),Base,"RData",paste0("IterationNos_",Base,".RData")))
+load(file=file.path(getwd(),Base,"RData",paste0("IterationNos_",Base,".RData")))
 
 png(filename = file.path(getwd(),"..","EqSimWHM","ReportGraphics",paste0("InitialSSB_",Base,".png")), width = 600, height = 600)
 h <- hist(dfSSB$SSB[sel.iters]/1e6,breaks=12,main=paste0("Distribution of initial SSB (",Base,")"), xlab=paste0("SSB ",tyr," (Mt)"),axes=F,ylab="")
@@ -151,9 +152,6 @@ FLSs.1k <- FLSs[,,,,,sel.iters]
 #replace first iteration with the assessment output
 FLSs.1k[,,,,,1] <- FLS
 
-
-#plot of selected iters 
-
 plot(FLSs.1k,main=Base)
 #check first iter (should match assessment)
 ssb(FLSs.1k[,,,,,1])/ssb(FLS)
@@ -163,6 +161,37 @@ rec(FLSs.1k[,,,,,1])/rec(FLS)
 #intermediate save of 1000 iterations
 #save(FLSs.1k,file = file.path(getwd(),Base,"RData",paste0("WHOM_SS",substr(Base,7,8),"_FLS.RData")))
 load(file = file.path(getwd(),Base,"RData",paste0("WHOM_SS",substr(Base,7,8),"_FLS.RData")))
+
+#plot of selected iters 
+dfSelectedIters <- data.frame(Iter=c(),Year=c(),SSB=c(),FBar=c(),Rec=c())
+for (iter in c(1,98,198,298,398,498,598,698,798,898,998)){
+  dfSelectedIters <- dplyr::bind_rows(dfSelectedIters,
+                                      data.frame(Iter=iter,Year=ass.yrs,
+                                                 SSB=as.numeric(ssb(FLSs.1k[,,,,,iter]))/1e6,
+                                                 FBar=as.numeric(fbar(FLSs.1k[,,,,,iter])),
+                                                 Rec=as.numeric(rec(FLSs.1k[,,,,,iter]))/1e6))
+}
+
+dfSelectedIters$fIter <- as.factor(dfSelectedIters$Iter)
+png(filename = file.path(getwd(),"..","EqSimWHM","ReportGraphics",paste0("SelectSSB_Historical",Base,".png")), width = 600, height = 400)
+ggplot(data = filter(dfSelectedIters,Iter>1), mapping = aes(x=Year, y=SSB, group=fIter, col=fIter)) + 
+  geom_line(lwd=1) + theme(legend.position = "none") + 
+  geom_line(data = filter(dfSelectedIters,Iter==1), mapping = aes(x=Year, y=SSB), colour="black", lty=2, lwd=1) +
+  ylab("SSB (Mt)")
+dev.off()
+png(filename = file.path(getwd(),"..","EqSimWHM","ReportGraphics",paste0("SelectFBar_Historical",Base,".png")), width = 600, height = 400)
+ggplot(data = filter(dfSelectedIters,Iter>1), mapping = aes(x=Year, y=FBar, group=fIter, col=fIter)) + 
+  geom_line(lwd=1) + theme(legend.position = "none") + 
+  geom_line(data = filter(dfSelectedIters,Iter==1), mapping = aes(x=Year, y=FBar), colour="black", lty=2, lwd=1) +
+  ylab("FBar (1_10)")
+dev.off()
+png(filename = file.path(getwd(),"..","EqSimWHM","ReportGraphics",paste0("SelectRecr_Historical",Base,".png")), width = 600, height = 400)
+ggplot(data = filter(dfSelectedIters,Iter>1), mapping = aes(x=Year, y=Rec, group=fIter, col=fIter)) + 
+  geom_line(lwd=1) + theme(legend.position = "none") + 
+  geom_line(data = filter(dfSelectedIters,Iter==1), mapping = aes(x=Year, y=Rec), colour="black", lty=2, lwd=1) +
+  ylab("Recruitment (billions)")
+dev.off()
+
 
 #qqplot of terminal year SSB
 ggplot(data = data.frame(SSB=as.numeric(ssb(FLSs.1k[,as.character(tyr)]))), aes(sample=SSB)) + 
@@ -267,6 +296,32 @@ for(i in 1:nits){
   sels[,i] <- tsel[,ncol(tsel)]
 }
 
+
+dfSels <- data.frame(Age=ages,Selectivity=c(sels),Iter=rep(seq(1,1000),each=length(ages)))
+dfSels$fIter <- as.factor(dfSels$Iter)
+png(filename = file.path(getwd(),"..","EqSimWHM","ReportGraphics",paste0("Selection",Base,".png")), width = 600, height = 400)
+ggplot(data = filter(dfSels,Iter %in% c(98,198,298,309,498,598,698,798,898,998)),
+       mapping = aes(x=Age, y=Selectivity, group=fIter, col=fIter)) + geom_line(lwd=1) +
+  theme(legend.position = "none") + 
+  geom_line(data = filter(dfSels,Iter==1), mapping = aes(x=Age, y=Selectivity), colour="black", lty=2, lwd=1)
+dev.off()
+
+png(filename = file.path(getwd(),"..","EqSimWHM","ReportGraphics",paste0("SelectionByAge",Base,".png")), width = 600, height = 400)
+ggplot(data = dfSels, mapping = aes(Selectivity)) + 
+  geom_bar() + scale_x_binned(n.breaks=15, nice.breaks=FALSE) +
+  geom_vline(xintercept=c(0.25,0.5,0.75), col="grey", lwd=0.5, lty=2) +
+  facet_wrap(~Age, labeller = labeller(Age = c("0" = "Age 0", "1" = "Age 1", "2" = "Age 2", "3" = "Age 3",
+                                              "4" = "Age 4", "5" = "Age 5", "6" = "Age 6", "7" = "Age 7",
+                                              "8" = "Age 8", "9" = "Age 9", "10" = "Age 10", "11" = "Age 11",
+                                              "12" = "Age 12", "13" = "Age 13", "14" = "Age 14", "15" = "Age 15+"))) +
+  theme(axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        panel.background = element_blank())
+dev.off()
+
 #quick look at range of patterns
 plot(ages,seq(0,length=nages),type="n",ylim=c(0,1))
 for (i in k.iters){lines(ages,sels[,i])}
@@ -278,7 +333,6 @@ yrs <- seq(length(ass.yrs)-9,length(ass.yrs)-1)
 set.seed(1)
 ransel <- array(data = sample(seq(1,nits),length(yrs)*length(k.iters),replace=TRUE),
                 dim=c(length(yrs),length(k.iters)), dimnames=list(yr=yrs,iter=k.iters))
-
 
 #CAUTION - this takes approx 1hr
 for (y in yrs){
@@ -403,118 +457,8 @@ dim(CWerr)
 stock.wt(FLSs.1k[,as.character(seq(tyr-10,tyr-1)),,,,2:1000]) <- stock.wt(FLSs.1k[,as.character(seq(tyr-10,tyr-1)),,,,2:1000])*exp(Werr[,,,,,2:1000])
 catch.wt(FLSs.1k[,as.character(seq(tyr-10,tyr-1)),,,,2:1000]) <- catch.wt(FLSs.1k[,as.character(seq(tyr-10,tyr-1)),,,,2:1000])*exp(Werr[,,,,,2:1000])
 
-save(FLSs.1k,file = file.path(getwd(),Base,paste0("MSE_",Base,"_FLStocks_1k15PG_varSelection_varWgt.RData")))
-#load(file=file.path(getwd(),Base,paste0("MSE_",Base,"_FLStocks_1k15PG_varSelection_varWgt.RData")))
-
-#randomly select future weights (mimicking EqSim)
-Nrun <- 40
-Nmod <- 1000
-histYears <- seq(tyr-10,tyr-1)
-nhistYears <- length(histYears)
-fYears <- seq(tyr,tyr+Nrun-1)
-nfYears <- length(fYears)
-ac <- function(x){as.character(x)}
-
-#iteration stock/catch weights from last 10 years
-iSW <- array(as.numeric(stock.wt(FLSs.1k[,ac(histYears),,,,])),
-            dim=c(nages,nhistYears,Nmod), 
-            dimnames=list(Age = ages,Year = histYears, Iter = seq(1,Nmod)))
-iCW <- array(as.numeric(catch.wt(FLSs.1k[,ac(histYears),,,,])),
-             dim=c(nages,nhistYears,Nmod), 
-             dimnames=list(Age = ages,Year = histYears, Iter = seq(1,Nmod)))
-
-#random sample from last 10 (same for each iteration)
-rsam <- sample(histYears,Nrun,replace=TRUE)
-
-#future weights
-ifSW <- ifCW <- array(NA,dim = c(nages,nfYears,Nmod), 
-                      dimnames = list(Age = ages,Year = fYears, Iter = seq(1,Nmod)))
-for(iii in seq(1,Nmod)){
-  ifSW[,,iii] <- iSW[,c(as.character(rsam)),iii]
-  ifCW[,,iii] <- iCW[,c(as.character(rsam)),iii]
-}
-
-#data frame for future stock weights statistics
-dfFutureSW <- dfFutureCW <- data.frame(Age=rep(ages,nfYears), Year=rep(fYears,each=nages),
-                         Lo=rep(NA,nages*nfYears),Md=rep(NA,nages*nfYears),Hi=rep(NA,nages*nfYears))
-
-for(aa in ages){
-  for (y in fYears){
-    dfFutureSW$Lo[dfFutureSW$Age==aa & dfFutureSW$Year==y] <- quantile(ifSW[as.character(aa),as.character(y),],0.05)
-    dfFutureSW$Md[dfFutureSW$Age==aa & dfFutureSW$Year==y] <- quantile(ifSW[as.character(aa),as.character(y),],0.5)
-    dfFutureSW$Hi[dfFutureSW$Age==aa & dfFutureSW$Year==y] <- quantile(ifSW[as.character(aa),as.character(y),],0.95)
-    dfFutureCW$Lo[dfFutureCW$Age==aa & dfFutureCW$Year==y] <- quantile(ifCW[as.character(aa),as.character(y),],0.05)
-    dfFutureCW$Md[dfFutureCW$Age==aa & dfFutureCW$Year==y] <- quantile(ifCW[as.character(aa),as.character(y),],0.5)
-    dfFutureCW$Hi[dfFutureCW$Age==aa & dfFutureCW$Year==y] <- quantile(ifCW[as.character(aa),as.character(y),],0.95)
-  }
-}
-#make Age a factor so plot order appropriate
-dfFutureSW <- within(dfFutureSW, Age <- factor(Age, levels = ac(ages)))
-dfFutureCW <- within(dfFutureCW, Age <- factor(Age, levels = ac(ages)))
-
-#dfSW <- data.frame(SW=as.numeric(fSW),Year=as.numeric(rep(colnames(fSW),each=16)),Age=seq(0,15))
-
-#dfSW <- within(dfSW, Age <- factor(Age, levels = ac(ages)))
-
-#make Age a factor so plot order appropriate
-dfWeights <- within(dfWeights, Age <- factor(Age, levels = ac(ages)))
-
-
-#plots to show historic, assessment and future weights
-#year tay-11 contains the SS3 estimate of weight
-
-#Stock weights
-dfSAWeights <- data.frame(SW=as.numeric(stock.wt(FLSs.1k[,ac(tyr-11),,,,])),Age=seq(0,15)) %>%
-  group_by(Age) %>% summarise(Lo=quantile(SW,0.05),Md=median(SW),Hi=quantile(SW,0.95))
-dfSAWeights$Year <- 2018
-t<-dfSAWeights
-t$Year <- 1982
-dfSAWeights <- dplyr::bind_rows(dfSAWeights,t)
-dfSAWeights <- within(dfSAWeights, Age <- factor(Age, levels = ac(ages)))
-
-dfIter1 <- data.frame(Age=rep(seq(0,15),nfYears), Year=rep(fYears,each=nages), SW = as.numeric(ifSW[,,601]))
-dfIter2 <- data.frame(Age=rep(seq(0,15),nfYears), Year=rep(fYears,each=nages), SW = as.numeric(ifSW[,,723]))
-dfIter1 <- within(dfIter1, Age <- factor(Age, levels = ac(ages)))
-dfIter2 <- within(dfIter2, Age <- factor(Age, levels = ac(ages)))
-
-gSW <- ggplot(data = dfWeights, mapping = aes(x=Year,y=SW)) +
-  geom_line(aes(group=Age)) +
-  geom_line(data=dfSAWeights, mapping=aes(x=Year,y=Md), col="red") +
-  geom_line(data=dfSAWeights, mapping=aes(x=Year,y=Hi), col="red", lty=2) +
-  geom_line(data=dfSAWeights, mapping=aes(x=Year,y=Lo), col="red", lty=2) +
-  geom_line(data=dfFutureSW, mapping = aes(x=Year,y=Hi), col = "blue", lty=2) +
-  geom_line(data=dfFutureSW, mapping = aes(x=Year,y=Lo), col = "blue", lty=2) +
-  geom_line(data=dfFutureSW, mapping = aes(x=Year,y=Md), col = "blue") +
-  geom_line(data=dfIter1, mapping = aes(x=Year,y=SW), col="grey") +
-  geom_line(data=dfIter2, mapping = aes(x=Year,y=SW), col="grey") +
-  facet_wrap(~Age) + ylab("Stock Weight")
-
-
-#Catch weights
-dfSAWeights <- data.frame(CW=as.numeric(catch.wt(FLSs.1k[,ac(tyr-11),,,,])),Age=seq(0,15)) %>%
-  group_by(Age) %>% summarise(Lo=quantile(CW,0.05),Md=median(CW),Hi=quantile(CW,0.95))
-dfSAWeights$Year <- 2018
-t<-dfSAWeights
-t$Year <- 1982
-dfSAWeights <- dplyr::bind_rows(dfSAWeights,t)
-dfSAWeights <- within(dfSAWeights, Age <- factor(Age, levels = ac(ages)))
-
-dfIter1 <- data.frame(Age=rep(seq(0,15),nfYears), Year=rep(fYears,each=nages), CW = as.numeric(ifCW[,,601]))
-dfIter2 <- data.frame(Age=rep(seq(0,15),nfYears), Year=rep(fYears,each=nages), CW = as.numeric(ifCW[,,723]))
-dfIter1 <- within(dfIter1, Age <- factor(Age, levels = ac(ages)))
-dfIter2 <- within(dfIter2, Age <- factor(Age, levels = ac(ages)))
-
-gCW <- ggplot(data = dfWeights, mapping = aes(x=Year,y=CW)) +
-  geom_line(aes(group=Age)) +
-  geom_line(data=dfSAWeights, mapping=aes(x=Year,y=Md), col="red") +
-  geom_line(data=dfSAWeights, mapping=aes(x=Year,y=Hi), col="red", lty=2) +
-  geom_line(data=dfSAWeights, mapping=aes(x=Year,y=Lo), col="red", lty=2) +
-  geom_line(data=dfFutureCW, mapping = aes(x=Year,y=Hi), col = "blue", lty=2) +
-  geom_line(data=dfFutureCW, mapping = aes(x=Year,y=Lo), col = "blue", lty=2) +
-  geom_line(data=dfFutureCW, mapping = aes(x=Year,y=Md), col = "blue") +
-  geom_line(data=dfIter1, mapping = aes(x=Year,y=CW), col="grey") +
-  geom_line(data=dfIter2, mapping = aes(x=Year,y=CW), col="grey") +
-  facet_wrap(~Age) + ylab("Catch Weight")
+#save(FLSs.1k,file = file.path(getwd(),Base,paste0("MSE_",Base,"RData","_FLStocks_1k15PG_varSelection_varWgt.RData")))
+load(file=file.path(getwd(),Base,"RData",paste0("MSE_",Base,"_FLStocks_1k15PG_varSelection_varWgt.RData")))
 
 #old code
 #create the FLStock objects
