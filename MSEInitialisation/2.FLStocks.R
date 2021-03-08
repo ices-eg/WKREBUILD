@@ -1,5 +1,3 @@
-#Create list of FLStock objects for each randomly generated stock
-
 #REMEMBER - set the base assessment in setup.R
 source("0.Setup.R")
 source("SS3toFLStock_v3.30_AC.r")
@@ -159,8 +157,9 @@ fbar(FLSs.1k[,,,,,1])/fbar(FLS)
 rec(FLSs.1k[,,,,,1])/rec(FLS)
 
 #intermediate save of 1000 iterations
-#save(FLSs.1k,file = file.path(getwd(),Base,"RData",paste0("WHOM_SS",substr(Base,7,8),"_FLS.RData")))
-load(file = file.path(getwd(),Base,"RData",paste0("WHOM_SS",substr(Base,7,8),"_FLS.RData")))
+#save(FLSs.1k,file = file.path(getwd(),Base,"RData",paste0("WHOM_SS",substr(Base,7,8),"_FLS.RData"))) #old name
+#save(FLSs.1k,file = file.path(getwd(),Base,"RData",paste0("WHOM_SS",substr(Base,7,8),"_FLS_Clean.RData")))
+load(file = file.path(getwd(),Base,"RData",paste0("WHOM_SS",substr(Base,7,8),"_FLS_Clean.RData")))
 
 #plot of selected iters 
 dfSelectedIters <- data.frame(Iter=c(),Year=c(),SSB=c(),FBar=c(),Rec=c())
@@ -256,9 +255,9 @@ ssb(FLSs.1k.1.5SD[,,,,,1])/ssb(FLS)
 fbar(FLSs.1k.1.5SD[,,,,,1])/fbar(FLS)
 rec(FLSs.1k.1.5SD[,,,,,1])/rec(FLS)
 
-#save the inflated noisy dataset
-save(FLSs.1k.1.5SD,file = file.path(getwd(),Base,paste0("MSE_",Base,"_FLStocks_1k15PG_15SD.RData")))
-#load(file = file.path(getwd(),Base,paste0("MSE_",Base,"_FLStocks_1k15PG_15SD.RData")))
+#save the inflated noise dataset
+#save(FLSs.1k.1.5SD,file = file.path(getwd(),Base,"RData",paste0("WHOM_SS",substr(Base,7,8),"_FLS_15SD_Clean.RData")))
+load(file = file.path(getwd(),Base,"RData",paste0("WHOM_SS",substr(Base,7,8),"_FLS_15SD_Clean.RData")))
 
 #distribution of abundances@age in starting year
 ggplot(data = data.frame(data.frame(age = as.numeric(rep(dimnames(FLSs.1k.1.5SD)$age,dim(FLSs.1k.1.5SD)[6])),
@@ -338,8 +337,8 @@ ransel <- array(data = sample(seq(1,nits),length(yrs)*length(k.iters),replace=TR
 for (y in yrs){
   cat(y,"\n")
   for (i in 2:nits) {   #leave first slot (assessment)
-  #for (i in 2:10) {   #leave first slot (assessment)
-      FLCore::harvest(FLSs.1k[,y,,,,i]) <- sels[,ransel[as.character(y),as.character(i)]]
+      #FLCore::harvest(FLSs.1k[,y,,,,i]) <- sels[,ransel[as.character(y),as.character(i)]]
+      FLCore::harvest(FLSs.1k[,y,,,,i]) <- sels[,ransel[as.character(y),as.character(i)]]*(as.numeric(FLCore::fbar(FLSs.1k[,y,,,,i]))/mean(sels[2:11,ransel[as.character(y),as.character(i)]]))
   }
 }
 
@@ -372,9 +371,8 @@ gSelHistatAge <- ggplot(data = dfSelections, mapping = aes(Sel)) +
   facet_wrap(~Age) + ylab("Count") +
   theme(axis.text.x=element_blank())
 
-save(FLSs.1k,file = file.path(getwd(),Base,paste0("MSE_",Base,"_FLStocks_1k15PG_varSelection.RData")))
-#load(file=file.path(getwd(),Base,paste0("MSE_",Base,"_FLStocks_1k15PG_varSelection.RData")))
-
+#save(FLSs.1k,file = file.path(getwd(),Base,"RData",paste0("WHOM_SS",substr(Base,7,8),"_FLS_varSel.RData")))
+load(file = file.path(getwd(),Base,"RData",paste0("WHOM_SS",substr(Base,7,8),"_FLS_varSel.RData")))
 
 ###############catch and stock weight ####################################################
 #SS3 fits a time invariant model to catch/stock weight data
@@ -419,6 +417,7 @@ dfWSummary <- dfWSummary %>% mutate(CV=(SW.cv+CW.cv)/2,Phi=(SW.phi1+CW.phi1)/2)
 
 #array to store error (100 years generated to test stats)
 Werr <- SWerr <- CWerr <- FLQuant(NA,dimnames=list(age=ages,year=seq(1,100),iter=seq(1,1000)))
+set.seed(1)
 
 #generate errors
 for (a in ages){
@@ -437,7 +436,8 @@ for (a in ages){
   }
 }
 
-save(SWerr,CWerr,Werr,file=file.path(getwd(),Base,"WErr.RData"))
+save(SWerr,CWerr,Werr,file=file.path(getwd(),Base,"RData","WErr_V3.RData"))
+#load(file=file.path(getwd(),Base,"RData","WErr.RData"))
 
 #select final 10 years
 SWerr <- SWerr[,91:100]
@@ -458,7 +458,8 @@ stock.wt(FLSs.1k[,as.character(seq(tyr-10,tyr-1)),,,,2:1000]) <- stock.wt(FLSs.1
 catch.wt(FLSs.1k[,as.character(seq(tyr-10,tyr-1)),,,,2:1000]) <- catch.wt(FLSs.1k[,as.character(seq(tyr-10,tyr-1)),,,,2:1000])*exp(Werr[,,,,,2:1000])
 
 #save(FLSs.1k,file = file.path(getwd(),Base,paste0("MSE_",Base,"RData","_FLStocks_1k15PG_varSelection_varWgt.RData")))
-load(file=file.path(getwd(),Base,"RData",paste0("MSE_",Base,"_FLStocks_1k15PG_varSelection_varWgt.RData")))
+save(FLSs.1k,file = file.path(getwd(),Base,"RData",paste0("WHOM_SS",substr(Base,7,8),"_FLS_varSelvarWgt_V3.RData")))
+#load(file=file.path(getwd(),Base,"RData",paste0("WHOM_SS",substr(Base,7,8),"_FLS_varSelvarWgt.RData")))
 
 #old code
 #create the FLStock objects
