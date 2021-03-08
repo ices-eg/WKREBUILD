@@ -398,6 +398,14 @@ dfWSummary <- dfWeights %>% filter(Year>=2000) %>% group_by(Age) %>% summarise(S
 
 dfWSummary <- dfWSummary %>% mutate(CV=(SW.cv+CW.cv)/2,Phi=(SW.phi1+CW.phi1)/2)
 
+plot(dfWSummary$Age,dfWSummary$SW.cv,ylim=c(0,0.5),ylab="CV",xlab="Age")
+points(dfWSummary$Age,dfWSummary$CW.cv,pch=19)
+points(dfWSummary$Age,dfWSummary$CV,pch=19,col="red")
+
+plot(dfWSummary$Age,dfWSummary$SW.phi1,ylim=c(0,0.75),ylab="Phi",xlab="Age")
+points(dfWSummary$Age,dfWSummary$CW.phi1,pch=19)
+points(dfWSummary$Age,dfWSummary$Phi,pch=19,col="red")
+
 #error generating example
 #set.seed(1)
 #cv <- 0.5
