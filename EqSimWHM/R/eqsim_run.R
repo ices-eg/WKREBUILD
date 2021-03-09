@@ -367,7 +367,7 @@ eqsim_run <- function(fit,
     ############################################################################
     #Population in simulation year 1 (Jan1)
     #Ny[,1,] <- unlist(lapply(lapply(fit$stks,FUN=FLCore::stock.n),'[',,ac(range(fit$stk)["maxyear"])))
-    Ny[,1,] <- array(as.numeric(stock.n(stks[,ac(tyr)])),dim=c(ages,Nmod))   #FLStock iter vesrion
+    Ny[,1,] <- array(as.numeric(stock.n(stks[,ac(tyr)])),dim=c(ages,Nmod))   #FLStock iter version
     
     #ssby[1,] <- unlist(lapply(lapply(fit$stks,FUN=FLCore::ssb),'[',,ac(range(fit$stk)["maxyear"])))
     #ssby.obs[1,] <- ssby[1,]*exp(SSBerr[1,])
