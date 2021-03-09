@@ -111,7 +111,7 @@ simYears <- ac(seq(yStart,yEnd))
 numWorm <- 5
 
 # assessment dataframe
-runName   <- paste(stock,assess,assessyear, OM$code,niters,nyr,sep="_")
+runName   <- paste(stock,assess,assessyear, OM$code,niters,sep="_")
 dfassess  <- fassess_df(runName=runName, FLSs=FLSs, OM = OM, numWorm = numWorm) 
 
 # Loop over management procedures
@@ -127,7 +127,7 @@ for (mp in c("MP5.00","MP5.01","MP5.03",
   
   invisible(gc())
   
-  runName <- paste(stock,assess,assessyear, OM$code,MP$code,niters,nyr,sep="_")
+  runName <- paste(stock,assess,assessyear, OM$code,niters, MP$code,nyr,sep="_")
   
 
   #exploitation constraints
