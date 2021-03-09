@@ -51,20 +51,20 @@ per2 <- 5
 # OM             <- OM2.3                       #WGWIDE SS 2020, stochastic weights, selection
 
 # WHOM SAM 2019
-stock          <- "WHOM"
-assess         <- "SAM"
-assessyear     <- "2019"
-FLStockfile    <- "WGWIDE19_SAM.RData"
-FLStockSimfile <- "WHOM SAM19_FLS_converged.RData" 
-OM             <- OM2.4                         #WGWIDE SAM 2019, stochastic weights, selection
-
-# WHOM SAM 2019
 # stock          <- "WHOM"
 # assess         <- "SAM"
-# assessyear     <- "2020"
-# FLStockfile    <- "WGWIDE20_SAM.RData"
-# FLStockSimfile <- "WHOM SAM20_FLS_converged.RData" 
-# OM             <- OM2.5                       #WGWIDE SAM 2020, stochastic weights, selection
+# assessyear     <- "2019"
+# FLStockfile    <- "WGWIDE19_SAM.RData"
+# FLStockSimfile <- "WHOM SAM19_FLS_converged.RData" 
+# OM             <- OM2.4                         #WGWIDE SAM 2019, stochastic weights, selection
+
+# WHOM SAM 2019
+stock          <- "WHOM"
+assess         <- "SAM"
+assessyear     <- "2020"
+FLStockfile    <- "WGWIDE20_SAM.RData"
+FLStockSimfile <- "WHOM SAM20_FLS_converged.RData"
+OM             <- OM2.5                       #WGWIDE SAM 2020, stochastic weights, selection
 
 #assessment FLStock
 FLS <- loadRData(file.path(RData.dir,FLStockfile)) %>% FLCore::setPlusGroup(., 15)
