@@ -296,7 +296,7 @@ for(i in 1:nits){
 }
 
 
-dfSels <- data.frame(Age=ages,Selectivity=c(sels),Iter=rep(seq(1,1000),each=length(ages)))
+dfSels <- data.frame(Age=ages,Selectivity=c(sels),Iter=rep(seq(1,nits),each=length(ages)))
 dfSels$fIter <- as.factor(dfSels$Iter)
 png(filename = file.path(getwd(),"..","EqSimWHM","ReportGraphics",paste0("Selection",Base,".png")), width = 600, height = 400)
 ggplot(data = filter(dfSels,Iter %in% c(98,198,298,309,498,598,698,798,898,998)),
