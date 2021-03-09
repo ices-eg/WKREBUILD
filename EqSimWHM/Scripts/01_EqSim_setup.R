@@ -30,6 +30,10 @@ library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(icesTAF) # install.packages("icesTAF")
+
+library(tidyverse)
+options(dplyr.summarise.inform = FALSE)
+
 #stop on warning
 #options(warn=2)
 

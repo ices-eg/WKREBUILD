@@ -34,6 +34,7 @@ stats.dir <- file.path(Res.dir, "Stats")
 # niters <- 1000
 nworm  <- 5
 maxyr <- yEnd
+nyrs  <- as.numeric(nyr)
 
 FLSs@stock  <- ssb(FLSs)
 
@@ -178,7 +179,7 @@ save(worms,file = file.path(temp.dir,paste0("worms.Rdata")))
 # unique(df$perfstat)
 
 periods <-
-  bind_rows(df, dfhist) %>% 
+  bind_rows(df) %>% 
   distinct(period,year) 
 
 periods2 <-
@@ -295,39 +296,40 @@ The approach to evaluate potential harvest control rules (HCR) for western horse
 
 MP5.00 constant F; MP5.01 constant F with minimum TAC of 50kT; MP5.03 constant F with 20% IAV constraint above Btrigger. 
 
-```{r echo=FALSE, fig.align="center", fig.asp=0.45, message=FALSE, warning=FALSE}
+```{r echo=FALSE, fig.align="center", fig.asp=1.4, message=FALSE, warning=FALSE}
 
 # myperfstat <- "catch"
 # myperfstat <- "stock"
-# myperfstat <- "fbar"
+myperfstat <- "fbar"
 # myperfstat <- "rec"
-myperfstat <- "pblim"
+# myperfstat <- "pblim"
+unique(t$iter)
 
-df %>% 
-  filter(perfstat==myperfstat) %>% 
-  ggplot(aes(x=year, y=mean)) +
+t <-
+  df %>% 
+  filter(perfstat==myperfstat) 
+
+t %>% 
+  # filter(ftgt == "0.1") %>% 
+  ggplot(aes(x=year, y=mean, group=iter)) +
+
   theme_publication() +
   theme(axis.text.x = element_text(angle = 90, vjust=0.5)) +
   theme( panel.grid.major.x = element_blank()) +
   theme(legend.position = "none") +
   
-  geom_line(data=filter(wormhist, 
-                        perfstat %in% myperfstat), 
-            aes(x=year, y=value, group=iter),
+  # worms
+  geom_line(aes(x=year, y=value, group=iter),
             size=0.5, colour="gray", inherit.aes = FALSE) +
-  
-  geom_ribbon(data=filter(dfhist, perfstat == myperfstat), 
-              aes(ymin=lower, ymax=upper), alpha=0.2, fill="blue") +
-  geom_line(data=filter(dfhist, perfstat == myperfstat), colour="blue") +
-  
-  geom_line(data=filter(worms, 
-                        perfstat %in% myperfstat), 
-            aes(x=year, y=value, group=iter),
-            size=0.5, colour="gray", inherit.aes = FALSE) +
-  
-  geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.2, fill="red") +
-  geom_line(colour="red") +
-  
+
+  # history ribbon
+  geom_ribbon(data=filter(t, period=="HI"), aes(ymin=lower, ymax=upper), fill="gray", alpha=0.2) +
+  # future ribbon
+  geom_ribbon(data=filter(t, !period=="HI"), aes(ymin=lower, ymax=upper), fill="red", alpha=0.2) +
+
+  geom_line(aes(y=mean), colour="red", size=1) +
+  geom_line(data=filter(t, iter %in% c("1","1000")), aes(y=mean), colour="black", size=0.7) +
+
   geom_vline(xintercept=periods2$year[1], linetype="dotted") +
   geom_vline(xintercept=periods2$year[2], linetype="dotted") +
   geom_vline(xintercept=periods2$year[3], linetype="dotted") +

@@ -17,8 +17,7 @@ fassess_df <- function(runName, FLSs, OM, numWorm=5){
   assess     <- stringr::word(runName,2,sep="_")
   assessyear <- stringr::word(runName,3,sep="_")
   OMname     <- stringr::word(runName,4,sep="_")
-  niters     <- an(stringr::word(runName,6,sep="_"))
-  nyrs       <- an(stringr::word(runName,7,sep="_"))
+  niters     <- an(stringr::word(runName,5,sep="_"))
   Blim       <- OM$refPts$Blim
   Bpa        <- OM$refPts$Bpa
   
@@ -54,7 +53,7 @@ fassess_df <- function(runName, FLSs, OM, numWorm=5){
     x %>% 
     distinct(iter) %>% 
     # arrange(iter) %>% 
-    filter(row_number() <= 5)
+    filter(row_number() <= numWorm)
   
   dfhist <- 
     x %>% 
@@ -78,7 +77,6 @@ fassess_df <- function(runName, FLSs, OM, numWorm=5){
       assessyear = assessyear,
       om       = OMname,
       niters   = niters,
-      nyrs     = nyrs,
       blim     = Blim,
       bpa      = Bpa) %>%
     
@@ -96,7 +94,6 @@ fassess_df <- function(runName, FLSs, OM, numWorm=5){
       assessyear = assessyear,
       om       = OMname,
       niters   = niters,
-      nyrs     = nyrs,
       blim     = Blim,
       bpa      = Bpa) %>%
     
@@ -112,18 +109,18 @@ fassess_df <- function(runName, FLSs, OM, numWorm=5){
 # ==========================================================================================================
 
 
-runName=runName
-simRuns = SimRuns
-FLSs = FLSs
-Res.dir = Res.dir
-Plot.dir = Plot.dir
-lStatPer = lStatPer
-simYears = simYears
-xlab = MP$xlab
-OM = OM
-Fbarrange=c(range(FLS)[["minfbar"]], range(FLS)[["maxfbar"]])
-numWorm = numWorm
-dfassess = dfassess
+# runName=runName
+# simRuns = SimRuns
+# FLSs = FLSs
+# Res.dir = Res.dir
+# Plot.dir = Plot.dir
+# lStatPer = lStatPer
+# simYears = simYears
+# xlab = MP$xlab
+# OM = OM
+# Fbarrange=c(range(FLS)[["minfbar"]], range(FLS)[["maxfbar"]])
+# numWorm = numWorm
+# dfassess = dfassess
 
 fsummary_df <- function(runName, simRuns, FLSs, 
                         Res.dir, Plot.dir, 
@@ -139,23 +136,20 @@ fsummary_df <- function(runName, simRuns, FLSs,
   require(tidyverse)
   options(dplyr.summarise.inform = FALSE)
   
-  stock  <- stringr::word(runName,1,sep="_")
-  assess <- stringr::word(runName,2,sep="_")
+  stock      <- stringr::word(runName,1,sep="_")
+  assess     <- stringr::word(runName,2,sep="_")
   assessyear <- stringr::word(runName,3,sep="_")
-  OMname <- stringr::word(runName,4,sep="_")
-  MPname <- stringr::word(runName,5,sep="_")
-  niters <- an(stringr::word(runName,6,sep="_"))
-  nyrs   <- an(stringr::word(runName,7,sep="_"))
-  Blim = OM$refPts$Blim
-  Bpa  = OM$refPts$Bpa
+  OMname     <- stringr::word(runName,4,sep="_")
+  niters     <- an(stringr::word(runName,5,sep="_"))
+  MPname     <- stringr::word(runName,6,sep="_")
+  nyrs       <- an(stringr::word(runName,7,sep="_"))
+  Blim       <- OM$refPts$Blim
+  Bpa        <- OM$refPts$Bpa
   
   years <-
-    data.frame(period="HI", year=seq(an(lStatPer$HI[1]),
-                                     an(lStatPer$HI[2])),
-               stringsAsFactors = FALSE) %>% 
-    bind_rows(data.frame(period="CU", year=seq(an(lStatPer$CU[1]),
+    data.frame(period="CU", year=seq(an(lStatPer$CU[1]),
                                                an(lStatPer$CU[2])),
-                         stringsAsFactors = FALSE)) %>% 
+                         stringsAsFactors = FALSE) %>% 
     bind_rows(data.frame(period="ST", year=seq(an(lStatPer$ST[1]),
                                                an(lStatPer$ST[2])),
                          stringsAsFactors = FALSE)) %>% 
@@ -176,11 +170,13 @@ fsummary_df <- function(runName, simRuns, FLSs,
   
   dfall <- df <- worms <- data.frame(stringsAsFactors = FALSE)
   
-  # Find out how to use the stock units
+  # add history
+  dfall <- bind_rows(dfall, dfassess) 
+    
+  # TO DO: Find out how to use the stock units from FLStock object
   # l <-
   #   units(FLSs) %>% 
   #   data.frame(t(matrix(unlist(l), ncol=length(l), byrow=FALSE)))
-  
   
   # ftgt <- 0.0
   for (ftgt in an(names(SimRuns))){
@@ -484,10 +480,8 @@ fsummary_df <- function(runName, simRuns, FLSs,
         bpa      = Bpa) 
       
     dfall <-
-      dfall %>% 
       
-      # add history
-      bind_rows(mutate(dfassess, ftgt=ftgt)) %>% 
+      dfall %>% 
       
       # add worms
       bind_rows(worms) %>% 

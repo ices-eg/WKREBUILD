@@ -30,34 +30,44 @@ per2 <- 5
 
 # set up the OM =========================================================================================================
 
-#OM <- OM2; MP <- MP2.0_10000
-#OM <- OM2; MP <- MP3.0
 #OM <- OM2.1   #WGWIDE 2019, const weights, selection
-#OM <- OM2.2   #WGWIDE SS 2019, stochastic weights, selection
-OM <- OM2.3   #WGWIDE SS 2020, stochastic weights, selection
-#OM <- OM2.4   #WGWIDE SAM 2019, stochastic weights, selection
-#OM <- OM2.5   #WGWIDE SAM 2020, stochastic weights, selection
 
-# WHOM SS
+# WHOM SS 2019
+# stock          <- "WHOM"
+# assess         <- "SS3"
+# assessyear     <- "2019"
+# FLStockfile    <- "WGWIDE19.RData"
+# FLStockSimfile <- "WHOM_SS19_FLS_V1.RData"    #V1 iterations as single FLStock
+# FLStockSimfile <- "WHOM_SS19_FLS_V2.RData"    #V2 new draw, contains variability in selection and weights
+# FLStockSimfile <- "WHOM_SS19_FLS_V3.RData"    #V3 improved variability in selection and weights
+# OM             <- OM2.2                       #WGWIDE SS 2019, stochastic weights, selection
+
+# WHOM SS 2020
+# stock          <- "WHOM"
+# assess         <- "SS3"
+# assessyear     <- "2020"
+# FLStockfile    <- "WGWIDE20.RData"
+# FLStockSimfile <- "WHOM_SS20_FLS_V2.RData"
+# OM             <- OM2.3                       #WGWIDE SS 2020, stochastic weights, selection
+
+# WHOM SAM 2019
+# stock          <- "WHOM"
+# assess         <- "SAM"
+# assessyear     <- "2019"
+# FLStockfile    <- "WGWIDE19_SAM.RData"
+# FLStockSimfile <- "WHOM SAM19_FLS_converged.RData" 
+# OM             <- OM2.4                         #WGWIDE SAM 2019, stochastic weights, selection
+
+# WHOM SAM 2019
 stock          <- "WHOM"
-assess         <- "SS3"
+assess         <- "SAM"
 assessyear     <- "2020"
-#FLStockfile    <- "WGWIDE19.RData"
-#FLStockSimfile <- "WHOM_SS19_FLS_V1.RData"    #V1 iterations as single FLStock
-#FLStockSimfile <- "WHOM_SS19_FLS_V2.RData"    #V2 new draw, contains variability in selection and weights
-FLStockfile    <- "WGWIDE20.RData"
-FLStockSimfile <- "WHOM_SS20_FLS_V2.RData"
-
-#WHOM SAM
-#stock          <- "WHOM"
-#assess         <- "SAM"
-#FLStockfile    <- "WGWIDE19_SAM.RData"
-#FLStockSimfile <- "MSE_WGWIDE19_FLStocks_SAM1000.RData" #"MSE_WGWIDE19_FLStocks_SAM.RData"
+FLStockfile    <- "WGWIDE20_SAM.RData"
+FLStockSimfile <- "WHOM SAM20_FLS_converged.RData"
+OM             <- OM2.5                       #WGWIDE SAM 2020, stochastic weights, selection
 
 #assessment FLStock
-FLS <-
-  loadRData(file.path(RData.dir,FLStockfile)) %>%
-  FLCore::setPlusGroup(., 15)
+FLS <- loadRData(file.path(RData.dir,FLStockfile)) %>% FLCore::setPlusGroup(., 15)
 
 #Blim <- min(ssb(FLS))
 #The IBP in 2019 selected SSB in 2003 as a proxy for Bpa and derived Blim from this (Bpa/1.4)
@@ -101,24 +111,23 @@ simYears <- ac(seq(yStart,yEnd))
 numWorm <- 5
 
 # assessment dataframe
-runName   <- paste(stock,assess,assessyear, OM$code,niters,nyr,sep="_")
+runName   <- paste(stock,assess,assessyear, OM$code,niters,sep="_")
 dfassess  <- fassess_df(runName=runName, FLSs=FLSs, OM = OM, numWorm = numWorm) 
 
 # Loop over management procedures
 # for (mp in c("MP5.00","MP5.01","MP5.10","MP5.11","MP5.20","MP5.21")) {
 #for (mp in c("MP5.00","MP5.23")) {
-# for (mp in c("MP5.00","MP5.01","MP5.03",
-#             "MP5.10","MP5.11","MP5.13",
-#             "MP5.20","MP5.21","MP5.23")) {
-
-mp <- c("MP5.11")
+for (mp in c("MP5.00","MP5.01","MP5.03",
+            "MP5.10","MP5.11","MP5.13",
+            "MP5.20","MP5.21","MP5.23")) {
+# mp <- c("MP5.11")
   
 
   MP <- get(mp)
   
   invisible(gc())
   
-  runName <- paste(stock,assess,assessyear, OM$code,MP$code,niters,nyr,sep="_")
+  runName <- paste(stock,assess,assessyear, OM$code,niters, MP$code,nyr,sep="_")
   
 
   #exploitation constraints
@@ -199,8 +208,8 @@ mp <- c("MP5.11")
   lStatPer[['LT']] <- lStatPer2[['LT']] <- c(yStart+yConstraints+per1+per2,yStart+nyr-1)
   lStatPer[['HI']] <- c(range(FLSs)[["minyear"]], lStatPer[['CU']][1]-1)
   
-  set.seed(1)
-  
+  set.seed(1)      # DO YOU NEED TO SET THIS IN THE LOOP?
+   
   sim <- eqsim_run(fit = SRR,
                   bio.years = OM$BioYrs,
                   bio.const = OM$BioConst,
