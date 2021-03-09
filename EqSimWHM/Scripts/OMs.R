@@ -37,13 +37,25 @@ OM2.1 <- list("code" = "OM2.1",
 OM2.2 <- list("code" = "OM2.2",
             "desc" = "WGWIDE19",
             "IM" = NA,
-            "SRR" = "SRR.WG19.SegReg_Blim.exterm", "RecAR" = TRUE, maxRecRes = c(3,-3),
+            "RecAR" = TRUE, maxRecRes = c(3,-3),
             "BioYrs" = c(2008,2017), "BioConst" = FALSE, 
             "SelYrs" = c(2008,2017), "SelConst" = FALSE,
             "Obs" = NA,
             refPts = list("Fpa" = 0.074, "Flim" = 0.103, "Fmsy" = 0.074, "Bpa" = 1168272,
                           "Blim" = 834480, "MSYBtrigger" = 1168272, "Bloss" = 761613),
             "pBlim" = 0.05)
+
+#artificially reduced recent recruitment (2014-2018 yc abundance halved in initial sim year)
+OM2.2.RR <- list("code" = "OM2.2.RR",
+              "desc" = "WGWIDE19 RR",
+              "IM" = NA,
+              "SRR" = "SRR.WG19.SegReg_Blim.exterm", "RecAR" = TRUE, maxRecRes = c(3,-3),
+              "BioYrs" = c(2008,2017), "BioConst" = FALSE, 
+              "SelYrs" = c(2008,2017), "SelConst" = FALSE,
+              "Obs" = NA,
+              refPts = list("Fpa" = 0.074, "Flim" = 0.103, "Fmsy" = 0.074, "Bpa" = 1168272,
+                            "Blim" = 834480, "MSYBtrigger" = 1168272, "Bloss" = 761613),
+              "pBlim" = 0.05)
 
 #WGWIDE2020 Update assessment, IBPWHM reference points, stochastic bio and selection
 OM2.3 <- list("code" = "OM2.3",
