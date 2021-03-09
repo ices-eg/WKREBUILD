@@ -42,6 +42,11 @@ name(WG19) <- "Western Horse Mackerel, WGWIDE19 SS Assessment"
 WG20 <- loadRData(file.path(RData.dir,"WGWIDE20.RData")) %>% FLCore::setPlusGroup(., 15)
 name(WG20) <- "Western Horse Mackerel, WGWIDE20 SS Assessment"
 
+yrs_WG19 <- seq(dims(WG19)$minyear,dims(WG19)$maxyear)
+nYrs_WG19 <- length(yrs_WG19)
+yrs_WG20 <- seq(dims(WG20)$minyear,dims(WG20)$maxyear)
+nYrs_WG20 <- length(yrs_WG20)
+
 #1000 iterations
 FLSs_WG19 <- loadRData(file=file.path(RData.dir,"WHOM_SS19_FLS_V2.RData"))
 FLSs_WG20 <- loadRData(file=file.path(RData.dir,"WHOM_SS20_FLS_V2.RData"))
@@ -65,7 +70,8 @@ dfWeights <- within(dfWeights, Age <- factor(Age, levels = ac(ages)))
 
 #assessment weights at age (from the 1000 replicates)
 dfSAWeights <- data.frame(WG=c(),Iter=c(),Age=c(),Var=c(),Wgt=c())
-for (i in seq(1,1000)){
+
+for (i in seq(1,nits)){
   SW <- as.numeric(FLCore::stock.wt(FLSs_WG19[,1,,,,i]))
   CW <- as.numeric(FLCore::catch.wt(FLSs_WG19[,1,,,,i]))
   dfSAWeights <- dplyr::bind_rows(dfSAWeights,data.frame(WG="WGWIDE19",Iter=i,Age=seq(0,15),Var="SW",Wgt=SW))
@@ -77,40 +83,69 @@ for (i in seq(1,1000)){
 }
 dfSAWeights <- within(dfSAWeights, Age <- factor(Age, levels = ac(ages)))
 
-#generate some future weights (mimicking EqSim)
+#assessment selection
+dfSAOp  <- data.frame(WG=c(),Iter=c(),Age=c(),Year=c(),Var=c(),Val=c())
+for (i in seq(1,nits)){
+  dfSAOp <- dplyr::bind_rows(dfSAOp,
+                               data.frame(WG="WGWIDE19",Iter=i,Age=ages,Year=rep(yrs_WG19,each=nAges),Var="Sel",
+                                          Val=as.numeric(sweep(matrix(harvest(FLSs_WG19[,,,,,i]),ncol=nYrs_WG19),2,matrix(harvest(FLSs_WG19['15',,,,,i]),ncol=nYrs_WG19),"/"))))
+  dfSAOp <- dplyr::bind_rows(dfSAOp,
+                               data.frame(WG="WGWIDE20",Iter=i,Age=ages,Year=rep(yrs_WG20,each=nAges),Var="Sel",
+                                          Val=as.numeric(sweep(matrix(harvest(FLSs_WG20[,,,,,i]),ncol=nYrs_WG20),2,matrix(harvest(FLSs_WG20['15',,,,,i]),ncol=nYrs_WG20),"/"))))
+}
+dfSAOp <- within(dfSAOp, fAge <- factor(Age, levels = ac(ages)))
+
+
+#generate some future weights and selections (mimicking EqSim)
 ass.yrs <- seq(dims(FLSs_WG19)$minyear,dims(FLSs_WG19)$maxyear)
 nass.yrs <- length(ass.yrs)
 tyr <- dims(FLSs_WG19)$maxyear
-ages <- seq(0,15)
-nages <- length(ages)
 Nrun <- 23
-Nmod <- 1000
+Nmod <- nits
+#historic years
 histYears <- seq(tyr-10,tyr-1)
 nhistYears <- length(histYears)
+#future years
 fYears <- seq(tyr,tyr+Nrun-1)
 nfYears <- length(fYears)
 
 #iteration stock/catch weights from last 10 years
-iSW <- array(as.numeric(stock.wt(FLSs_WG19[,ac(histYears),,,,])),dim=c(nages,nhistYears,Nmod), 
+iSW <- array(as.numeric(stock.wt(FLSs_WG19[,ac(histYears),,,,])),dim=c(nAges,nhistYears,Nmod), 
              dimnames=list(Age = ages,Year = histYears, Iter = seq(1,Nmod)))
-iCW <- array(as.numeric(catch.wt(FLSs_WG19[,ac(histYears),,,,])),dim=c(nages,nhistYears,Nmod), 
+iCW <- array(as.numeric(catch.wt(FLSs_WG19[,ac(histYears),,,,])),dim=c(nAges,nhistYears,Nmod), 
              dimnames=list(Age = ages,Year = histYears, Iter = seq(1,Nmod)))
 
 #random sample from last 10 (same for each iteration)
 rsam <- sample(histYears,Nrun,replace=TRUE)
 
-#future weights
-ifSW <- ifCW <- array(NA,dim = c(nages,nfYears,Nmod), dimnames = list(Age = ages,Year = fYears, Iter = seq(1,Nmod)))
+#future weights/selections
+ifSW <- ifCW <- ifSel <- array(NA,dim = c(nAges,nfYears,Nmod), dimnames = list(Age = ages,Year = fYears, Iter = seq(1,Nmod)))
 for(iii in seq(1,Nmod)){
   ifSW[,,iii] <- iSW[,c(as.character(rsam)),iii]
   ifCW[,,iii] <- iCW[,c(as.character(rsam)),iii]
 }
 
+#random sample for selections
+rsamsel = sample(seq(1,1000),Nrun*Nmod,replace=TRUE)
+
+#really slow - recode this!
+t <- filter(dfSAOp,WG=="WGWIDE19" & Var=="Sel" & Year==max(yrs_WG19)) %>% select(Iter,Age,Val)
+c <- 0
+for (iii in seq(1,nits)){
+  for (yy in seq(1,nfYears)){
+    c <- c + 1
+    ifSel[,yy,iii] <- t$Val[t$Iter==rsamsel[c]]
+  }
+}
+
+
 dfSimWeights <- dplyr::bind_rows(
-  data.frame(Age=rep(ages,nfYears), Year=rep(fYears,each=nages), Var="SW",
-             Lo=rep(NA,nages*nfYears),Md=rep(NA,nages*nfYears),Hi=rep(NA,nages*nfYears)),
-  data.frame(Age=rep(ages,nfYears), Year=rep(fYears,each=nages), Var="CW",
-             Lo=rep(NA,nages*nfYears),Md=rep(NA,nages*nfYears),Hi=rep(NA,nages*nfYears)))
+  data.frame(Age=rep(ages,nfYears), Year=rep(fYears,each=nAges), Var="SW",
+             Lo=rep(NA,nAges*nfYears),Md=rep(NA,nAges*nfYears),Hi=rep(NA,nAges*nfYears)),
+  data.frame(Age=rep(ages,nfYears), Year=rep(fYears,each=nAges), Var="CW",
+             Lo=rep(NA,nAges*nfYears),Md=rep(NA,nAges*nfYears),Hi=rep(NA,nAges*nfYears)),
+  data.frame(Age=rep(ages,nfYears), Year=rep(fYears,each=nAges), Var="Sel",
+             Lo=rep(NA,nAges*nfYears),Md=rep(NA,nAges*nfYears),Hi=rep(NA,nAges*nfYears)))
 
 for(aa in ages){
   for (y in fYears){
@@ -123,10 +158,14 @@ for(aa in ages){
     dfSimWeights$Lo[cond1 & cond2] <- quantile(ifCW[as.character(aa),as.character(y),],0.05)
     dfSimWeights$Md[cond1 & cond2] <- quantile(ifCW[as.character(aa),as.character(y),],0.5)
     dfSimWeights$Hi[cond1 & cond2] <- quantile(ifCW[as.character(aa),as.character(y),],0.95)
+    cond2 <- dfSimWeights$Var=="Sel"
+    dfSimWeights$Lo[cond1 & cond2] <- quantile(ifSel[as.character(aa),as.character(y),],0.05)
+    dfSimWeights$Md[cond1 & cond2] <- quantile(ifSel[as.character(aa),as.character(y),],0.5)
+    dfSimWeights$Hi[cond1 & cond2] <- quantile(ifSel[as.character(aa),as.character(y),],0.95)
   }
 }
 
-dfSimWeights <- within(dfSimWeights, Age <- factor(Age, levels = ac(ages)))
+dfSimWeights <- within(dfSimWeights, fAge <- factor(Age, levels = ac(ages)))
 
 ##############################PLOTS################################################################
 
@@ -261,49 +300,58 @@ png(filename = file.path(Rep.dir,"WGSSB.png"), width = 600, height = 400)
 print(ggHistSSB)
 dev.off()
 
-#Selections
-fGetFLStockSelection <- function(stk){
-  sel <- matrix(FLCore::harvest(stk), ncol = dim(stk)[2])
-  Fbar <- matrix(FLCore::fbar(stk), ncol = dim(stk)[2])
-  sel <- sweep(sel, 2, Fbar, "/")
-  sel <- sel/max(sel[,seq(dim(sel)[2]-10,dim(sel)[2])])  #last 10 years to avoid noise at start
-}
-
-yrs <- seq(dims(WG19)$minyear,dims(WG19)$maxyear)
-nYrs <- length(yrs)
-
-sels <- array(NA, dim=c(nAges,nYrs,nits), dimnames=list(age=ages,yr=yrs,iter=iters))
-for (i in iters){sels[,,ac(i)] <- fGetFLStockSelection(FLSs_WG19[,,,,,i])}
-
-
-
-#extract selection info from each iteration
-Sels <- lapply(FLSs_WG19,fGetFLStockSelection)
-iSel <- matrix(unlist(Sels),nrow=nAges,ncol=length(FLSs),dimnames=list(age=ac(ages),iter=seq(1,length(FLSs))))
-
-dfSASelection = data.frame(Age = ages, iter=0, Sel = rowMeans(fGetFLStockSelection(WG19)), stringsAsFactors = FALSE)
-dfSASelection <- within(dfSASelection, Age <- factor(Age, levels = ac(ages)))
-
-dfSASelection <- dplyr::bind_rows(dfSASelection,data.frame(Age = ac(ages), iter=rep(seq(1,length(FLSs)),each=nAges), Sel = c(iSel)))
-#make Age a factor so plot order appropriate
-dfSASelection <- within(dfSASelection, Age <- factor(Age, levels = ac(ages)))
-
-#selection patterns
-
+####################Selections#######################################################################
 #data, assessment point estimates and range of values from 1000 iters
-gSelProfs <- ggplot(data = dfSASelection) + geom_line(aes(x=Age,y=Sel,group=iter)) +
-  geom_line(filter(dfSASelection,iter==0),mapping=aes(x=Age,y=Sel,group=1),col="red",lwd=1)
-
+gSelProfs_WG19 <- ggplot(data = filter(dfSAOp,WG=="WGWIDE19" & Var=="Sel" & Year==rev(yrs_WG19)[1])) + geom_line(aes(x=Age,y=Val,group=Iter)) +
+  geom_line(filter(dfSAOp,WG=="WGWIDE19" & Var=="Sel" & Iter==1 & Year==rev(yrs_WG19)[1]),mapping=aes(x=Age,y=Val,group=1),col="red",lwd=1)
+gSelProfs_WG20 <- ggplot(data = filter(dfSAOp,WG=="WGWIDE20" & Var=="Sel" & Year==rev(yrs_WG20)[1])) + geom_line(aes(x=Age,y=Val,group=Iter)) +
+  geom_line(filter(dfSAOp,WG=="WGWIDE20" & Var=="Sel" & Iter==1 & Year==rev(yrs_WG20)[1]),mapping=aes(x=Age,y=Val,group=1),col="red",lwd=1)
 
 #distributions of selection@age
 #distribution of values from 1000 iterations, point estimates from assessment
-#sort stupid long x ais labels
-gSelHistatAge <- ggplot(data = dfSASelection, mapping = aes(Sel)) + 
+#sort stupid long x axis labels
+gSelHistatAge_WG19 <- ggplot(data = filter(dfSAOp,WG == "WGWIDE19" & Var=="Sel" & Year==max(yrs_WG19)), mapping = aes(Val)) + 
   geom_bar() + scale_x_binned(n.breaks=15, nice.breaks=FALSE) +
   theme(text = element_text(size=10), axis.text.x = element_text(angle=45, hjust=1)) +
   geom_vline(xintercept=c(0.25,0.5,0.75), col="grey", lwd=1, lty=2) +
   facet_wrap(~Age) + ylab("Count") +
   theme(axis.text.x=element_blank())
+
+gSelHistatAge_WG20 <- ggplot(data = filter(dfSAOp,WG == "WGWIDE20" & Var=="Sel" & Year==max(yrs_WG20)), mapping = aes(Val)) + 
+  geom_bar() + scale_x_binned(n.breaks=15, nice.breaks=FALSE) +
+  theme(text = element_text(size=10), axis.text.x = element_text(angle=45, hjust=1)) +
+  geom_vline(xintercept=c(0.25,0.5,0.75), col="grey", lwd=1, lty=2) +
+  facet_wrap(~Age) + ylab("Count") +
+  theme(axis.text.x=element_blank())
+
+png(filename = file.path(Rep.dir,"Sel_WG19.png"), width = 600, height = 600)
+ggplot(data = filter(dfSAOp,WG=="WGWIDE19" & Var=="Sel" & Iter==1 & Age<=5), mapping = aes(x=Year,y=Val)) +
+  geom_segment(filter(dfSAOp,WG=="WGWIDE19" & Var=="Sel" & Age<=5 & Year==dims(WG19)$maxyear & Iter==600) %>%
+                 mutate(x1=dims(WG19)$minyear,x2=dims(WG19)$maxyear), mapping = aes(x = x1, y = Val, xend = x2, yend = Val), col = "grey") +
+  geom_segment(filter(dfSAOp,WG=="WGWIDE19" & Var=="Sel" & Age<=5 & Year==dims(WG19)$maxyear & Iter==650) %>%
+                 mutate(x1=dims(WG19)$minyear,x2=dims(WG19)$maxyear), mapping = aes(x = x1, y = Val, xend = x2, yend = Val), col = "grey") +
+  geom_segment(filter(dfSAOp,WG=="WGWIDE19" & Var=="Sel" & Age<=5 & Year==dims(WG19)$maxyear & Iter==710) %>%
+                 mutate(x1=dims(WG19)$minyear,x2=dims(WG19)$maxyear), mapping = aes(x = x1, y = Val, xend = x2, yend = Val), col = "grey") +
+  geom_line(aes(group=fAge)) + 
+  geom_segment(filter(dfSAOp,WG=="WGWIDE19" & Var=="Sel" & Age<=5) %>%
+                 group_by(Age) %>% summarise(y1 = quantile(Val,0.95),y2 = quantile(Val,0.95)) %>%
+                 mutate(x1=dims(WG19)$minyear,x2=dims(WG19)$maxyear), mapping = aes(x = x1, y = y1, xend = x2, yend = y2), col = "red", lty = 2) +
+  geom_segment(filter(dfSAOp,WG=="WGWIDE19" & Var=="Sel" & Age<=5) %>%
+                 group_by(Age) %>% summarise(y1 = quantile(Val,0.05),y2 = quantile(Val,0.05)) %>%
+                 mutate(x1=dims(WG19)$minyear,x2=dims(WG19)$maxyear), mapping = aes(x = x1, y = y1, xend = x2, yend = y2), col = "red", lty = 2) +
+  geom_line(data=filter(dfSimWeights,Var=="Sel" & Age<=5), mapping = aes(x=Year,y=Hi), col = "blue", lty=2) +
+  geom_line(data=filter(dfSimWeights,Var=="Sel" & Age<=5), mapping = aes(x=Year,y=Lo), col = "blue", lty=2) +
+  geom_line(data=filter(dfSimWeights,Var=="Sel" & Age<=5), mapping = aes(x=Year,y=Md), col = "blue") +
+  geom_line(data = filter(data.frame(Age = rep(ages,nfYears), fAge = factor(rep(ages,nfYears),levels=ac(ages)), Year = rep(fYears, each=nAges), W = as.numeric(ifSel[,,600])),Age<=5), mapping = aes(x=Year,y=W), col="grey") +
+  geom_line(data = filter(data.frame(Age = rep(ages,nfYears), fAge = factor(rep(ages,nfYears),levels=ac(ages)), Year = rep(fYears, each=nAges), W = as.numeric(ifSel[,,750])),Age<=5), mapping = aes(x=Year,y=W), col="grey") +
+  geom_line(data = filter(data.frame(Age = rep(ages,nfYears), fAge = factor(rep(ages,nfYears),levels=ac(ages)), Year = rep(fYears, each=nAges), W = as.numeric(ifSel[,,710])),Age<=5), mapping = aes(x=Year,y=W), col="grey") +
+  facet_wrap(~Age, labeller = labeller(fAge = c("0" = "Age 0", "1" = "Age 1", "2" = "Age 2", "3" = "Age 3",
+                                                                             "4" = "Age 4", "5" = "Age 5", "6" = "Age 6", "7" = "Age 7",
+                                                                             "8" = "Age 8", "9" = "Age 9", "10" = "Age 10", "11" = "Age 11",
+                                                                             "12" = "Age 12", "13" = "Age 13", "14" = "Age 14", "15" = "Age 15+"))) +
+  ylab("Selection") + theme(axis.text.x = element_text(angle = 45, hjust=1))
+dev.off()
+
 
 
 ################Stock and Catch Weights##################################################################
@@ -386,8 +434,6 @@ load(file=file.path(Sim.dir,paste0(runRef,"_SimRuns.Rdata")))
 #target F = 0.075
 sim <- SimRuns[["0.075"]]
 
-ages <- seq(0,15)
-nages <- length(ages)
 simYears <- seq(2018,length=23)
 nsimYears = length(simYears)
 iters <- seq(1,1000)
