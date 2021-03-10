@@ -372,6 +372,18 @@ MP5.23 <- list("code" = "MP5.23",
                "TAC_IAV" = c(0.2,0.2),
                "Obs" = Uncertainties)
 
+#default uncertainties
+MP5.23.DU <- list("code" = "MP5.23.DU",
+               "desc" = "Double BP HCR, default uncertainties",
+               "xlab" = "Double BP IAVBtrig, default uncertainties",
+               "HCRName" = "DoubleBP",
+               "F_target" = F_targets,
+               "B_trigger" = "MSYBtrigger",
+               "minTAC" = NA,
+               "maxTAC" = NA,
+               "TAC_IAV" = c(0.2,0.2),
+               "Obs" = list("cvF" = 0.233, "phiF" = 0.423, "cvSSB" = 0.233, "phiSSB" = 0.423))
+
 # ===========================================================================
 # Basic Test
 # ===========================================================================
