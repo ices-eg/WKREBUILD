@@ -124,7 +124,7 @@ fassess_df <- function(runName, FLSs, OM, numWorm=5){
 
 fsummary_df <- function(runName, simRuns, FLSs, 
                         Res.dir, Plot.dir, 
-                        lStatPer, OM,  
+                        lStatPer, OM, MP,  
                         simYears, xlab, 
                         Fbarrange=c(1,10),
                         numWorm=5, dfassess){
@@ -139,9 +139,9 @@ fsummary_df <- function(runName, simRuns, FLSs,
   stock      <- stringr::word(runName,1,sep="_")
   assess     <- stringr::word(runName,2,sep="_")
   assessyear <- stringr::word(runName,3,sep="_")
-  OMname     <- stringr::word(runName,4,sep="_")
+  OMname     <- OM$code
   niters     <- an(stringr::word(runName,5,sep="_"))
-  MPname     <- stringr::word(runName,6,sep="_")
+  MPname     <- MP$code
   nyrs       <- an(stringr::word(runName,7,sep="_"))
   Blim       <- OM$refPts$Blim
   Bpa        <- OM$refPts$Bpa
