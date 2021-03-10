@@ -25,7 +25,8 @@ source("D:/GIT/wk_WKREBUILD/EqSimWHM/R/get_dropbox.r")
 # basedir  <- "E:/MARTIN"
 basedir  <- "C:/TEMP"
 # basedir  <- "D:/TEMP"
-sao.name <- "WHOM_2020"
+sao.name   <- "WHOM_2019"
+namestring <- "WHOM_SAM19"
 tempdir  <- file.path(basedir,sao.name) 
 
 # set simulator properties
@@ -83,7 +84,7 @@ simruns <- base::data.frame(
   maxgradient = max(fit$sdrep$gradient.fixed),
   inFLStock   = TRUE,
   stringsAsFactors = FALSE)
-save(simruns, file="run/simruns.RData")
+save(simruns, file=paste0("run/",namestring,"_simruns.RData"))
 
 # # should be 0 if the model has converged
 # fit$opt$convergence 
@@ -161,6 +162,10 @@ units(FLS@harvest)   <-  "f"
 # ssb
 FLS@stock            <- ssb(FLS)
 
+# Save FLstock object
+# save(FLS, file="run/WHOM_SAM20_FLS_WGWIDE.RData")
+save(FLS, file=paste0("run/",namestring,"_FLS_WGWIDE.RData"))
+
 # validObject(FLS)
 # plot(FLS)
 # plot(FLS@catch)
@@ -206,7 +211,8 @@ while (i <= nsim) {
       inFLStock = FALSE,
       stringsAsFactors = FALSE)
     simruns <- bind_rows(simruns, df)
-    save(simruns, file="run/simruns.RData")
+    # save(simruns, file="run/simruns.RData")
+    save(simruns, file=paste0("run/",namestring,"_simruns.RData"))
     
   } else {
       
@@ -230,6 +236,7 @@ while (i <= nsim) {
       FLSs[,,,,,i]@stock            <- ssb(FLSs[,,,,,i])
       
       save(FLSs, file="run/FLSs.RData")
+      save(FLSs, file=paste0("run/",namestring,"_FLS_converged.RData"))
       
       print(paste("trial", it, ";",
                   "iter", i, "of", nsim, ";",  
@@ -263,7 +270,8 @@ while (i <= nsim) {
       inFLStock   = ifelse(sim_fit$opt$convergence==0,TRUE,FALSE),
       stringsAsFactors = FALSE)
     simruns <- bind_rows(simruns, df)
-    save(simruns, file="run/simruns.RData")
+    # save(simruns, file="run/simruns.RData")
+    save(simruns, file=paste0("run/",namestring,"_simruns.RData"))
     
     rm(sim_fit)
     invisible(gc())
