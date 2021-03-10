@@ -51,20 +51,20 @@ per2 <- 5
 # OM             <- OM2.3                       #WGWIDE SS 2020, stochastic weights, selection
 
 # WHOM SAM 2019
-# stock          <- "WHOM"
-# assess         <- "SAM"
-# assessyear     <- "2019"
-# FLStockfile    <- "WGWIDE19_SAM.RData"
-# FLStockSimfile <- "WHOM SAM19_FLS_converged.RData" 
-# OM             <- OM2.4                         #WGWIDE SAM 2019, stochastic weights, selection
-
-# WHOM SAM 2019
 stock          <- "WHOM"
 assess         <- "SAM"
-assessyear     <- "2020"
-FLStockfile    <- "WGWIDE20_SAM.RData"
-FLStockSimfile <- "WHOM SAM20_FLS_converged.RData"
-OM             <- OM2.5                       #WGWIDE SAM 2020, stochastic weights, selection
+assessyear     <- "2019"
+FLStockfile    <- "WHOM_SAM19_FLS_WGWIDE.RData"
+FLStockSimfile <- "WHOM_SAM19_FLS_converged.RData"
+OM             <- OM2.4                         #WGWIDE SAM 2019, stochastic weights, selection
+
+# WHOM SAM 2019
+# stock          <- "WHOM"
+# assess         <- "SAM"
+# assessyear     <- "2020"
+# FLStockfile    <- "WHOM_SAM20_FLS_WGWIDE.RData"
+# FLStockSimfile <- "WHOM_SAM20_FLS_converged.RData"
+# OM             <- OM2.5                       #WGWIDE SAM 2020, stochastic weights, selection
 
 #assessment FLStock
 FLS <- loadRData(file.path(RData.dir,FLStockfile)) %>% FLCore::setPlusGroup(., 15)
@@ -115,14 +115,14 @@ runName   <- paste(stock,assess,assessyear, OM$code,niters,sep="_")
 dfassess  <- fassess_df(runName=runName, FLSs=FLSs, OM = OM, numWorm = numWorm) 
 
 # Loop over management procedures
+
+# mp <- c("MP5.11")
 # for (mp in c("MP5.00","MP5.01","MP5.10","MP5.11","MP5.20","MP5.21")) {
-#for (mp in c("MP5.00","MP5.23")) {
+# for (mp in c("MP5.00","MP5.23")) {
 for (mp in c("MP5.00","MP5.01","MP5.03",
             "MP5.10","MP5.11","MP5.13",
             "MP5.20","MP5.21","MP5.23")) {
-# mp <- c("MP5.11")
   
-
   MP <- get(mp)
   
   invisible(gc())
@@ -431,10 +431,10 @@ for (mp in c("MP5.00","MP5.01","MP5.03",
   # save(settings,file = file.path(Res.dir,runName,paste0(runName,"_eqSim_Settings.Rdata")))
   
   df  <- fsummary_df(
-    run=runName, simRuns = simRuns, FLSs=FLSs,
+    runName=runName, simRuns = simRuns, FLSs=FLSs,
     Res.dir = Res.dir, Plot.dir = Plot.dir,
     lStatPer = lStatPer, simYears = simYears, xlab = MP$xlab,
-    OM = OM, 
+    OM = OM, MP = MP,
     Fbarrange=c(range(FLS)[["minfbar"]], range(FLS)[["maxfbar"]]),
     numWorm = numWorm, dfassess=dfassess) 
   
