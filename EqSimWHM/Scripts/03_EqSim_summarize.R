@@ -24,6 +24,8 @@ for (i in 1:length(file.list)) {
   print(file.list[i])
   df <- bind_rows(df, loadRData(file.list[i])[["df"]])
 }
+df <- df %>% setNames(gsub("method","simulator", names(.)))
+df <- df %>% mutate(simulator = toupper(simulator))
 
 # mystock      =  "WHOM"
 # myassess     = "SAM"
@@ -45,6 +47,7 @@ myvalue = "mean"
 plotvar <- function(mystock      =  "WHOM",
                     myassess     = "SAM",
                     myassessyear = c("2019","2020"),
+                    mysimulator  = "EQSIM",
                     myom         = c("OM2.4","OM2.5"),
                     myniters     = "1000",
                     mymp         = c("MP5.23"),
@@ -54,7 +57,9 @@ plotvar <- function(mystock      =  "WHOM",
                     mycolour     = "blue",
                     myyintercept = 834000,
                     myvalue      = "median",
-                    myfacets     = c("assessyear","ftgt")) {
+                    myfacets     = c("assessyear","ftgt"),
+                    myfirstyear  = as.numeric(NA),
+                    mylastyear   = as.numeric(NA)) {
   
   
   # history
@@ -65,8 +70,14 @@ plotvar <- function(mystock      =  "WHOM",
     filter(stock      %in% mystock) %>% 
     filter(assess     %in% myassess) %>% 
     filter(assessyear %in% myassessyear) %>% 
+    filter(simulator  %in% mysimulator) %>% 
     filter(om         %in% myom) %>% 
     # filter(niters     == myniters) %>% 
+    
+    {if(!is.na(myfirstyear)) filter(., year >= myfirstyear) else (.)} %>%    
+    {if(!is.na(mylastyear))  filter(., year <= mylastyear) else (.)} %>%   
+    
+    mutate(age = as.numeric(age)) %>% 
     
     # fix for pblim 
     mutate(median = ifelse(perfstat=="pblim" & !is.na(mean), mean, median)) %>% 
@@ -87,18 +98,27 @@ plotvar <- function(mystock      =  "WHOM",
     filter(stock      %in% mystock) %>% 
     filter(assess     %in% myassess) %>% 
     filter(assessyear %in% myassessyear) %>% 
+    filter(simulator  %in% mysimulator) %>% 
     filter(om         %in% myom) %>% 
     # filter(niters     ==   myniters) %>% 
     filter(mp         ==   mymp) %>%
     filter(nyrs       %in% mynyrs) %>% 
     filter(ftgt       %in% myftgt) %>% 
     
-    mutate(code = paste("EqSim", assess,assessyear,om,mp,sep="_")) 
-  
+    {if(!is.na(myfirstyear)) filter(., year >= myfirstyear) else (.)} %>%    
+    {if(!is.na(mylastyear))  filter(., year <= mylastyear) else (.)} %>%   
+    
+    mutate(code = paste("EqSim", assess,assessyear,om,mp,sep="_")) %>%  
+    mutate(age  = as.numeric(age)) 
+    
   # periods
   p <-
     bind_rows(h, d) %>% 
     distinct(assessyear, period, year) %>% 
+    
+    {if(!is.na(myfirstyear)) filter(., year >= myfirstyear) else (.)} %>%    
+    {if(!is.na(mylastyear))  filter(., year <= mylastyear) else (.)} %>%   
+    
     group_by(assessyear, period) %>% 
     summarise(
       minyear = min(year),
@@ -107,11 +127,20 @@ plotvar <- function(mystock      =  "WHOM",
   
   # title
   t <- paste(
+    toupper(mystock),
+    paste(unique(myassess), collapse="-"),
+    paste(unique(myassessyear), collapse="-"),
+    paste(unique(mysimulator), collapse="-"),
+    paste(unique(myom), collapse="-"),
+    paste(unique(myniters), collapse="-"),
+    paste(unique(mymp), collapse="-"),
+    paste(unique(mynyrs), collapse="-"),
     toupper(myperfstat),
-    paste(unique(myassess), collapse="_"),
-    paste(unique(myassessyear), collapse="_"),
-    paste(unique(mymp), collapse="_"),
-    sep=" "
+    paste(c(myfacets[2],myfacets[1]), collapse="-"),
+    paste(c(max(min(h$year), myfirstyear, na.rm=TRUE),
+            min(max(d$year), mylastyear, na.rm=TRUE)), 
+          collapse="-"),
+    sep="_"
   )
     
   myfig <- 
@@ -172,9 +201,11 @@ plotvar <- function(mystock      =  "WHOM",
   
 }
 
+
 plotvar(mystock      =  "WHOM",
         myassess     = "SAM",
         myassessyear = c("2019","2020"),
+        mysimulator  = "EQSIM",
         myom         = c("OM2.4","OM2.5"),
         myniters     = "1000",
         mymp         = c("MP5.13"),
@@ -184,8 +215,8 @@ plotvar(mystock      =  "WHOM",
         mycolour     = "blue",
         myyintercept = 611814,
         myvalue      = "median",
-        myfacets     = c("assessyear","ftgt")
-)
+        myfacets     = c("assessyear","ftgt"),
+        myfirstyear  = 2000)
 
 plotvar(mystock      =  "WHOM",
         myassess     = "SAM",
@@ -262,6 +293,68 @@ plotvar(mystock      =  "WHOM",
         myfacets     = c("assessyear","ftgt")
 )
 
+plotvar(mystock      =  "WHOM",
+        myassess     = "SAM",
+        myassessyear = c("2019"),
+        myom         = c("OM2.4"),
+        myniters     = "1000",
+        mymp         = c("MP5.23"),
+        mynyrs       = "23",
+        myftgt       = c(0.075),
+        myperfstat   = c("catch.n"),
+        mycolour     = "blue",
+        myyintercept = NA,
+        myvalue      = "median",
+        myfacets     = c("ftgt","age")
+)
+
+plotvar(mystock      =  "WHOM",
+        myassess     = "SAM",
+        myassessyear = c("2019"),
+        myom         = c("OM2.4"),
+        myniters     = "1000",
+        mymp         = c("MP5.23"),
+        mynyrs       = "23",
+        myftgt       = c(0.075),
+        myperfstat   = c("catch.wt"),
+        mycolour     = "blue",
+        myyintercept = NA,
+        myvalue      = "median",
+        myfacets     = c("ftgt","age")
+)
+
+plotvar(mystock      =  "WHOM",
+        myassess     = "SAM",
+        myassessyear = c("2019"),
+        myom         = c("OM2.4"),
+        myniters     = "1000",
+        mymp         = c("MP5.23"),
+        mynyrs       = "23",
+        myftgt       = c(0.075),
+        myperfstat   = c("stock.wt"),
+        mycolour     = "blue",
+        myyintercept = NA,
+        myvalue      = "median",
+        myfacets     = c("ftgt","age")
+)
+
+plotvar(mystock      =  "WHOM",
+        myassess     = "SAM",
+        myassessyear = c("2019"),
+        myom         = c("OM2.4"),
+        myniters     = "1000",
+        mymp         = c("MP5.23"),
+        mynyrs       = "23",
+        myftgt       = c(0.075),
+        myperfstat   = c("mat"),
+        mycolour     = "blue",
+        myyintercept = NA,
+        myvalue      = "median",
+        myfacets     = c("ftgt","age")
+)
+
+
+
 
 
 plotvar(mystock      =  "WHOM",
@@ -269,7 +362,7 @@ plotvar(mystock      =  "WHOM",
         myassessyear = c("2019"),
         myom         = c("OM2.4"),
         myniters     = "1000",
-        mymp         = c("MP5.13", "MP5.23"),
+        mymp         = c("MP5.03", "MP5.13","MP5.23"),
         mynyrs       = "23",
         myftgt       = c(0.0, 0.05, 0.075, 0.10, 0.15),
         myperfstat   = "stock",
