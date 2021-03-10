@@ -456,6 +456,23 @@ plotvar(mystock      =  "WHOM",
         myfirstyear  = 2000)
 
 
+plotvar(mystock      =  "WHOM",
+        myassess     = c("SAM"),
+        myassessyear = c("2019"),
+        mysimulator  = "EQSIM",
+        myom         = c("OM2.4"),
+        myniters     = "1000",
+        mymp         = c("MP5.23","MP5.23.DU"),
+        mynyrs       = "23",
+        myftgt       = c(0.0, 0.05, 0.075, 0.10, 0.15),
+        myperfstat   = "stock",
+        mycolour     = "blue",
+        myyintercept =  611814,
+        myvalue      = "median",
+        myfacets     = c("mp","ftgt"),
+        myfirstyear  = 2010,
+        mylastyear   = 2030)
+
 
 
 
