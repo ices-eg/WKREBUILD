@@ -33,14 +33,17 @@ per2 <- 5
 #OM <- OM2.1   #WGWIDE 2019, const weights, selection
 
 # WHOM SS 2019
+
 # stock          <- "WHOM"
 # assess         <- "SS3"
 # assessyear     <- "2019"
 # FLStockfile    <- "WGWIDE19.RData"
-# FLStockSimfile <- "WHOM_SS19_FLS_V1.RData"    #V1 iterations as single FLStock
-# FLStockSimfile <- "WHOM_SS19_FLS_V2.RData"    #V2 new draw, contains variability in selection and weights
 # FLStockSimfile <- "WHOM_SS19_FLS_V3.RData"    #V3 improved variability in selection and weights
 # OM             <- OM2.2                       #WGWIDE SS 2019, stochastic weights, selection
+
+# FLStockSimfile <- "WHOM_SS19_FLS_V1.RData"    #V1 iterations as single FLStock
+# FLStockSimfile <- "WHOM_SS19_FLS_V2.RData"    #V2 new draw, contains variability in selection and weights
+# OM             <- OM2.2.WR                       #WGWIDE SS 2019, stochastic weights, selection; wrong reference points
 
 # WHOM SS 2020
 # stock          <- "WHOM"
@@ -57,6 +60,7 @@ assessyear     <- "2019"
 FLStockfile    <- "WHOM_SAM19_FLS_WGWIDE.RData"
 FLStockSimfile <- "WHOM_SAM19_FLS_converged.RData"
 OM             <- OM2.4                         #WGWIDE SAM 2019, stochastic weights, selection
+# OM             <- OM2.4.WR                         #WGWIDE SAM 2019, stochastic weights, selection
 
 # WHOM SAM 2019
 # stock          <- "WHOM"
@@ -118,10 +122,11 @@ dfassess  <- fassess_df(runName=runName, FLSs=FLSs, OM = OM, numWorm = numWorm)
 
 # mp <- c("MP5.11")
 # for (mp in c("MP5.00","MP5.01","MP5.10","MP5.11","MP5.20","MP5.21")) {
-# for (mp in c("MP5.00","MP5.23")) {
-for (mp in c("MP5.00","MP5.01","MP5.03",
-            "MP5.10","MP5.11","MP5.13",
-            "MP5.20","MP5.21","MP5.23")) {
+# for (mp in c("MP5.23")) {
+for (mp in c("MP5.23.DU")) {
+    # for (mp in c("MP5.00","MP5.01","MP5.03",
+#             "MP5.10","MP5.11","MP5.13",
+#             "MP5.20","MP5.21","MP5.23")) {
   
   MP <- get(mp)
   
