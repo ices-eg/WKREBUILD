@@ -371,6 +371,20 @@ plotvar(mystock      =  "WHOM",
         myfacets     = c("ftgt","age")
 )
 
+plotvar(mystock      =  "WHOM",
+        myassess     = "SAM",
+        myassessyear = c("2019"),
+        myom         = c("OM2.4"),
+        myniters     = "1000",
+        mymp         = c("MP5.23"),
+        mynyrs       = "23",
+        myftgt       = c(0.075),
+        myperfstat   = c("sel"),
+        mycolour     = "blue",
+        myyintercept = NA,
+        myvalue      = "median",
+        myfacets     = c("ftgt","age")
+)
 
 
 
