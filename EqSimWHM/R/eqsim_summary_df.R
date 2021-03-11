@@ -60,6 +60,8 @@ fsummary_df <- function(runName, OM, MP, ftgt,
   )
   
   # cat("Creating dataframe for run with f = ", ftgt, "\n")
+  names(Stats$recBpa)
+  
   
   df <- 
     data.frame(stringsAsFactors = FALSE) %>% 
@@ -82,6 +84,26 @@ fsummary_df <- function(runName, OM, MP, ftgt,
            mutate_if(is.factor, as.character) %>% 
            mutate(perfstat = "catch",  iter="all") %>% 
            rename(metric=age),
+         as.data.frame(Stats$TAC$val)  %>%     
+           mutate_if(is.factor, as.character) %>% 
+           mutate(perfstat = "tac", iter="all") %>% 
+           rename(metric=age),
+         as.data.frame(Stats$IAV$val)  %>%     
+           mutate_if(is.factor, as.character) %>% 
+           mutate(perfstat = "iav", iter="all") %>% 
+           rename(metric=age),
+         as.data.frame(Stats$IAVup$val)  %>%     
+           mutate_if(is.factor, as.character) %>% 
+           mutate(perfstat = "iavup", iter="all") %>% 
+           rename(metric=age),
+         as.data.frame(Stats$IAVdown$val)  %>%     
+           mutate_if(is.factor, as.character) %>% 
+           mutate(perfstat = "iavdown", iter="all") %>% 
+           rename(metric=age),
+         as.data.frame(Stats$IAVupdown$val)  %>%     
+           mutate_if(is.factor, as.character) %>% 
+           mutate(perfstat = "iavupdown", iter="all") %>% 
+           rename(metric=age),
     ) %>% 
     mutate(metric = case_when(
         metric == "50%" ~ "median",
@@ -90,7 +112,23 @@ fsummary_df <- function(runName, OM, MP, ftgt,
         TRUE           ~ metric)
     ) %>% 
     filter(metric %in% c("mean","median","lower","upper")) %>% 
+    
+    # add pblim and pbpa
+    bind_rows(
+      as.data.frame(Stats$pBlim$val)  %>%     
+        mutate_if(is.factor, as.character) %>% 
+        mutate(perfstat = "pblim", iter="all") %>% 
+        rename(metric=age) %>% 
+        filter(metric == "mean"),
+      as.data.frame(Stats$pBpa$val)  %>%     
+        mutate_if(is.factor, as.character) %>% 
+        mutate(perfstat = "pbpa", iter="all") %>% 
+        rename(metric=age) %>% 
+        filter(metric=="mean"),
+    ) %>% 
     filter(!is.na(year)) %>% 
+    
+    # now make broader data frame
     tidyr::pivot_wider(names_from = metric, values_from=data) %>% 
     
     # now bind the worms
@@ -101,12 +139,21 @@ fsummary_df <- function(runName, OM, MP, ftgt,
       as.data.frame(Stats$Rec$worm)  %>% 
         mutate_if(is.factor, as.character) %>% 
         mutate(perfstat = "rec",   metric="worm", age=ac(age)),
-      as.data.frame(Stats$FBar$val) %>% 
+      as.data.frame(Stats$FBar$worm) %>% 
         mutate_if(is.factor, as.character) %>% 
         mutate(perfstat = "fbar",  metric="worm"),
-      as.data.frame(Stats$Catch$val)%>% 
+      as.data.frame(Stats$Catch$worm)%>% 
         mutate_if(is.factor, as.character) %>% 
         mutate(perfstat = "catch",  metric="worm"),
+      as.data.frame(Stats$TAC$worm)%>% 
+        mutate_if(is.factor, as.character) %>% 
+        mutate(perfstat = "tac",  metric="worm"),
+      as.data.frame(Stats$IAV$worm)%>% 
+        mutate_if(is.factor, as.character) %>% 
+        mutate(perfstat = "iav",  metric="worm"),
+      as.data.frame(Stats$IAVupdown$worm)%>% 
+        mutate_if(is.factor, as.character) %>% 
+        mutate(perfstat = "iavupdown",  metric="worm"),
     ) %>% 
     filter(!is.na(year)) %>% 
     
@@ -122,8 +169,13 @@ fsummary_df <- function(runName, OM, MP, ftgt,
       nyrs       = nyrs,
       blim       = blim,
       bpa        = bpa,
-    )
+    ) %>% 
+    
+    # add periods
+    left_join(years, by="year")
 
+  df 
+  
 } # end of function
 
 # glimpse(df)
