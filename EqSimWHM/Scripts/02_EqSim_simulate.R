@@ -13,7 +13,7 @@
 # 01/07/2020 included additional features by Martin Pastoors
 # ================================================================================================================
 
-# source(file.path(getwd(),"Scripts","01_EqSim_setup.R"))
+source(file.path(getwd(),"Scripts","01_EqSim_setup.R"))
 
 #Note: niters and nyr could be included in the OM or MP definitions
 
@@ -318,8 +318,6 @@ for (mp in c("MP5.23")) {
     # firstBelow <- recTimeBlim <- recTimeBpa <- rep(NA,dim(SSB.true)[6])
     # names(firstBelow) <- names(recTimeBlim) <- names(recTimeBpa) <- as.character(seq(1,dim(SSB.true)[6]))
     # 
-    # #drop the unused dimensions
-    # SSB1 <- drop(as.array(SSB.true))
     # 
     # #iterations during which SSB fell below Blim
     # anyBelow <- apply(SSB1,MARGIN=2,FUN = function(x){any(x<OM$refPts$Blim)})
@@ -353,26 +351,28 @@ for (mp in c("MP5.23")) {
     
     #Bpa############
     #did any iterations recover above Bpa?
-    anyBackAboveBpa <- apply(SSB1[,names(anyBelow[anyBelow])], MARGIN=2, FUN = function(x){any(x>OM$refPts$Bpa, na.rm=TRUE)})
+    #anyBackAboveBpa <- apply(SSB1[,names(anyBelow[anyBelow])], MARGIN=2, FUN = function(x){any(x>OM$refPts$Bpa, na.rm=TRUE)})
     #set the recovery time for those that did not recover to 0
-    recTimeBpa[names(anyBackAboveBpa[!anyBackAboveBpa])] <- 0
+    #recTimeBpa[names(anyBackAboveBpa[!anyBackAboveBpa])] <- 0
     
     #iterations which fell below and subsequently recovered
-    recoveredBpa <- intersect(names(anyBelow[anyBelow]),names(anyBackAboveBpa[anyBackAboveBpa]))
+    #recoveredBpa <- intersect(names(anyBelow[anyBelow]),names(anyBackAboveBpa[anyBackAboveBpa]))
     #get recovery time
-    recTimeBpa[recoveredBpa] <- apply(SSB1[,recoveredBpa], MARGIN=2, FUN = function(x){min(which(x>OM$refPts$Bpa))})
+    #recTimeBpa[recoveredBpa] <- apply(SSB1[,recoveredBpa], MARGIN=2, FUN = function(x){min(which(x>OM$refPts$Bpa))})
     
     #recovery time  
-    rBpa <- recTimeBpa-firstBelow
+    #rBpa <- recTimeBpa-firstBelow
     
-    Stats[["recBpa"]][["val"]] <- quantile(rBpa[rBpa>0],probs=percentiles,na.rm=T)
-    Stats[["recBpa"]][["nobelow"]] <- sum(!anyBelow)
-    Stats[["recBpa"]][["norecover"]] <- sum(!anyBackAboveBpa)
+    #Stats[["recBpa"]][["val"]] <- quantile(rBpa[rBpa>0],probs=percentiles,na.rm=T)
+    #Stats[["recBpa"]][["nobelow"]] <- sum(!anyBelow)
+    #Stats[["recBpa"]][["norecover"]] <- sum(!anyBackAboveBpa)
     
     
     #proportion iterations recovered above Bpa for 3 years
     #only applies for years in the simulation period
-    t <- SSB1[simYears,]
+    #drop the unused dimensions
+    t <- drop(as.array(SSB.true))[simYears,]
+    
     #remove any iterations where stock never falls below the threshold
     t <- t[,apply(t,MARGIN=2,function(x){sum(x<OM$refPts$Bpa)})>0]
 
@@ -398,7 +398,7 @@ for (mp in c("MP5.23")) {
     
     #proportion iterations recovered above Blim for 3 years
     #only applies for years in the simulation period
-    t <- SSB1[simYears,]
+    t <- drop(as.array(SSB.true))[simYears,]
     #remove any iterations where stock never falls below the threshold
     t <- t[,apply(t,MARGIN=2,function(x){sum(x<OM$refPts$Blim)})>0]
     
