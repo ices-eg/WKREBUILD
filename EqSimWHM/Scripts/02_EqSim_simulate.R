@@ -13,7 +13,7 @@
 # 01/07/2020 included additional features by Martin Pastoors
 # ================================================================================================================
 
-source(file.path(getwd(),"Scripts","01_EqSim_setup.R"))
+# source(file.path(getwd(),"Scripts","01_EqSim_setup.R"))
 
 #Note: niters and nyr could be included in the OM or MP definitions
 
@@ -125,8 +125,8 @@ numWorm <- 5
 worms <- c(1,sample(seq(2,1000),numWorm))
 
 # assessment dataframe
-runName   <- paste(stock,assess,assessyear, OM$code,niters,sep="_")
-dfassess  <- fassess_df(runName=runName, FLSs=FLSs, OM = OM, iworms = worms) #AC 11/03/2021 updated to iworms from numWorm
+# runName   <- paste(stock,assess,assessyear, OM$code,niters,sep="_")
+# dfassess  <- fassess_df(runName=runName, FLSs=FLSs, OM = OM, iworms = worms) #AC 11/03/2021 updated to iworms from numWorm
 
 # Loop over management procedures
 
@@ -259,8 +259,9 @@ for (mp in c("MP5.23")) {
   
   #Create list objects to store stocks, stats
   Stocks <- AllStats <- list()
-  #create a template by extending the time frame out to the final year of the simulation
-  stockTemplate <- window(SRR$stk, end=yEnd)
+  # create a template by extending the time frame out to the final year of the simulation
+  # stockTemplate <- window(SRR$stk, end=yEnd)
+  stockTemplate <- window(FLSs, end=yEnd)
   
   #set the maturity, natural mortality and f/m proportions
   mat(stockTemplate)[,simYears] <- mat(stockTemplate)[,ac(yStart-1)]
@@ -271,7 +272,10 @@ for (mp in c("MP5.23")) {
   #plot(stockTemplate)
   
   #extend object to store necessary number of iterations
-  stockTemplate <- FLCore::propagate(stockTemplate,niters)
+  # stockTemplate <- FLCore::propagate(stockTemplate,niters)
+  
+  # create empty dataframe
+  df <- data.frame(stringsAsFactors = FALSE)
   
   #populate each stock object
   #year dimension is trimmed to the actual simulation period (may be longer depending on HCR implemented)
@@ -310,42 +314,42 @@ for (mp in c("MP5.23")) {
     #Stats[["SSB"]][["worm"]] <- FLCore::iter(SSB.true,1:numWorm)
     Stats[["SSB"]][["worm"]] <- FLCore::iter(SSB.true,worms)
     
-    #time to recovery after falling below Blim
-    firstBelow <- recTimeBlim <- recTimeBpa <- rep(NA,dim(SSB.true)[6])
-    names(firstBelow) <- names(recTimeBlim) <- names(recTimeBpa) <- as.character(seq(1,dim(SSB.true)[6]))
-    
-    #drop the unused dimensions
-    SSB1 <- drop(as.array(SSB.true))
-    
-    #iterations during which SSB fell below Blim
-    anyBelow <- apply(SSB1,MARGIN=2,FUN = function(x){any(x<OM$refPts$Blim)})
-    #exclude those that never fell below Blim
-    SSB1[,!anyBelow]<-NA
-    recTimeBlim[names(anyBelow[!anyBelow])] <- NA
-    recTimeBpa[names(anyBelow[!anyBelow])] <- NA
-    
-    #year in which SSB fell below Blim
-    firstBelow[names(anyBelow[anyBelow])] <- apply(SSB1[,anyBelow], MARGIN=2, FUN = function(x){min(which(x<OM$refPts$Blim))})
-    #remove SSB records prior to the year when it fell below Blim
-    for (i in 1:length(firstBelow)){if (!is.na(firstBelow[i])) {SSB1[1:firstBelow[i],i]<-NA}}
-    
-    #Blim############
-    #did any iterations recover above Blim?
-    anyBackAboveBlim <- apply(SSB1[,names(anyBelow[anyBelow])], MARGIN=2, FUN = function(x){any(x>OM$refPts$Blim, na.rm=TRUE)})
-    #set the recovery time for those that did not recover to 0
-    recTimeBlim[names(anyBackAboveBlim[!anyBackAboveBlim])] <- 0
-    
-    #iterations which fell below and subsequently recovered
-    recoveredBlim <- intersect(names(anyBelow[anyBelow]),names(anyBackAboveBlim[anyBackAboveBlim]))
-    #get recovery time
-    recTimeBlim[recoveredBlim] <- apply(SSB1[,recoveredBlim], MARGIN=2, FUN = function(x){min(which(x>OM$refPts$Blim))})
-    
-    #recovery time
-    rBlim <- recTimeBlim-firstBelow
-    
-    Stats[["recBlim"]][["val"]] <- quantile(rBlim[rBlim>0],probs=percentiles,na.rm=T)
-    Stats[["recBlim"]][["nobelow"]] <- sum(!anyBelow)
-    Stats[["recBlim"]][["norecover"]] <- sum(!anyBackAboveBlim)
+    # #time to recovery after falling below Blim
+    # firstBelow <- recTimeBlim <- recTimeBpa <- rep(NA,dim(SSB.true)[6])
+    # names(firstBelow) <- names(recTimeBlim) <- names(recTimeBpa) <- as.character(seq(1,dim(SSB.true)[6]))
+    # 
+    # #drop the unused dimensions
+    # SSB1 <- drop(as.array(SSB.true))
+    # 
+    # #iterations during which SSB fell below Blim
+    # anyBelow <- apply(SSB1,MARGIN=2,FUN = function(x){any(x<OM$refPts$Blim)})
+    # #exclude those that never fell below Blim
+    # SSB1[,!anyBelow]<-NA
+    # recTimeBlim[names(anyBelow[!anyBelow])] <- NA
+    # recTimeBpa[names(anyBelow[!anyBelow])] <- NA
+    # 
+    # #year in which SSB fell below Blim
+    # firstBelow[names(anyBelow[anyBelow])] <- apply(SSB1[,anyBelow], MARGIN=2, FUN = function(x){min(which(x<OM$refPts$Blim))})
+    # #remove SSB records prior to the year when it fell below Blim
+    # for (i in 1:length(firstBelow)){if (!is.na(firstBelow[i])) {SSB1[1:firstBelow[i],i]<-NA}}
+    # 
+    # #Blim############
+    # #did any iterations recover above Blim?
+    # anyBackAboveBlim <- apply(SSB1[,names(anyBelow[anyBelow])], MARGIN=2, FUN = function(x){any(x>OM$refPts$Blim, na.rm=TRUE)})
+    # #set the recovery time for those that did not recover to 0
+    # recTimeBlim[names(anyBackAboveBlim[!anyBackAboveBlim])] <- 0
+    # 
+    # #iterations which fell below and subsequently recovered
+    # recoveredBlim <- intersect(names(anyBelow[anyBelow]),names(anyBackAboveBlim[anyBackAboveBlim]))
+    # #get recovery time
+    # recTimeBlim[recoveredBlim] <- apply(SSB1[,recoveredBlim], MARGIN=2, FUN = function(x){min(which(x>OM$refPts$Blim))})
+    # 
+    # #recovery time
+    # rBlim <- recTimeBlim-firstBelow
+    # 
+    # Stats[["recBlim"]][["val"]] <- quantile(rBlim[rBlim>0],probs=percentiles,na.rm=T)
+    # Stats[["recBlim"]][["nobelow"]] <- sum(!anyBelow)
+    # Stats[["recBlim"]][["norecover"]] <- sum(!anyBackAboveBlim)
     
     #Bpa############
     #did any iterations recover above Bpa?
@@ -501,7 +505,14 @@ for (mp in c("MP5.23")) {
 
     AllStats[[ac(ii)]] <- Stats
     
-  }
+    df  <- bind_rows(
+      df,
+      #AS 11/03/2021 update to iworms; MP 11/03/2021 including in the F loop
+      fsummary_df(runName=runName, OM=OM, MP=MP, ftgt=ii,
+                  Stats=Stats, lStatPer=lStatPer, 
+                  Fbarrange=c(range(FLS)[["minfbar"]], range(FLS)[["maxfbar"]])))
+    
+  } # end of loop over Fs
   
   settings <- fGetSettings(
     stats = AllStats, lStatPer=lStatPer, SimRuns=SimRuns, 
@@ -509,13 +520,13 @@ for (mp in c("MP5.23")) {
     OM=OM, MP=MP, niters=niters, nyr=nyr)
   # save(settings,file = file.path(Res.dir,runName,paste0(runName,"_eqSim_Settings.Rdata")))
   
-  df  <- fsummary_df(
-    runName=runName, simRuns = simRuns, FLSs=FLSs,
-    Res.dir = Res.dir, Plot.dir = Plot.dir,
-    lStatPer = lStatPer, simYears = simYears, xlab = MP$xlab,
-    OM = OM, MP = MP,
-    Fbarrange=c(range(FLS)[["minfbar"]], range(FLS)[["maxfbar"]]),
-    iworms=worms, dfassess=dfassess)   #AS 11/03/2021 update to iworms
+  # df  <- fsummary_df(
+  #   runName=runName, simRuns = simRuns, FLSs=FLSs,
+  #   Res.dir = Res.dir, Plot.dir = Plot.dir,
+  #   lStatPer = lStatPer, simYears = simYears, xlab = MP$xlab,
+  #   OM = OM, MP = MP,
+  #   Fbarrange=c(range(FLS)[["minfbar"]], range(FLS)[["maxfbar"]]),
+  #   iworms=worms, dfassess=dfassess)   #AS 11/03/2021 update to iworms
   
   ## Save data
   lStats <- list(stats = AllStats, runName = runName, lStatPer = lStatPer, 
@@ -542,4 +553,16 @@ for (mp in c("MP5.23")) {
   
 } # end of for loop MPs
 
+# test
+
+# df %>%
+#   filter(perfstat=="stock") %>%
+#   filter(year >= 2000) %>%
+#   ggplot(aes(x=year, y=data, group=iter)) +
+#   theme_publication() +
+#   theme(legend.position = "none") +
+#   geom_line(aes(colour=iter)) +
+#   geom_ribbon(aes(x=year, ymin=lower, ymax=upper), fill="blue", alpha=0.3) +
+#   expand_limits(y=0) +
+#   facet_wrap(~ftgt)
 
