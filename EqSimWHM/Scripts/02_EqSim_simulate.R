@@ -43,11 +43,11 @@ FLStockfile    <- "WGWIDE19.RData"
 #OM <- OM2.2; FLStockSimfile <- "WHOM_SS19_FLS_V2.RData"    #V2 new draw, contains variability in selection and weights
 
 #base case
-#OM <- OM2.2; FLStockSimfile <- "WHOM_SS19_FLS_V3.RData"
+OM <- OM2.2; FLStockSimfile <- "WHOM_SS19_FLS_V3.RData"
 
 #reduced recruitment scenarios
 #OM <- OM2.2.RR; FLStockSimfile <- "WHOM_SS19_FLS_V3_RR.RData"
-OM <- OM2.2.RR.5lowest; FLStockSimfile <- "WHOM_SS19_FLS_V3_RR_5lowest.RData"
+#OM <- OM2.2.RR.5lowest; FLStockSimfile <- "WHOM_SS19_FLS_V3_RR_5lowest.RData"
 
 
 #OM             <- OM2.2.WR                       #WGWIDE SS 2019, stochastic weights, selection; wrong reference points
@@ -120,8 +120,9 @@ yStart <- as.numeric(maxObsYear)
 yEnd <- yStart + nyr - 1
 simYears <- ac(seq(yStart,yEnd))
 numWorm <- 5
-#random selection for worms AC 11/03/2021, don't include the first iter (assessment)
-worms <- sample(seq(2,1000),numWorm)
+#random selection for worms AC 11/03/2021
+#iter 1 is the assessment estimates
+worms <- c(1,sample(seq(2,1000),numWorm))
 
 # assessment dataframe
 runName   <- paste(stock,assess,assessyear, OM$code,niters,sep="_")
@@ -134,8 +135,8 @@ dfassess  <- fassess_df(runName=runName, FLSs=FLSs, OM = OM, iworms = worms) #AC
 for (mp in c("MP5.23")) {
 #for (mp in c("MP5.23.DU")) {
 #for (mp in c("MP5.00","MP5.01","MP5.03",
-#             "MP5.10","MP5.11","MP5.13",
-#             "MP5.20","MP5.21","MP5.23")) {
+#            "MP5.10","MP5.11","MP5.13",
+#            "MP5.20","MP5.21","MP5.23")) {
 
   MP <- get(mp)
   
@@ -269,7 +270,7 @@ for (mp in c("MP5.23")) {
   #quick look
   #plot(stockTemplate)
   
-  #extend object to store neessary number of iterations
+  #extend object to store necessary number of iterations
   stockTemplate <- FLCore::propagate(stockTemplate,niters)
   
   #populate each stock object
@@ -364,6 +365,60 @@ for (mp in c("MP5.23")) {
     Stats[["recBpa"]][["nobelow"]] <- sum(!anyBelow)
     Stats[["recBpa"]][["norecover"]] <- sum(!anyBackAboveBpa)
     
+    
+    #proportion iterations recovered above Bpa for 3 years
+    #only applies for years in the simulation period
+    t <- SSB1[simYears,]
+    #remove any iterations where stock never falls below the threshold
+    t <- t[,apply(t,MARGIN=2,function(x){sum(x<OM$refPts$Bpa)})>0]
+
+    #mark all those values below the threshold
+    t[t<OM$refPts$Bpa] <- 0
+    runningTot <- rep(NA,length(simYears))
+    names(runningTot) <- simYears
+    runningTot[simYears[1]] <- 1
+    
+    #not very efficient but cycle through by simulation year
+    for (y in as.character(simYears[2]:simYears[length(simYears)])){
+      runningTot[y] <- sum(apply(t[1:which(simYears==y),],MARGIN=2,function(x)(any(x==0))))
+      t[y,!t[y,] == 0 & t[as.character(as.integer(y)-1),] == 0] <- 1
+      t[y,!t[y,] == 0 & t[as.character(as.integer(y)-1),] == 1] <- 2
+      t[y,!t[y,] == 0 & t[as.character(as.integer(y)-1),] == 2] <- 3
+      t[y,!t[y,] == 0 & t[as.character(as.integer(y)-1),] == 3] <- 3
+    }
+    
+    #proportion recovered is the proportion of iterations with value 3
+    propRec <- apply(t,MARGIN=1,function(x){sum(x==3)})/runningTot
+    
+    Stats[["precBpa"]][["val"]] <- propRec
+    
+    #proportion iterations recovered above Blim for 3 years
+    #only applies for years in the simulation period
+    t <- SSB1[simYears,]
+    #remove any iterations where stock never falls below the threshold
+    t <- t[,apply(t,MARGIN=2,function(x){sum(x<OM$refPts$Blim)})>0]
+    
+    #mark all those values below the threshold
+    t[t<OM$refPts$Blim] <- 0
+    runningTot <- rep(NA,length(simYears))
+    names(runningTot) <- simYears
+    runningTot[simYears[1]] <- 1
+    
+    #not very efficient but cycle through by simulation year
+    for (y in as.character(simYears[2]:simYears[length(simYears)])){
+      runningTot[y] <- sum(apply(t[1:which(simYears==y),],MARGIN=2,function(x)(any(x==0))))
+      t[y,!t[y,] == 0 & t[as.character(as.integer(y)-1),] == 0] <- 1
+      t[y,!t[y,] == 0 & t[as.character(as.integer(y)-1),] == 1] <- 2
+      t[y,!t[y,] == 0 & t[as.character(as.integer(y)-1),] == 2] <- 3
+      t[y,!t[y,] == 0 & t[as.character(as.integer(y)-1),] == 3] <- 3
+    }
+    
+    #proportion recovered is the proportion of iterations with value 3
+    propRec <- apply(t,MARGIN=1,function(x){sum(x==3)})/runningTot
+    
+    Stats[["precBlim"]][["val"]] <- propRec
+
+        
     #SSB error
     tSSB <- FLQuant(SimRuns[[ii]]$SSBratio[1:(yEnd-yStart+1),],
                     dim = c(1,yEnd-yStart+1,1,1,1,niters),
