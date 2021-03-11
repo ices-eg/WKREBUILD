@@ -58,7 +58,7 @@ OM2.2.RR <- list("code" = "OM2.2.RR",
               "pBlim" = 0.05)
 
 #artificially reduced recent recruitment (2014-2018 yc abundance halved in initial sim year)
-OM2.2.RR_5lowest <- list("code" = "OM2.2.RR_5lowest",
+OM2.2.RR.5lowest <- list("code" = "OM2.2.RR.5lowest",
                  "desc" = "WGWIDE19 RR 5 lowest",
                  "IM" = NA,
                  "RecAR" = TRUE, maxRecRes = c(3,-3),

@@ -6,7 +6,9 @@
 # OM = OM
 # numWorm = numWorm
 
-fassess_df <- function(runName, FLSs, OM, numWorm=5){
+#AC 11/03/2021 - updated worms parameter - now a vector of iteration numbers
+#fassess_df <- function(runName, FLSs, OM, numWorm=5){
+fassess_df <- function(runName, FLSs, OM, iworms){
   
   #produces a dataframe
 
@@ -53,7 +55,8 @@ fassess_df <- function(runName, FLSs, OM, numWorm=5){
     x %>% 
     distinct(iter) %>% 
     # arrange(iter) %>% 
-    filter(row_number() <= numWorm)
+    #filter(row_number() <= numWorm)
+    filter(row_number() %in% iworms)  #AC
   
   dfhist <- 
     x %>% 
@@ -122,13 +125,21 @@ fassess_df <- function(runName, FLSs, OM, numWorm=5){
 # numWorm = numWorm
 # dfassess = dfassess
 
+# fsummary_df <- function(runName, simRuns, FLSs, 
+#                         Res.dir, Plot.dir, 
+#                         lStatPer, OM, MP,  
+#                         simYears, xlab, 
+#                         Fbarrange=c(1,10),
+#                         numWorm=5, dfassess){
+
+#AC 11/03/2021 - updated worms parameter - now a vector of iteration numbers
 fsummary_df <- function(runName, simRuns, FLSs, 
                         Res.dir, Plot.dir, 
                         lStatPer, OM, MP,  
                         simYears, xlab, 
                         Fbarrange=c(1,10),
-                        numWorm=5, dfassess){
-
+                        iworms, dfassess){
+    
   #produces a dataframe
   #comparing the supplied performance statistic for ST,MT and LT for each runName
   #grouped by runName
@@ -290,7 +301,8 @@ fsummary_df <- function(runName, simRuns, FLSs,
       distinct(iter) %>% 
       mutate(iter=as.numeric(iter)) %>% 
       arrange(iter) %>% 
-      filter(row_number() <= 5) %>% 
+      #filter(row_number() <= 5) %>% 
+      filter(row_number() %in% iworms) %>% #AC
       mutate(iter=as.character(iter))
     
     # item <- "C"

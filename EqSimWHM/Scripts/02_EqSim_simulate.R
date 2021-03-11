@@ -13,7 +13,7 @@
 # 01/07/2020 included additional features by Martin Pastoors
 # ================================================================================================================
 
-# source(file.path(getwd(),"Scripts","01_EqSim_setup.R"))
+source(file.path(getwd(),"Scripts","01_EqSim_setup.R"))
 
 #Note: niters and nyr could be included in the OM or MP definitions
 
@@ -33,33 +33,40 @@ per2 <- 5
 #OM <- OM2.1   #WGWIDE 2019, const weights, selection
 
 # WHOM SS 2019
+stock          <- "WHOM"
+assess         <- "SS3"
+assessyear     <- "2019"
+FLStockfile    <- "WGWIDE19.RData"
 
-# stock          <- "WHOM"
-# assess         <- "SS3"
-# assessyear     <- "2019"
-# FLStockfile    <- "WGWIDE19.RData"
-# FLStockSimfile <- "WHOM_SS19_FLS_V3.RData"    #V3 improved variability in selection and weights
-# OM             <- OM2.2                       #WGWIDE SS 2019, stochastic weights, selection
+#early efforts
+#OM <- OM2.2; FLStockSimfile <- "WHOM_SS19_FLS_V1.RData"    #V1 iterations as single FLStock
+#OM <- OM2.2; FLStockSimfile <- "WHOM_SS19_FLS_V2.RData"    #V2 new draw, contains variability in selection and weights
 
-# FLStockSimfile <- "WHOM_SS19_FLS_V1.RData"    #V1 iterations as single FLStock
-# FLStockSimfile <- "WHOM_SS19_FLS_V2.RData"    #V2 new draw, contains variability in selection and weights
-# OM             <- OM2.2.WR                       #WGWIDE SS 2019, stochastic weights, selection; wrong reference points
+#base case
+#OM <- OM2.2; FLStockSimfile <- "WHOM_SS19_FLS_V3.RData"
+
+#reduced recruitment scenarios
+#OM <- OM2.2.RR; FLStockSimfile <- "WHOM_SS19_FLS_V3_RR.RData"
+OM <- OM2.2.RR.5lowest; FLStockSimfile <- "WHOM_SS19_FLS_V3_RR_5lowest.RData"
+
+
+#OM             <- OM2.2.WR                       #WGWIDE SS 2019, stochastic weights, selection; wrong reference points
 
 # WHOM SS 2020
-# stock          <- "WHOM"
-# assess         <- "SS3"
-# assessyear     <- "2020"
-# FLStockfile    <- "WGWIDE20.RData"
-# FLStockSimfile <- "WHOM_SS20_FLS_V2.RData"
-# OM             <- OM2.3                       #WGWIDE SS 2020, stochastic weights, selection
+#stock          <- "WHOM"
+#assess         <- "SS3"
+#assessyear     <- "2020"
+#FLStockfile    <- "WGWIDE20.RData"
+#FLStockSimfile <- "WHOM_SS20_FLS_V3.RData"
+#OM             <- OM2.3                       #WGWIDE SS 2020, stochastic weights, selection
 
 # WHOM SAM 2019
-stock          <- "WHOM"
-assess         <- "SAM"
-assessyear     <- "2019"
-FLStockfile    <- "WHOM_SAM19_FLS_WGWIDE.RData"
-FLStockSimfile <- "WHOM_SAM19_FLS_converged.RData"
-OM             <- OM2.4                         #WGWIDE SAM 2019, stochastic weights, selection
+#stock          <- "WHOM"
+#assess         <- "SAM"
+#assessyear     <- "2019"
+#FLStockfile    <- "WHOM_SAM19_FLS_WGWIDE.RData"
+#FLStockSimfile <- "WHOM_SAM19_FLS_converged.RData"
+#OM             <- OM2.4                         #WGWIDE SAM 2019, stochastic weights, selection
 # OM             <- OM2.4.WR                         #WGWIDE SAM 2019, stochastic weights, selection
 
 # WHOM SAM 2019
@@ -113,21 +120,23 @@ yStart <- as.numeric(maxObsYear)
 yEnd <- yStart + nyr - 1
 simYears <- ac(seq(yStart,yEnd))
 numWorm <- 5
+#random selection for worms AC 11/03/2021, don't include the first iter (assessment)
+worms <- sample(seq(2,1000),numWorm)
 
 # assessment dataframe
 runName   <- paste(stock,assess,assessyear, OM$code,niters,sep="_")
-dfassess  <- fassess_df(runName=runName, FLSs=FLSs, OM = OM, numWorm = numWorm) 
+dfassess  <- fassess_df(runName=runName, FLSs=FLSs, OM = OM, iworms = worms) #AC 11/03/2021 updated to iworms from numWorm
 
 # Loop over management procedures
 
 # mp <- c("MP5.11")
 # for (mp in c("MP5.00","MP5.01","MP5.10","MP5.11","MP5.20","MP5.21")) {
-# for (mp in c("MP5.23")) {
-for (mp in c("MP5.23.DU")) {
-    # for (mp in c("MP5.00","MP5.01","MP5.03",
+for (mp in c("MP5.23")) {
+#for (mp in c("MP5.23.DU")) {
+#for (mp in c("MP5.00","MP5.01","MP5.03",
 #             "MP5.10","MP5.11","MP5.13",
 #             "MP5.20","MP5.21","MP5.23")) {
-  
+
   MP <- get(mp)
   
   invisible(gc())
@@ -297,7 +306,8 @@ for (mp in c("MP5.23.DU")) {
     #SSB
     SSB.true <- ssb(Stocks[[ii]])
     Stats[["SSB"]][["val"]] <- fStatPercs(SSB.true, lStatPer=lStatPer)
-    Stats[["SSB"]][["worm"]] <- FLCore::iter(SSB.true,1:numWorm)
+    #Stats[["SSB"]][["worm"]] <- FLCore::iter(SSB.true,1:numWorm)
+    Stats[["SSB"]][["worm"]] <- FLCore::iter(SSB.true,worms)
     
     #time to recovery after falling below Blim
     firstBelow <- recTimeBlim <- recTimeBpa <- rep(NA,dim(SSB.true)[6])
@@ -361,7 +371,8 @@ for (mp in c("MP5.23.DU")) {
                                     area="unique",iter=ac(seq(1,niters))))
     
     Stats[["SSBratio"]][["val"]] <- fStatPercs(tSSB, lStatPer = lStatPer)
-    Stats[["SSBratio"]][["worm"]] <- FLCore::iter(tSSB,1:numWorm)
+    #Stats[["SSBratio"]][["worm"]] <- FLCore::iter(tSSB,1:numWorm)
+    Stats[["SSBratio"]][["worm"]] <- FLCore::iter(tSSB,worms)
     
     SSB.dev <- SimRuns[[ii]][["SSBdev"]]
     Stats[["SSB.dev"]] <- SSB.dev
@@ -369,7 +380,9 @@ for (mp in c("MP5.23.DU")) {
     #FBar - realised F
     FBar <- fbar(Stocks[[ii]])
     Stats[["FBar"]][["val"]] <- fStatPercs(FBar, lStatPer=lStatPer)
-    Stats[["FBar"]][["worm"]] <- FLCore::iter(FBar,1:numWorm)
+    #Stats[["FBar"]][["worm"]] <- FLCore::iter(FBar,1:numWorm)
+    Stats[["FBar"]][["worm"]] <- FLCore::iter(FBar,worms)
+    
     
     #FBar error
     tFBar <- FLQuant(SimRuns[[ii]]$Fratio[1:(yEnd-yStart+1),],
@@ -379,7 +392,8 @@ for (mp in c("MP5.23.DU")) {
     
     #browser()
     Stats[["Fratio"]][["val"]] <- fStatPercs(tFBar, lStatPer = lStatPer)
-    Stats[["Fratio"]][["worm"]] <- FLCore::iter(tFBar,1:numWorm)
+    #Stats[["Fratio"]][["worm"]] <- FLCore::iter(tFBar,1:numWorm)
+    Stats[["Fratio"]][["worm"]] <- FLCore::iter(tFBar,worms)
     
     Fdev <- SimRuns[[ii]][["Fdev"]]
     Stats[["Fdev"]] <- Fdev
@@ -387,7 +401,8 @@ for (mp in c("MP5.23.DU")) {
     #yield
     Catch <- catch(Stocks[[ii]])
     Stats[["Catch"]][["val"]] <- fStatPercs(Catch, lStatPer=lStatPer)
-    Stats[["Catch"]][["worm"]] <- FLCore::iter(Catch,1:numWorm)
+    #Stats[["Catch"]][["worm"]] <- FLCore::iter(Catch,1:numWorm)
+    Stats[["Catch"]][["worm"]] <- FLCore::iter(Catch,worms)
     
     #TAC
     tTAC <- FLQuant(SimRuns[[ii]]$TAC[1:(yEnd-yStart+1),],
@@ -396,7 +411,8 @@ for (mp in c("MP5.23.DU")) {
                                     area="unique",iter=ac(seq(1,niters))))
     
     Stats[["TAC"]][["val"]] <- fStatPercs(tTAC, lStatPer = lStatPer)
-    Stats[["TAC"]][["worm"]] <- FLCore::iter(tTAC,1:numWorm)
+    #Stats[["TAC"]][["worm"]] <- FLCore::iter(tTAC,1:numWorm)
+    Stats[["TAC"]][["worm"]] <- FLCore::iter(tTAC,worms)
     
     #IAV - multiplied by 100 this stat is the absolute percentage change (no indication of up or down)
     IAV <- abs(1-Catch[,as.character(seq(yStart+1,yEnd))]/Catch[,as.character(seq(yStart,yEnd-1))])
@@ -404,21 +420,24 @@ for (mp in c("MP5.23.DU")) {
     IAV <- ifelse(is.finite(IAV),IAV,NA)
     
     Stats[["IAV"]][["val"]] <- fStatPercs(IAV, lStatPer = lStatPer2)
-    Stats[["IAV"]][["worm"]] <- FLCore::iter(IAV,1:numWorm)
+    #Stats[["IAV"]][["worm"]] <- FLCore::iter(IAV,1:numWorm)
+    Stats[["IAV"]][["worm"]] <- FLCore::iter(IAV,worms)
     
     #IAV increases/decreases
     IAVup <- IAVdown <- IAVupdown <- Catch[,as.character(seq(yStart+1,yEnd))]/Catch[,as.character(seq(yStart,yEnd-1))] - 1
     IAVup[IAVup<0] <- NA
     IAVdown[IAVdown>0] <- NA
     
-    Stats[["IAVupdown"]][["worm"]] <- FLCore::iter(IAVupdown,1:numWorm)
+    #Stats[["IAVupdown"]][["worm"]] <- FLCore::iter(IAVupdown,1:numWorm)
+    Stats[["IAVupdown"]][["worm"]] <- FLCore::iter(IAVupdown,worms)
     Stats[["IAVup"]][["val"]] <- fStatPercs(IAVup, lStatPer = lStatPer2)
     Stats[["IAVdown"]][["val"]] <- fStatPercs(IAVdown, lStatPer = lStatPer2)
     
     #Recruitment
     Rec <- rec(Stocks[[ii]])
     Stats[["Rec"]][["val"]] <- fStatPercs(Rec, lStatPer=lStatPer)
-    Stats[["Rec"]][["worm"]] <- FLCore::iter(Rec,1:numWorm)
+    #Stats[["Rec"]][["worm"]] <- FLCore::iter(Rec,1:numWorm)
+    Stats[["Rec"]][["worm"]] <- FLCore::iter(Rec,worms)
     
     #probability that SSB is below RP (should this be true or observed SSB?)
     Stats[["pBlim"]][["val"]] <- fStatRisk(SSB = SSB.true, RP = OM$refPts$Blim, lStatPer = lStatPer)
@@ -441,7 +460,7 @@ for (mp in c("MP5.23.DU")) {
     lStatPer = lStatPer, simYears = simYears, xlab = MP$xlab,
     OM = OM, MP = MP,
     Fbarrange=c(range(FLS)[["minfbar"]], range(FLS)[["maxfbar"]]),
-    numWorm = numWorm, dfassess=dfassess) 
+    iworms=worms, dfassess=dfassess)   #AS 11/03/2021 update to iworms
   
   ## Save data
   lStats <- list(stats = AllStats, runName = runName, lStatPer = lStatPer, 
