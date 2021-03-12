@@ -28,6 +28,9 @@ per1 <- 5
 per2 <- 5
 # per3 is simply the remainder
 
+# Rebuilding threshold
+rebuiltThreshold <- 0.5
+
 # set up the OM =========================================================================================================
 
 #OM <- OM2.1   #WGWIDE 2019, const weights, selection
@@ -130,9 +133,9 @@ worms <- c(1,sample(seq(2,1000),numWorm))
 
 # Loop over management procedures
 
-# mp <- c("MP5.11")
+mp <- c("MP5.23")
 # for (mp in c("MP5.00","MP5.01","MP5.10","MP5.11","MP5.20","MP5.21")) {
-for (mp in c("MP5.23")) {
+# for (mp in c("MP5.23")) {
 #for (mp in c("MP5.23.DU")) {
 #for (mp in c("MP5.00","MP5.01","MP5.03",
 #            "MP5.10","MP5.11","MP5.13",
@@ -374,7 +377,8 @@ for (mp in c("MP5.23")) {
     t <- drop(as.array(SSB.true))[simYears,]
     
     #remove any iterations where stock never falls below the threshold
-    t <- t[,apply(t,MARGIN=2,function(x){sum(x<OM$refPts$Bpa)})>0]
+    #WHY WOULD YOU WANT TO REMOVE ITERATIONS WHERE THE STOCK NEVER FALLS BELOW THE THRESHOLD?
+    # t <- t[,apply(t,MARGIN=2,function(x){sum(x<OM$refPts$Bpa)})>0]
 
     #mark all those values below the threshold
     t[t<OM$refPts$Bpa] <- 0
@@ -396,11 +400,19 @@ for (mp in c("MP5.23")) {
     
     Stats[["precBpa"]][["val"]] <- propRec
     
+    # Calculate first year rebuilt to Blim
+    yearsRebuiltToBpa     <- propRec[propRec > rebuiltThreshold]
+    firstYearRebuiltToBpa <- min(an(attributes(yearsRebuiltToBpa)$names)) 
+    
+    Stats[["firstYearRebuiltToBpa"]][["val"]] <- firstYearRebuiltToBpa
+    
     #proportion iterations recovered above Blim for 3 years
     #only applies for years in the simulation period
     t <- drop(as.array(SSB.true))[simYears,]
+    
     #remove any iterations where stock never falls below the threshold
-    t <- t[,apply(t,MARGIN=2,function(x){sum(x<OM$refPts$Blim)})>0]
+    #WHY WOULD YOU WANT TO REMOVE ITERATIONS WHERE THE STOCK NEVER FALLS BELOW THE THRESHOLD?
+    # t <- t[,apply(t,MARGIN=2,function(x){sum(x<OM$refPts$Blim)})>0]
     
     #mark all those values below the threshold
     t[t<OM$refPts$Blim] <- 0
@@ -422,7 +434,12 @@ for (mp in c("MP5.23")) {
     
     Stats[["precBlim"]][["val"]] <- propRec
 
-        
+    # Calculate first year rebuilt to Blim
+    yearsRebuiltToBlim     <- propRec[propRec > rebuiltThreshold]
+    firstYearRebuiltToBlim <- min(an(attributes(yearsRebuiltToBlim)$names)) 
+    
+    Stats[["firstYearRebuiltToBlim"]][["val"]] <- firstYearRebuiltToBlim
+    
     #SSB error
     tSSB <- FLQuant(SimRuns[[ii]]$SSBratio[1:(yEnd-yStart+1),],
                     dim = c(1,yEnd-yStart+1,1,1,1,niters),
