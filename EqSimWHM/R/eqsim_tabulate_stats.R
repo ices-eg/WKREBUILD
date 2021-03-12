@@ -1,6 +1,6 @@
 fGetStatAsDF <- function(all,stat){
   #return the requested statistic as a dataframe
-  #all is a list with names corresponding to the target fishing mortality of the simulation
+  #all as a list with names corresponding to the target fishing mortality of the simulation
   #stat is one of SSB, Catch, FBar, TAC, IAV, Rec, pBlim, pBpa, pExt
   #all stats (in the age dimension of the FLQuant object are included)
   
@@ -9,14 +9,13 @@ fGetStatAsDF <- function(all,stat){
   
   for (f in names(all)){
     
-    t <- AllStats[[f]]
+    #t <- AllStats[[f]]
+    t <- all[[f]]
     Ftgt <- f
     OM <- t$OM$code
     MP <- t$MP$code
     yrs <- ac(c(t$simYears,'ST','MT','LT'))
-    
-    #browser()
-    
+
     if (stat=="SSB"){q <- t$SSB$val}
     else if (stat=="Catch") {q <- t$Catch$val}
     else if (stat=="FBar") {q <- t$FBar$val}
@@ -24,16 +23,14 @@ fGetStatAsDF <- function(all,stat){
     else if (stat=="pBpa") {q <- t$pBpa$val}
     else if (stat=="pExt") {q <- t$pExt$val}
     else if (stat=="IAV") {q <- t$IAV$val}
+    else if (stat=="precBpa") {q <- t$precBpa$val}
+    else if (stat=="precBlim") {q <- t$precBlim$val}
     else {stop("Invalid statistic")}
     
-    #if (stat=="IAV") browser()
-    
-    st <- dimnames(q)$age
-    q.yrs <- intersect(yrs,dimnames(q)$year)
-    
-    for (s in st){
+
+    if (stat %in% c("precBpa","precBlim")) {
       
-      st1 <- as.numeric(q[s,q.yrs,,,,])
+      q.yrs <- names(q)
       
       dfStats <- dplyr::bind_rows(dfStats,
                                   data.frame("Ftgt" = rep(Ftgt,length(q.yrs)),
@@ -41,9 +38,28 @@ fGetStatAsDF <- function(all,stat){
                                              "MP" = rep(MP,length(q.yrs)),
                                              "Per" = q.yrs,
                                              "Qty" = rep(stat,length(q.yrs)),
-                                             "Stat" = rep(s,length(q.yrs)),
-                                             "Val" = st1,
+                                             "Stat" = rep("Val",length(q.yrs)),
+                                             "Val" = q,
                                              stringsAsFactors = FALSE))
+    } else {
+    
+      st <- dimnames(q)$age
+      q.yrs <- intersect(yrs,dimnames(q)$year)
+      
+      for (s in st){
+        
+        st1 <- as.numeric(q[s,q.yrs,,,,])
+        
+        dfStats <- dplyr::bind_rows(dfStats,
+                                    data.frame("Ftgt" = rep(Ftgt,length(q.yrs)),
+                                               "OM" = rep(OM,length(q.yrs)),
+                                               "MP" = rep(MP,length(q.yrs)),
+                                               "Per" = q.yrs,
+                                               "Qty" = rep(stat,length(q.yrs)),
+                                               "Stat" = rep(s,length(q.yrs)),
+                                               "Val" = st1,
+                                               stringsAsFactors = FALSE))
+      }
     }
   }
   
@@ -52,11 +68,17 @@ fGetStatAsDF <- function(all,stat){
 }
 
 
-fMakeTable <- function(dfStats,q,s,om,mp,Title="",LowLimit=NA,HighLimit=NA,divFactor=1,dp=0){
-  
-  tData <- dfStats %>%
-    dplyr::filter(Per %in% c("ST","MT","LT") & Qty==q & Stat==s & OM==om & MP==mp) %>%
-    tidyr::pivot_wider(names_from="Ftgt",values_from = "Val",values_fn=list("Val"=function(x){round(x/divFactor,dp)}))
+fMakeTable <- function(dfStats,q,s,om,mp,Title="",LowLimit=NA,HighLimit=NA,divFactor=1,dp=0,pers=c("ST","MT","LT")){
+
+  if (any(is.na(pers))) {
+    tData <- dfStats %>%
+      dplyr::filter(Qty==q & Stat==s & OM==om & MP==mp) %>%
+      tidyr::pivot_wider(names_from="Ftgt",values_from = "Val",values_fn=list("Val"=function(x){round(x/divFactor,dp)}))
+  } else {
+    tData <- dfStats %>%
+      dplyr::filter(Per %in% pers & Qty==q & Stat==s & OM==om & MP==mp) %>%
+      tidyr::pivot_wider(names_from="Ftgt",values_from = "Val",values_fn=list("Val"=function(x){round(x/divFactor,dp)}))
+  }
   
   myft <- flextable::flextable(
     data = tData,
@@ -99,7 +121,9 @@ fTabulateStats <- function(sim, setting, plot.dir){
   dfStats <- dplyr::bind_rows(dfStats,fGetStatAsDF(all=AllStats,stat="pBlim"))
   dfStats <- dplyr::bind_rows(dfStats,fGetStatAsDF(all=AllStats,stat="pExt"))
   dfStats <- dplyr::bind_rows(dfStats,fGetStatAsDF(all=AllStats,stat="pBpa"))
-
+  dfStats <- dplyr::bind_rows(dfStats,fGetStatAsDF(all=AllStats,stat="precBpa"))
+  dfStats <- dplyr::bind_rows(dfStats,fGetStatAsDF(all=AllStats,stat="precBlim"))
+  
   #create a word doc
   my_doc <- officer::read_docx()
 
@@ -149,6 +173,14 @@ fTabulateStats <- function(sim, setting, plot.dir){
     body_add_par("Extinction Risk (%)", style = "Normal") %>%
     body_add_par("", style = "Normal") %>% 
     body_add_flextable(fMakeTable(dfStats,"pExt","mean",sim$OM$code,sim$MP$code,"mean",HighLimit=5,divFactor=0.01,dp=1)) %>%
+    body_add_break() %>%
+    body_add_par("Proportion Recovered Above Blim", style = "Normal") %>%
+    body_add_par("", style = "Normal") %>% 
+    body_add_flextable(fMakeTable(dfStats,"precBlim","Val",sim$OM$code,sim$MP$code,"Val",LowLimit=50,divFactor=0.01,dp=1,pers=NA)) %>%
+    body_add_break() %>%
+    body_add_par("Proportion Recovered Above Bpa", style = "Normal") %>%
+    body_add_par("", style = "Normal") %>% 
+    body_add_flextable(fMakeTable(dfStats,"precBpa","Val",sim$OM$code,sim$MP$code,"Val",LowLimit=50,divFactor=0.01,dp=1,pers=NA)) %>%
     body_add_break() %>%
     body_add_par("Settings used", style = "Normal") %>%
     body_add_flextable(fMakeSettingsTable(setting))
