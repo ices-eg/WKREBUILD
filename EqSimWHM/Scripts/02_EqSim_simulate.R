@@ -13,7 +13,7 @@
 # 01/07/2020 included additional features by Martin Pastoors
 # ================================================================================================================
 
-source(file.path(getwd(),"Scripts","01_EqSim_setup.R"))
+# source(file.path(getwd(),"Scripts","01_EqSim_setup.R"))
 
 #Note: niters and nyr could be included in the OM or MP definitions
 
@@ -133,9 +133,9 @@ worms <- c(1,sample(seq(2,1000),numWorm))
 
 # Loop over management procedures
 
-mp <- c("MP5.23")
+# mp <- c("MP5.23")
 # for (mp in c("MP5.00","MP5.01","MP5.10","MP5.11","MP5.20","MP5.21")) {
-# for (mp in c("MP5.23")) {
+for (mp in c("MP5.23")) {
 #for (mp in c("MP5.23.DU")) {
 #for (mp in c("MP5.00","MP5.01","MP5.03",
 #            "MP5.10","MP5.11","MP5.13",
@@ -582,4 +582,20 @@ mp <- c("MP5.23")
 #   geom_ribbon(aes(x=year, ymin=lower, ymax=upper), fill="blue", alpha=0.3) +
 #   expand_limits(y=0) +
 #   facet_wrap(~ftgt)
+
+# df %>%
+#   filter(perfstat %in% c("precblim","precbpa")) %>%
+# 
+#   ggplot(aes(x=year, y=mean, group=perfstat)) +
+#   theme_publication() +
+#   theme(legend.position = "none") +
+#   geom_line(aes(colour=perfstat)) +
+#   geom_vline(data=filter(df, perfstat %in% c("firstyearrebuildtobpa","firstyearrebuildtoblim")),
+#              aes(xintercept=mean, colour=perfstat)) +
+#   geom_text(data=filter(df, perfstat %in% c("firstyearrebuildtobpa","firstyearrebuildtoblim")),
+#              aes(x=mean, label=substr(ac(mean),3,4), colour=perfstat), 
+#             y=0.9, hjust=0) +
+#   expand_limits(y=0) +
+#   facet_wrap(~ftgt)
+
 
