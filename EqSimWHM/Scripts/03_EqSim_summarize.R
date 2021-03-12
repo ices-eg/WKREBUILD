@@ -686,7 +686,7 @@ plotrecovery <- function(
     
     geom_vline(data=p, aes(xintercept=mean, colour=perfstat), linetype="dashed") +
     
-    geom_hline(yintercept=myintercept, colour="gray", linetype="dashed") +
+    geom_hline(yintercept=myyintercept, colour="gray", linetype="dashed") +
     
     geom_text(data=filter(p, perfstat %in% c("precblim")),
               aes(x=mean, label=substr(ac(mean),3,4), colour=perfstat),
