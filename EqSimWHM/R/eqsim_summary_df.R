@@ -60,9 +60,7 @@ fsummary_df <- function(runName, OM, MP, ftgt,
   )
   
   # cat("Creating dataframe for run with f = ", ftgt, "\n")
-  names(Stats$recBpa)
-  
-  
+
   df <- 
     data.frame(stringsAsFactors = FALSE) %>% 
     
@@ -100,10 +98,6 @@ fsummary_df <- function(runName, OM, MP, ftgt,
            mutate_if(is.factor, as.character) %>% 
            mutate(perfstat = "iavdown", iter="all") %>% 
            rename(metric=age),
-         as.data.frame(Stats$IAVupdown$val)  %>%     
-           mutate_if(is.factor, as.character) %>% 
-           mutate(perfstat = "iavupdown", iter="all") %>% 
-           rename(metric=age),
     ) %>% 
     mutate(metric = case_when(
         metric == "50%" ~ "median",
@@ -125,9 +119,29 @@ fsummary_df <- function(runName, OM, MP, ftgt,
         mutate(perfstat = "pbpa", iter="all") %>% 
         rename(metric=age) %>% 
         filter(metric=="mean"),
+      as.data.frame(Stats$precBlim$val)  %>% 
+        setNames("data") %>% 
+        rownames_to_column(var="year") %>%
+        mutate(year = an(year)) %>% 
+        mutate(perfstat = "precblim", iter="all", metric="mean") ,
+      as.data.frame(Stats$precBpa$val)  %>% 
+        setNames("data") %>% 
+        rownames_to_column(var="year") %>% 
+        mutate(year = an(year)) %>% 
+        mutate(perfstat = "precbpa", iter="all", metric="mean") ,
     ) %>% 
     filter(!is.na(year)) %>% 
     
+    # add results without year variable (year is data instead)
+    bind_rows(
+      as.data.frame(Stats$firstYearRebuiltToBlim$val)  %>% 
+        setNames("data") %>% 
+        mutate(perfstat = "firstyearrebuildtoblim", iter="all", metric="mean") ,
+      as.data.frame(Stats$firstYearRebuiltToBpa$val)  %>% 
+        setNames("data") %>% 
+        mutate(perfstat = "firstyearrebuildtobpa", iter="all", metric="mean") ,
+    ) %>% 
+  
     # now make broader data frame
     tidyr::pivot_wider(names_from = metric, values_from=data) %>% 
     
@@ -155,7 +169,7 @@ fsummary_df <- function(runName, OM, MP, ftgt,
         mutate_if(is.factor, as.character) %>% 
         mutate(perfstat = "iavupdown",  metric="worm"),
     ) %>% 
-    filter(!is.na(year)) %>% 
+    # filter(!is.na(year)) %>% 
     
     # add descriptors
     mutate(
