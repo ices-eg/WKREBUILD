@@ -95,7 +95,6 @@ for (i in seq(1,nits)){
 }
 dfSAOp <- within(dfSAOp, fAge <- factor(Age, levels = ac(ages)))
 
-
 #generate some future weights and selections (mimicking EqSim)
 ass.yrs <- seq(dims(FLSs_WG19)$minyear,dims(FLSs_WG19)$maxyear)
 nass.yrs <- length(ass.yrs)
@@ -195,6 +194,23 @@ dfWHMAssess <- dplyr::bind_rows(dfWHMAssess,data.frame(WG = rep("WG20",dim(WG20)
                                                        Yr = seq(range(WG20)["minyear"],range(WG20)["maxyear"]), SSB = as.numeric(FLCore::ssb(WG20)), 
                                                        FBar = as.numeric(fbar(WG20)), Rec = as.numeric(rec(WG20))))
 table(dfWHMAssess$WG)
+
+#recruitment plot
+png(filename = file.path(Rep.dir,"WGWIDE19_Recr_TimeSeries.png"),width = 600, height = 600)
+plot(dfWHMAssess$Yr[dfWHMAssess$WG=="WG19"],dfWHMAssess$Rec[dfWHMAssess$WG=="WG19"]/1e6,type="l",
+     xlab="Year",ylab="Recruits (billions)",axes=F,ylim=c(0,60),xlim=c(1980,2020))
+points(dfWHMAssess$Yr[dfWHMAssess$WG=="WG19"],dfWHMAssess$Rec[dfWHMAssess$WG=="WG19"]/1e6,pch=19)
+axis(1)
+axis(2)
+dev.off()
+
+png(filename = file.path(Rep.dir,"WGWIDE19_SSBRecr_Scatter.png"),width = 600, height = 600)
+plot(dfWHMAssess$SSB[dfWHMAssess$WG=="WG19"]/1e6,dfWHMAssess$Rec[dfWHMAssess$WG=="WG19"]/1e6,type="p",xlim=c(0,6),
+     ylim=c(0,60),xlab="SSB (Mt)",ylab="Recruits (billions)",pch=19,axes=F)
+axis(1)
+axis(2)
+dev.off()
+
 
 #some plot limits
 x.mult <- 1.1
