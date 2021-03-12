@@ -134,10 +134,10 @@ fsummary_df <- function(runName, OM, MP, ftgt,
     
     # add results without year variable (year is data instead)
     bind_rows(
-      as.data.frame(Stats$firstYearRebuiltToBlim$val)  %>% 
+      as.data.frame(Stats$firstYearRebuiltToBlim)  %>% 
         setNames("data") %>% 
         mutate(perfstat = "firstyearrebuildtoblim", iter="all", metric="mean") ,
-      as.data.frame(Stats$firstYearRebuiltToBpa$val)  %>% 
+      as.data.frame(Stats$firstYearRebuiltToBpa)  %>% 
         setNames("data") %>% 
         mutate(perfstat = "firstyearrebuildtobpa", iter="all", metric="mean") ,
     ) %>% 
