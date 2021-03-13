@@ -129,3 +129,13 @@ OM2.5 <- list("code" = "OM2.5",
                             "Blim" = 611814, "MSYBtrigger" = 856540, "Bloss" = 604476),
               "pBlim" = 0.05)
 
+OM2.5.WR <- list("code" = "OM2.5.WR",
+              "desc" = "WGWIDE20_sam, wrong ref points",
+              "IM" = NA,
+              "SRR" = "SRR.WG20.SegReg_Blim.exterm", "RecAR" = TRUE, maxRecRes = c(3,-3),
+              "BioYrs" = c(2008,2017), "BioConst" = FALSE, 
+              "SelYrs" = c(2008,2017), "SelConst" = FALSE,
+              "Obs" = NA,
+              refPts = list("Fpa" = 0.074, "Flim" = 0.103, "Fmsy" = 0.074, "Bpa" = 1168272,
+                            "Blim" = 834480, "MSYBtrigger" = 1168272, "Bloss" = 761613),
+              "pBlim" = 0.05)
