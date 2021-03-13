@@ -67,22 +67,22 @@ sim_meta <-
 # myperfstat   = "pblim"
 # myvalue      = "mean"
 
-  # mystock      =  "WHOM"
-  # myassess     = c("SS3")
-  # myassessyear = c("2019")
-  # mysimulator  = "EQSIM"
-  # myom         = c("OM2.2")
-  # myniters     = "1000"
-  # mymp         = c("MP5.23")
-  # mynyrs       = "23"
-  # myftgt       = c(0.0, 0.05, 0.075, 0.10, 0.15)
-  # myperfstat   = "stock"
-  # mycolour     = "blue"
-  # myyintercept =  611814
-  # myvalue      = "median"
-  # myfacets     = c("mp","ftgt")
-  # myfirstyear  = 2000
-  # mylastyear   = as.numeric(NA)
+# mystock      =  "WHOM"
+# myassess     = c("SS3")
+# myassessyear = c("2019")
+# mysimulator  = "EQSIM"
+# myom         = c("OM2.2")
+# myniters     = "1000"
+# mymp         = c("MP5.23")
+# mynyrs       = "23"
+# myftgt       = c(0.0, 0.05, 0.075, 0.10, 0.15)
+# myperfstat   = "stock"
+# mycolour     = "blue"
+# myyintercept =  611814
+# myvalue      = "median"
+# myfacets     = c("mp","ftgt")
+# myfirstyear  = 2000
+# mylastyear   = as.numeric(NA)
 
 # plot function
 plotvar <- function(mystock      =  "WHOM",
