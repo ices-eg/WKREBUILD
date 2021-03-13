@@ -36,17 +36,17 @@ rebuiltThreshold <- 0.5
 #OM <- OM2.1   #WGWIDE 2019, const weights, selection
 
 # WHOM SS 2019
-stock          <- "WHOM"
-assess         <- "SS3"
-assessyear     <- "2019"
-FLStockfile    <- "WGWIDE19.RData"
+# stock          <- "WHOM"
+# assess         <- "SS3"
+# assessyear     <- "2019"
+# FLStockfile    <- "WGWIDE19.RData"
 
 #early efforts
 #OM <- OM2.2; FLStockSimfile <- "WHOM_SS19_FLS_V1.RData"    #V1 iterations as single FLStock
 #OM <- OM2.2; FLStockSimfile <- "WHOM_SS19_FLS_V2.RData"    #V2 new draw, contains variability in selection and weights
 
 #base case
-OM <- OM2.2; FLStockSimfile <- "WHOM_SS19_FLS_V3.RData"
+# OM <- OM2.2; FLStockSimfile <- "WHOM_SS19_FLS_V3.RData"
 
 #reduced recruitment scenarios
 #OM <- OM2.2.RR; FLStockSimfile <- "WHOM_SS19_FLS_V3_RR.RData"
@@ -64,21 +64,22 @@ OM <- OM2.2; FLStockSimfile <- "WHOM_SS19_FLS_V3.RData"
 #OM             <- OM2.3                       #WGWIDE SS 2020, stochastic weights, selection
 
 # WHOM SAM 2019
-#stock          <- "WHOM"
-#assess         <- "SAM"
-#assessyear     <- "2019"
-#FLStockfile    <- "WHOM_SAM19_FLS_WGWIDE.RData"
-#FLStockSimfile <- "WHOM_SAM19_FLS_converged.RData"
-#OM             <- OM2.4                         #WGWIDE SAM 2019, stochastic weights, selection
-# OM             <- OM2.4.WR                         #WGWIDE SAM 2019, stochastic weights, selection
-
-# WHOM SAM 2019
 # stock          <- "WHOM"
 # assess         <- "SAM"
-# assessyear     <- "2020"
-# FLStockfile    <- "WHOM_SAM20_FLS_WGWIDE.RData"
-# FLStockSimfile <- "WHOM_SAM20_FLS_converged.RData"
+# assessyear     <- "2019"
+# FLStockfile    <- "WHOM_SAM19_FLS_WGWIDE.RData"
+# FLStockSimfile <- "WHOM_SAM19_FLS_converged.RData"
+# OM             <- OM2.4                         #WGWIDE SAM 2019, stochastic weights, selection
+# OM             <- OM2.4.WR                         #WGWIDE SAM 2019, stochastic weights, selection
+
+# WHOM SAM 2020
+stock          <- "WHOM"
+assess         <- "SAM"
+assessyear     <- "2020"
+FLStockfile    <- "WHOM_SAM20_FLS_WGWIDE.RData"
+FLStockSimfile <- "WHOM_SAM20_FLS_converged.RData"
 # OM             <- OM2.5                       #WGWIDE SAM 2020, stochastic weights, selection
+OM             <- OM2.5.WR
 
 #assessment FLStock
 FLS <- loadRData(file.path(RData.dir,FLStockfile)) %>% FLCore::setPlusGroup(., 15)
@@ -136,7 +137,7 @@ worms <- c(1,sample(seq(2,1000),numWorm))
 # mp <- c("MP5.23")
 # for (mp in c("MP5.00","MP5.01","MP5.10","MP5.11","MP5.20","MP5.21")) {
 for (mp in c("MP5.23")) {
-#for (mp in c("MP5.23.DU")) {
+# for (mp in c("MP5.23.def")) {
 #for (mp in c("MP5.00","MP5.01","MP5.03",
 #            "MP5.10","MP5.11","MP5.13",
 #            "MP5.20","MP5.21","MP5.23")) {
