@@ -20,6 +20,7 @@ try(dev.off(),silent=TRUE)
 try(sink(),silent=TRUE)
 
 #packages
+library(stockassessment)  # for SAM forecasts etc. 
 library(FLCore)
 library(Cairo)    #plotting
 library(devEMF)   
@@ -33,6 +34,9 @@ library(icesTAF) # install.packages("icesTAF")
 
 library(tidyverse)
 options(dplyr.summarise.inform = FALSE)
+
+# library(Matrix)
+# library(gridExtra)
 
 #stop on warning
 #options(warn=2)
