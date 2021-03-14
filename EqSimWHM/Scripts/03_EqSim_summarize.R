@@ -17,39 +17,42 @@ gc()
 
 stats.dir <- file.path(Res.dir, "Stats")
 
-file.list <- list.files(path=stats.dir, pattern="eqSim_Stats", full.names=TRUE)
+file.list <- list.files(path=stats.dir, pattern="_Stats", full.names=TRUE)
 
 df <- data.frame(stringsAsFactors = FALSE)
 for (i in 1:length(file.list)) {
   print(file.list[i])
   df <- bind_rows(df, loadRData(file.list[i])[["df"]])
 }
-df <- df %>%  mutate(simulator = "EQSIM")
-df <- df %>%  mutate(period=ifelse(is.na(period) & year < (an(assessyear)-1), "HI",period)) 
+# NEEDS TO BE DONE IN SIMULATION CODE
+df <- df %>%  mutate(method = ifelse(is.na(method),"EQSIM", method))
+df <- df %>%  mutate(period = ifelse(is.na(period) & year < (an(assessyear)-1), "HI",period)) 
+df <- df %>%  mutate(metric = ifelse(is.na(metric) & !is.na(iter), "worm",metric)) 
+df <- df %>%  mutate(perfstat = ifelse(perfstat=="ssb", "stock",perfstat)) 
+df <- df %>%  mutate(ftgt = ac(ftgt)) 
 
 rebuiltThreshold <- 0.5
 
 
 # summary of simulations
-tmp <-
-  df %>% 
-  dplyr::select(stock, assess, assessyear, om, mp, niters, nyrs, ftgt) %>% 
-  distinct() %>% 
-  group_by(stock, assess, assessyear, om, mp, niters, nyrs) %>% 
-  summarise(
-    ftgt     = paste(ftgt, collapse=",")
-  ) 
-
 sim_meta <-
   df %>% 
-  dplyr::select(stock, assess, assessyear, om, mp, niters, nyrs, perfstat) %>% 
+  dplyr::select(stock, assess, assessyear, method, om, mp, niters, nyrs, ftgt) %>% 
   distinct() %>% 
-  group_by(stock, assess, assessyear, om, mp, niters, nyrs) %>% 
+  group_by(stock, assess, assessyear, method, om, mp, niters, nyrs) %>% 
   summarise(
-    perfstat     = paste(perfstat, collapse=",")
+    ftgt     = paste(ftgt, collapse=",")
   ) %>% 
-  left_join(tmp)
 
+  left_join(
+    df %>% 
+      dplyr::select(stock, assess, assessyear, method, om, mp, niters, nyrs, perfstat) %>% 
+      distinct() %>% 
+      group_by(stock, assess, assessyear, om, mp, method, niters, nyrs) %>% 
+      summarise(
+        perfstat     = paste(perfstat, collapse=",")
+      )    
+  )
 
 # mystock      =  "WHOM"
 # myassess     = "SAM"
@@ -68,19 +71,19 @@ sim_meta <-
 # myvalue      = "mean"
 
 # mystock      =  "WHOM"
-# myassess     = c("SS3")
+# myassess     = c("SAM")
 # myassessyear = c("2019")
-# mysimulator  = "EQSIM"
-# myom         = c("OM2.2")
+# mymethod     = c("EQSIM","SAMHCR")
+# myom         = c("OM2.4","no_OM")
 # myniters     = "1000"
-# mymp         = c("MP5.23")
+# mymp         = c("MP5.10")
 # mynyrs       = "23"
 # myftgt       = c(0.0, 0.05, 0.075, 0.10, 0.15)
 # myperfstat   = "stock"
 # mycolour     = "blue"
 # myyintercept =  611814
 # myvalue      = "median"
-# myfacets     = c("mp","ftgt")
+# myfacets     = c("method","ftgt")
 # myfirstyear  = 2000
 # mylastyear   = as.numeric(NA)
 
@@ -88,12 +91,12 @@ sim_meta <-
 plotvar <- function(mystock      =  "WHOM",
                     myassess     = "SAM",
                     myassessyear = c("2019","2020"),
-                    mysimulator  = "EQSIM",
+                    mymethod  = "EQSIM",
                     myom         = c("OM2.4","OM2.5"),
                     myniters     = "1000",
                     mymp         = c("MP5.23"),
                     mynyrs       = "23",
-                    myftgt       = c(0.0, 0.025, 0.05, 0.075, 0.10, 0.125, 0.15),
+                    myftgt       = ac(c(0.0, 0.025, 0.05, 0.075, 0.10, 0.125, 0.15)),
                     myperfstat   = "stock",
                     mycolour     = "blue",
                     myyintercept = 834000,
@@ -108,14 +111,13 @@ plotvar <- function(mystock      =  "WHOM",
     df %>% 
     filter(period     %in% c("HI")) %>% 
     filter(perfstat   %in% myperfstat) %>% 
-    filter(stock      %in% mystock) %>% 
     filter(assess     %in% myassess) %>% 
     filter(assessyear %in% myassessyear) %>% 
-    filter(simulator  %in% mysimulator) %>% 
+    filter(method     %in% mymethod) %>% 
     filter(om         %in% myom) %>% 
     filter(mp         %in% mymp) %>% 
-    filter(nyrs       %in% mynyrs) %>% 
-    filter(ftgt       %in% myftgt) %>% 
+    # filter(nyrs       %in% mynyrs) %>% 
+    filter(ftgt       %in% ac(myftgt)) %>% 
     
     {if(!is.na(myfirstyear)) filter(., year >= myfirstyear) else (.)} %>%    
     {if(!is.na(mylastyear))  filter(., year <= mylastyear) else (.)} %>%   
@@ -130,11 +132,11 @@ plotvar <- function(mystock      =  "WHOM",
     filter(stock      %in% mystock) %>% 
     filter(assess     %in% myassess) %>% 
     filter(assessyear %in% myassessyear) %>% 
-    filter(simulator  %in% mysimulator) %>% 
+    filter(method  %in% mymethod) %>% 
     filter(om         %in% myom) %>% 
     filter(mp         %in% mymp) %>%
-    filter(nyrs       %in% mynyrs) %>% 
-    filter(ftgt       %in% myftgt) %>% 
+    # filter(nyrs       %in% mynyrs) %>% 
+    filter(ftgt       %in% ac(myftgt)) %>% 
     
     {if(!is.na(myfirstyear)) filter(., year >= myfirstyear) else (.)} %>%    
     {if(!is.na(mylastyear))  filter(., year <= mylastyear) else (.)} %>%   
@@ -160,7 +162,7 @@ plotvar <- function(mystock      =  "WHOM",
     toupper(mystock),
     paste(unique(myassess), collapse="-"),
     paste(unique(myassessyear), collapse="-"),
-    paste(unique(mysimulator), collapse="-"),
+    paste(unique(mymethod), collapse="-"),
     paste(unique(myom), collapse="-"),
     paste(unique(myniters), collapse="-"),
     paste(unique(mymp), collapse="-"),
@@ -172,7 +174,9 @@ plotvar <- function(mystock      =  "WHOM",
           collapse="-"),
     sep="_"
   )
-    
+  
+  # h %>% filter(!is.na(iter), !is.na(data)) %>% View()
+  
   myfig <- 
 
     ggplot(d, aes(x=year, y=get(myvalue), group=mp)) +
@@ -186,7 +190,7 @@ plotvar <- function(mystock      =  "WHOM",
                 aes(ymin=lower, ymax=upper, group=iter), alpha=0.4, fill="gray") +
     
     # historical worms
-    geom_line(data=filter(h, metric=="worm"), 
+    geom_line(data=filter(h, metric=="worm"),
               aes(x=year, y=data, group=iter), colour="darkgray", size=0.5) +
     
     # historical median
@@ -231,10 +235,45 @@ plotvar <- function(mystock      =  "WHOM",
   
 }
 
+
+plotvar(mystock      = "WHOM",
+        myassess     = "SAM",
+        myassessyear = c("2019"),
+        mymethod     = c("EQSIM", "SAMHCR"),
+        myom         = c("OM2.4","no_OM"),
+        myniters     = "1000",
+        mymp         = c("MP5.10"),
+        mynyrs       = "23",
+        myftgt       = c(0.0, 0.05, 0.075, 0.10, 0.15),
+        myperfstat   = "stock",
+        mycolour     = "blue",
+        myyintercept = 611814,
+        myvalue      = "median",
+        myfacets     = c("method","ftgt"),
+        myfirstyear  = 2000)
+
+plotvar(mystock      = "WHOM",
+        myassess     = "SAM",
+        myassessyear = c("2020"),
+        mymethod     = c("EQSIM", "SAMHCR"),
+        myom         = c("OM2.5","no_OM"),
+        myniters     = "1000",
+        mymp         = c("MP5.10"),
+        mynyrs       = "23",
+        myftgt       = c(0.0, 0.05, 0.075, 0.10, 0.15),
+        myperfstat   = "stock",
+        mycolour     = "blue",
+        myyintercept = 611814,
+        myvalue      = "median",
+        myfacets     = c("method","ftgt"),
+        myfirstyear  = 2000)
+
+# df %>% filter(method=="SAMHCR", !is.na(iter)) %>% View()
+
 plotvar(mystock      = "WHOM",
         myassess     = "SS3",
         myassessyear = c("2019"),
-        mysimulator  = "EQSIM",
+        mymethod  = "EQSIM",
         myom         = c("OM2.2"),
         myniters     = "1000",
         mymp         = c("MP5.23"),
@@ -250,7 +289,7 @@ plotvar(mystock      = "WHOM",
 plotvar(mystock      = "WHOM",
         myassess     = "SS3",
         myassessyear = c("2019"),
-        mysimulator  = "EQSIM",
+        mymethod  = "EQSIM",
         myom         = c("OM2.2"),
         myniters     = "1000",
         mymp         = c("MP5.23"),
@@ -266,7 +305,7 @@ plotvar(mystock      = "WHOM",
 plotvar(mystock      = "WHOM",
         myassess     = c("SAM"),
         myassessyear = c("2019"),
-        mysimulator  = "EQSIM",
+        mymethod  = "EQSIM",
         myom         = c("OM2.4", "OM2.4.WR"),
         myniters     = "1000",
         mymp         = c("MP5.23"),
@@ -282,7 +321,7 @@ plotvar(mystock      = "WHOM",
 plotvar(mystock      = "WHOM",
         myassess     = "SS3",
         myassessyear = c("2019","2019"),
-        mysimulator  = "EQSIM",
+        mymethod  = "EQSIM",
         myom         = c("OM2.2","OM2.2.RR.5lowest"),
         myniters     = "1000",
         mymp         = c("MP5.23"),
@@ -528,7 +567,7 @@ plotvar(mystock      =  "WHOM",
 plotvar(mystock      =  "WHOM",
         myassess     = c("SS3"),
         myassessyear = c("2019"),
-        mysimulator  = "EQSIM",
+        mymethod  = "EQSIM",
         myom         = c("OM2.2.WR","OM2.2"),
         myniters     = "1000",
         mymp         = c("MP5.23"),
@@ -544,7 +583,7 @@ plotvar(mystock      =  "WHOM",
 plotvar(mystock      =  "WHOM",
         myassess     = c("SAM"),
         myassessyear = c("2019"),
-        mysimulator  = "EQSIM",
+        mymethod  = "EQSIM",
         myom         = c("OM2.4.WR","OM2.4"),
         myniters     = "1000",
         mymp         = c("MP5.23"),
@@ -560,7 +599,7 @@ plotvar(mystock      =  "WHOM",
 plotvar(mystock      =  "WHOM",
         myassess     = c("SS3"),
         myassessyear = c("2019"),
-        mysimulator  = "EQSIM",
+        mymethod  = "EQSIM",
         myom         = c("OM2.2"),
         myniters     = "1000",
         mymp         = c("MP5.23","MP5.23.DU"),
@@ -576,7 +615,7 @@ plotvar(mystock      =  "WHOM",
 plotvar(mystock      =  "WHOM",
         myassess     = c("SAM"),
         myassessyear = c("2019"),
-        mysimulator  = "EQSIM",
+        mymethod  = "EQSIM",
         myom         = c("OM2.4"),
         myniters     = "1000",
         mymp         = c("MP5.23","MP5.23.DU"),
@@ -593,7 +632,7 @@ plotvar(mystock      =  "WHOM",
 plotvar(mystock      =  "WHOM",
         myassess     = c("SAM"),
         myassessyear = c("2019"),
-        mysimulator  = "EQSIM",
+        mymethod  = "EQSIM",
         myom         = c("OM2.4"),
         myniters     = "1000",
         mymp         = c("MP5.23","MP5.23.def"),
@@ -616,7 +655,7 @@ plotrecovery <- function(
                     mystock      =  "WHOM",
                     myassess     = "SAM",
                     myassessyear = c("2019","2020"),
-                    mysimulator  = "EQSIM",
+                    mymethod  = "EQSIM",
                     myom         = c("OM2.4","OM2.5"),
                     myniters     = "1000",
                     mymp         = c("MP5.23"),
@@ -634,7 +673,7 @@ plotrecovery <- function(
     filter(stock      %in% mystock) %>% 
     filter(assess     %in% myassess) %>% 
     filter(assessyear %in% myassessyear) %>% 
-    filter(simulator  %in% mysimulator) %>% 
+    filter(method  %in% mymethod) %>% 
     filter(om         %in% myom) %>% 
     filter(mp         %in% mymp) %>% 
     filter(nyrs       %in% mynyrs) %>% 
@@ -650,7 +689,7 @@ plotrecovery <- function(
     filter(stock      %in% mystock) %>% 
     filter(assess     %in% myassess) %>% 
     filter(assessyear %in% myassessyear) %>% 
-    filter(simulator  %in% mysimulator) %>% 
+    filter(method  %in% mymethod) %>% 
     filter(om         %in% myom) %>% 
     filter(mp         %in% mymp) %>% 
     filter(nyrs       %in% mynyrs) %>% 
@@ -667,7 +706,7 @@ plotrecovery <- function(
     toupper(mystock),
     paste(unique(myassess), collapse="-"),
     paste(unique(myassessyear), collapse="-"),
-    paste(unique(mysimulator), collapse="-"),
+    paste(unique(mymethod), collapse="-"),
     paste(unique(myom), collapse="-"),
     paste(unique(myniters), collapse="-"),
     paste(unique(mymp), collapse="-"),
@@ -714,7 +753,7 @@ plotrecovery(
   mystock      =  "WHOM",
   myassess     = "SAM",
   myassessyear = c("2019","2020"),
-  mysimulator  = "EQSIM",
+  mymethod  = "EQSIM",
   myom         = c("OM2.4","OM2.5"),
   myniters     = "1000",
   mymp         = c("MP5.23"),
@@ -728,7 +767,7 @@ plotrecovery(
   mystock      =  "WHOM",
   myassess     = c("SS3", "SAM"),
   myassessyear = c("2019"),
-  mysimulator  = "EQSIM",
+  mymethod  = "EQSIM",
   myom         = c("OM2.2","OM2.4"),
   myniters     = "1000",
   mymp         = c("MP5.23"),
