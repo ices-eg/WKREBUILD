@@ -20,8 +20,8 @@
 #basic simulation settings
 #niters <- 10000
 #niters <- 1000
-niters <- 1000
-nyr <- 23
+niters  <- 1000
+nyr     <- 23
 
 # simulation periods
 per1 <- 5
