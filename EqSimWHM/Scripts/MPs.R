@@ -5,6 +5,8 @@
 
 F_targets     <- seq(0.0, 0.15, by=0.025)
 Uncertainties <- list("cvF" = 0.22, "phiF" = 0.03, "cvSSB" = 0.36, "phiSSB" = 0.51)
+Defaults <- list("cvF" = 0.24, "phiF" = 0.42, "cvSSB" = 0.24, "phiSSB" = 0.42)
+Perfect <- list("cvF" = 0, "phiF" = 0, "cvSSB" = 0, "phiSSB" = 0)
   
 #baseline, no harvest rule, no IAV control, no minimum TAC, no assessment/advice error
 MP1.0 <- list("code" = "MP1.0",
@@ -383,6 +385,19 @@ MP5.23.def <- list("code" = "MP5.23.def",
                "maxTAC" = NA,
                "TAC_IAV" = c(0.2,0.2),
                "Obs" = list("cvF" = 0.24, "phiF" = 0.42, "cvSSB" = 0.24, "phiSSB" = 0.42))
+
+
+#5.23 but zero assessment uncertainty
+MP5.23.perf <- list("code" = "MP5.23.perf",
+                   "desc" = "Double BP HCR with perfect assessment",
+                   "xlab" = "Double BP IAVBtrig",
+                   "HCRName" = "DoubleBP",
+                   "F_target" = F_targets,
+                   "B_trigger" = "MSYBtrigger",
+                   "minTAC" = NA,
+                   "maxTAC" = NA,
+                   "TAC_IAV" = c(0.2,0.2),
+                   "Obs" = Perfect)
 
 # ===========================================================================
 # Basic Test
