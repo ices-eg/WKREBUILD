@@ -51,6 +51,14 @@ nYrs_WG20 <- length(yrs_WG20)
 FLSs_WG19 <- loadRData(file=file.path(RData.dir,"WHOM_SS19_FLS_V2.RData"))
 FLSs_WG20 <- loadRData(file=file.path(RData.dir,"WHOM_SS20_FLS_V2.RData"))
 
+#maturity
+dfMat <- data.frame(Age=ages,Mat=as.numeric(FLCore::mat(WG19)[,'2018']))
+gMat <- ggplot(data = select(dfMat,Age,Maturity=Mat), mapping = aes(x=Age,y=Maturity)) + geom_line(lwd=1) + ylab("Proportion Mature")
+png(filename = file.path(Rep.dir,"WGWIDE19_Maturity.png"),width = 600, height = 600)
+print(gMat)
+dev.off()
+
+
 #weight at age data
 dfWeights <- data.frame(WG=c(),Year=c(),Age=c(),Var=c(),Wgt=c())
 
