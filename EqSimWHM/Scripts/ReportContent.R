@@ -256,7 +256,7 @@ ggRec_WG19 <- ggplot(data = out, mapping = aes(x=rec)) +
   stat_ecdf(geom = "line", pad=FALSE) + xlim(0,1.5e7) +
   stat_ecdf(data = filter(dfWHMAssess,WG=="WG19" & Yr>=1995 & Yr<=2018), 
             mapping = aes(x=Rec), geom="point", pad=FALSE) +
-  xlab("Recruits") + ylab("Cumulative Dist") + ggtitle("ECDF Recruitment, SS WGWIDE 19 (1995-2017)")
+  xlab("Recruits (000's)") + ylab("Cumulative Dist") + ggtitle("ECDF Recruitment, SS WGWIDE 19 (1995-2017)")
 
 png(filename = file.path(Rep.dir,"ECDF_SS_WGWIDE19.png"), width = 600, height = 400)
 print(ggRec_WG19)
