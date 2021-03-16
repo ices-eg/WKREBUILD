@@ -141,8 +141,8 @@ samsummary_df <- function(FC, ftgt, Settings, FLSs){
       dfsim %>%
         filter(perfstat=="stock") %>% 
         group_by(year, period) %>% 
-        summarise(nbelowblim = sum(stock<Settings[["blim"]])) %>% 
-        mutate(data = nbelowblim / Settings[["niters"]]) %>% 
+        summarise(nbelowblim = sum(stock<Settings[["Blim"]])) %>% 
+        mutate(mean = nbelowblim / Settings[["niters"]]) %>% 
         mutate(perfstat = "pblim") %>% 
         dplyr::select(-nbelowblim)
     ) %>% 
@@ -156,15 +156,19 @@ samsummary_df <- function(FC, ftgt, Settings, FLSs){
         arrange(iter, year) %>% 
         mutate(v1 = lag(data, n=1),
                v2 = lag(data, n=2)) %>% 
-        mutate(recovblim = ifelse(v2 >= Blim & v1 >= Blim & data >= Blim, TRUE, FALSE),
-               recovbpa  = ifelse(v2 >= Bpa & v1 >= Bpa & data >= Bpa, TRUE, FALSE)) %>% 
+        mutate(precblim = ifelse(v2 >= Settings[["Blim"]] & 
+                                 v1 >= Settings[["Blim"]] & 
+                                 data >= Settings[["Blim"]], TRUE, FALSE),
+               precbpa  = ifelse(v2 >= Settings[["Bpa"]] & 
+                                 v1 >= Settings[["Bpa"]] & 
+                                 data >= Settings[["Bpa"]], TRUE, FALSE)) %>% 
         filter(!is.na(v1), !is.na(v2)) %>% 
         group_by(year) %>% 
         summarize(
-          recovblim = sum(recovblim, na.rm=TRUE)/n(),
-          recovbpa  = sum(recovbpa, na.rm=TRUE)/n()
+          precblim = sum(precblim, na.rm=TRUE)/n(),
+          precbpa  = sum(precbpa, na.rm=TRUE)/n()
         ) %>% 
-        pivot_longer(names_to="perfstat", values_to="data",recovblim:recovbpa) 
+        pivot_longer(names_to="perfstat", values_to="mean",precblim:precbpa) 
     ) %>% 
     
     # add first year rebuilt to reference point
@@ -176,20 +180,24 @@ samsummary_df <- function(FC, ftgt, Settings, FLSs){
         arrange(iter, year) %>% 
         mutate(v1 = lag(data, n=1),
                v2 = lag(data, n=2)) %>% 
-        mutate(recovblim = ifelse(v2 >= Blim & v1 >= Blim & data >= Blim, TRUE, FALSE),
-               recovbpa  = ifelse(v2 >= Bpa & v1 >= Bpa & data >= Bpa, TRUE, FALSE)) %>% 
+        mutate(precblim = ifelse(v2 >= Settings[["Blim"]] & 
+                                   v1 >= Settings[["Blim"]] & 
+                                   data >= Settings[["Blim"]], TRUE, FALSE),
+               precbpa  = ifelse(v2 >= Settings[["Bpa"]] & 
+                                   v1 >= Settings[["Bpa"]] & 
+                                   data >= Settings[["Bpa"]], TRUE, FALSE)) %>% 
         filter(!is.na(v1), !is.na(v2)) %>% 
         group_by(year) %>% 
         summarize(
-          recovblim = sum(recovblim, na.rm=TRUE)/n(),
-          recovbpa  = sum(recovbpa, na.rm=TRUE)/n()
+          precblim = sum(precblim, na.rm=TRUE)/n(),
+          precbpa  = sum(precbpa, na.rm=TRUE)/n()
         ) %>% 
-        pivot_longer(names_to="perfstat", values_to="data",recovblim:recovbpa) %>% 
+        pivot_longer(names_to="perfstat", values_to="mean",precblim:precbpa) %>% 
         group_by(perfstat) %>% 
-        filter(data >= 0.5) %>% 
+        filter(mean >= 0.5) %>% 
         filter(year == min(year)) %>% 
-        dplyr::select(-data) %>% 
-        rename(data=year) %>% 
+        dplyr::select(-mean) %>% 
+        rename(mean=year) %>% 
         mutate(perfstat = gsub("recov","firstyearrebuildto", perfstat))
     ) %>% 
     
@@ -211,6 +219,7 @@ samsummary_df <- function(FC, ftgt, Settings, FLSs){
       om = Settings[["om"]]          ,
       mp = Settings[["mp"]]          ,
       runname = Settings[["runName"]]     ,
+      blim = Settings[["Blim"]]         ,
       bpa = Settings[["Bpa"]]         ,
       msybtrig = Settings[["MSYBtrigger"]] ,
       fmsy = Settings[["Fmsy"]]        ,
