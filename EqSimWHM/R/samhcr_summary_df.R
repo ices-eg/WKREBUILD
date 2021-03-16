@@ -1,4 +1,4 @@
-#eqsim_summary_df
+#samhcr_summary_df
 
 # FC = FC
 # ftgt = ftgt
@@ -28,7 +28,7 @@ samsummary_df <- function(FC, ftgt, Settings, FLSs){
     mutate(year = an(year))
   
   # set small ftgt to zero
-  ftgt = ifelse(ftgt==0.01, 0.0, ftgt)
+  ftgt = ifelse(ftgt <= 0.01, 0.0, ftgt)
   
 
   # make data frame out of the historical iterations
@@ -80,8 +80,10 @@ samsummary_df <- function(FC, ftgt, Settings, FLSs){
             perfstat = tolower(v),
             year     = as.numeric(FC[[y]]$year),
             age      = "all",
+            metric   = "worm",
             stringsAsFactors = FALSE
           )  %>%
+          mutate(perfstat=ifelse(perfstat=="ssb","stock",perfstat)) %>% 
           left_join(years, by="year")
         ) 
     }  # end of y loop
@@ -143,6 +145,52 @@ samsummary_df <- function(FC, ftgt, Settings, FLSs){
         mutate(data = nbelowblim / Settings[["niters"]]) %>% 
         mutate(perfstat = "pblim") %>% 
         dplyr::select(-nbelowblim)
+    ) %>% 
+    
+    # add calculated probability of recovery above threshold
+    bind_rows(
+      dfsim %>%
+        filter(perfstat == "stock") %>% 
+        filter(year >= an(CU[1])) %>% 
+        group_by(iter) %>% 
+        arrange(iter, year) %>% 
+        mutate(v1 = lag(data, n=1),
+               v2 = lag(data, n=2)) %>% 
+        mutate(recovblim = ifelse(v2 >= Blim & v1 >= Blim & data >= Blim, TRUE, FALSE),
+               recovbpa  = ifelse(v2 >= Bpa & v1 >= Bpa & data >= Bpa, TRUE, FALSE)) %>% 
+        filter(!is.na(v1), !is.na(v2)) %>% 
+        group_by(year) %>% 
+        summarize(
+          recovblim = sum(recovblim, na.rm=TRUE)/n(),
+          recovbpa  = sum(recovbpa, na.rm=TRUE)/n()
+        ) %>% 
+        pivot_longer(names_to="perfstat", values_to="data",recovblim:recovbpa) 
+    ) %>% 
+    
+    # add first year rebuilt to reference point
+    bind_rows(
+      dfsim %>%
+        filter(perfstat == "stock") %>% 
+        filter(year >= an(CU[1])) %>% 
+        group_by(iter) %>% 
+        arrange(iter, year) %>% 
+        mutate(v1 = lag(data, n=1),
+               v2 = lag(data, n=2)) %>% 
+        mutate(recovblim = ifelse(v2 >= Blim & v1 >= Blim & data >= Blim, TRUE, FALSE),
+               recovbpa  = ifelse(v2 >= Bpa & v1 >= Bpa & data >= Bpa, TRUE, FALSE)) %>% 
+        filter(!is.na(v1), !is.na(v2)) %>% 
+        group_by(year) %>% 
+        summarize(
+          recovblim = sum(recovblim, na.rm=TRUE)/n(),
+          recovbpa  = sum(recovbpa, na.rm=TRUE)/n()
+        ) %>% 
+        pivot_longer(names_to="perfstat", values_to="data",recovblim:recovbpa) %>% 
+        group_by(perfstat) %>% 
+        filter(data >= 0.5) %>% 
+        filter(year == min(year)) %>% 
+        dplyr::select(-data) %>% 
+        rename(data=year) %>% 
+        mutate(perfstat = gsub("recov","firstyearrebuildto", perfstat))
     ) %>% 
     
     mutate(iter = as.numeric(NA)) %>% 
