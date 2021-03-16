@@ -100,6 +100,7 @@ Settings[["stock"]]       <- stock
 Settings[["om"]]          <- om
 Settings[["mp"]]          <- mp
 Settings[["runName"]]     <- runName
+Settings[["Blim"]]        <- Blim
 Settings[["Bpa"]]         <- Bpa
 Settings[["MSYBtrigger"]] <- MSYBtrig
 Settings[["Fmsy"]]        <- Fmsy
