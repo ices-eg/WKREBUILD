@@ -7,31 +7,10 @@
 # 13/03/2021 adapted to new simulation outputs for WKWHMRP workshop
 # ============================================================================
 
-# Drive    <- "D:"
-# Base.dir <- file.path(Drive,"GIT")
-# MSE.dir <- file.path(Base.dir,"wk_WKREBUILD","EqSimWHM")
-# Res.dir <- file.path(MSE.dir, "Results")
-# RData.dir <- file.path(MSE.dir, "RData")
-
-# assess         <- "SAM"
-# assessyear     <- "2019"
-# name           <- "WHOM_SAM19_fit" 
-# FLStockfile    <- "WHOM_SAM19_FLS_WGWIDE.RData"
-# FLStockSimfile <- "WHOM_SAM19_FLS_converged.RData"
-
-assess         <- "SAM"
-assessyear     <- "2020"
-name           <- "WHOM_SAM20_fit"
-FLStockfile    <- "WHOM_SAM20_FLS_WGWIDE.RData"
-FLStockSimfile <- "WHOM_SAM20_FLS_converged.RData"
-
-fit            <- loadRData(file.path(RData.dir, paste0(name, ".RData")))
-FLS            <- loadRData(file.path(RData.dir,FLStockfile)) %>% FLCore::setPlusGroup(., 15)
-FLSs           <- loadRData(file.path(RData.dir,FLStockSimfile))
-FLSs@stock     <- ssb(FLSs)
-
-# define empty lists
-Stats <- Settings <- list()
+stock   = "WHOM"
+assess  = "SAM"
+om      = "no_OM"
+method  = "SAMHCR"
 
 # Define function arguments ---------
 Blim       <- 611814
@@ -50,8 +29,33 @@ per2       <- 5    # per3 is simply the remainder
 # Rebuilding threshold
 rebuiltThreshold <- 0.5
 
+assessyear     <- "2019"
+name           <- "WHOM_SAM19_fit"
+FLStockfile    <- "WHOM_SAM19_FLS_WGWIDE.RData"
+FLStockSimfile <- "WHOM_SAM19_FLS_converged.RData"
+# mp             <- "MP5.10"; Fscenario = 2
+mp             <- "MP5.20"; Fscenario = 5
+
+# assessyear     <- "2020"
+# name           <- "WHOM_SAM20_fit"
+# FLStockfile    <- "WHOM_SAM20_FLS_WGWIDE.RData"
+# FLStockSimfile <- "WHOM_SAM20_FLS_converged.RData"
+# mp             <- "MP5.10"; Fscenario = 2
+# mp             <- "MP5.20"; Fscenario = 5
+
+fit            <- loadRData(file.path(RData.dir, paste0(name, ".RData")))
+FLS            <- loadRData(file.path(RData.dir,FLStockfile)) %>% FLCore::setPlusGroup(., 15)
+FLSs           <- loadRData(file.path(RData.dir,FLStockSimfile))
+FLSs@stock     <- ssb(FLSs)
+
+runName = paste(stock,assess,assessyear, om,niters, mp,nyr,sep="_")
+
+# define empty lists
+Stats <- Settings <- list()
+
+
 minObsYear <- min(fit$data$years)
-maxObsYear <- max(fit$data$years)
+maxObsYear <- an(assessyear) - 1
 obsYears   <- ac(seq(minObsYear,maxObsYear))
 yStart     <- as.numeric(maxObsYear)
 yEnd       <- yStart + nyr - 1
@@ -87,13 +91,6 @@ Rdist <- FALSE # recruitment with mean and sd from sampled years
 F.RW  <- FALSE # if false no RW with increase variance in F in the forecast
 SR    <- TRUE # for SR relationship for rec coming from SRpar
 
-om      = "no_OM"
-mp      = "MP5.10"; Fscenario = 2
-# mp      = "MP5.20"; Fscenario = 5
-assess  = "SAM"
-method  = "SAMHCR"
-stock   = "WHOM"
-runName = paste(stock,assess,assessyear, om,niters, mp,nyr,sep="_")
 
 # create settings list
 Settings[["assess"]]      <- assess
@@ -133,7 +130,7 @@ df <- data.frame(stringsAsFactors = FALSE)
 set.seed(12345) # same seed to repeat output
 # i <- 4
 # F_targets <- c(seq(0.05,0.1,by=0.025))
-F_targets <- c(0.01, seq(0.025,0.15,by=0.025))
+F_targets <- c(1E-8, seq(0.025,0.15,by=0.025))
 
 for (i in 1:length(F_targets)) {
   
