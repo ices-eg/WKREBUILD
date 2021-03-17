@@ -40,12 +40,10 @@ rebuiltThreshold <- 0.5
 # assess         <- "SS3"
 # assessyear     <- "2019"
 # FLStockfile    <- "WGWIDE19.RData"
-# OM <- OM2.2;              FLStockSimfile <- "WHOM_SS19_FLS_V3.RData"
+# OM <- OM2.2;            
 # OM <- OM2.2.RR;         FLStockSimfile <- "WHOM_SS19_FLS_V3_RR.RData"
 # OM <- OM2.2.RR.5lowest; FLStockSimfile <- "WHOM_SS19_FLS_V3_RR_5lowest.RData"
-
-
-#OM             <- OM2.2.WR                       #WGWIDE SS 2019, stochastic weights, selection; wrong reference points
+# OM             <- OM2.2.WR;     FLStockSimfile <- "WHOM_SS19_FLS_V3.RData"      #wrong reference points
 
 # WHOM SS 2020
 stock          <- "WHOM"
@@ -53,7 +51,8 @@ assess         <- "SS3"
 assessyear     <- "2020"
 FLStockfile    <- "WGWIDE20.RData"
 FLStockSimfile <- "WHOM_SS20_FLS_V3.RData"
-OM             <- OM2.3                       #WGWIDE SS 2020, stochastic weights, selection
+# OM             <- OM2.3                       #WGWIDE SS 2020, stochastic weights, selection
+OM             <- OM2.3.WR                       #WGWIDE SS 2020, wrong reference points
 
 # WHOM SAM 2019
 # stock          <- "WHOM"
@@ -128,12 +127,12 @@ worms <- c(1,sample(seq(2,1000),numWorm))
 
 # mp <- c("MP5.23")
 # for (mp in c("MP5.00","MP5.01","MP5.10","MP5.11","MP5.20","MP5.21")) {
-# for (mp in c("MP5.23")) {
+for (mp in c("MP5.23")) {
 # for (mp in c("MP5.23.def")) {
-for (mp in c("MP5.00","MP5.01","MP5.03",
-             "MP5.10","MP5.11","MP5.13",
-             "MP5.20","MP5.21","MP5.23", 
-                               "MP5.23.def")) {
+# for (mp in c("MP5.00","MP5.01","MP5.03",
+#              "MP5.10","MP5.11","MP5.13",
+#              "MP5.20","MP5.21","MP5.23", 
+#                                "MP5.23.def")) {
 
   MP <- get(mp)
   
