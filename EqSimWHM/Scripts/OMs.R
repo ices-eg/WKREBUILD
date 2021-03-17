@@ -93,6 +93,18 @@ OM2.3 <- list("code" = "OM2.3",
                             "Blim" = 834480, "MSYBtrigger" = 1168272, "Bloss" = 761613),
               "pBlim" = 0.05)
 
+#WGWIDE2020 Update assessment, IBPWHM reference points, stochastic bio and selection
+OM2.3.WR <- list("code" = "OM2.3.WR",
+              "desc" = "WGWIDE20; wrong reference points",
+              "IM" = NA,
+              "SRR" = "SRR.WG20.SegReg_Blim.exterm", "RecAR" = TRUE, maxRecRes = c(3,-3),
+              "BioYrs" = c(2009,2018), "BioConst" = FALSE, 
+              "SelYrs" = c(2009,2018), "SelConst" = FALSE,
+              "Obs" = NA,
+              refPts = list("Fpa" = 0.115, "Flim" = 0.161, "Fmsy" = 0.115, "Bpa" = 856540,
+                            "Blim" = 611814, "MSYBtrigger" = 856540, "Bloss" = 604476),
+              "pBlim" = 0.05)
+
 #WGWIDE2019 SAM assessment, IBPWHM method for reference points, stochastic bio and selection
 OM2.4 <- list("code" = "OM2.4",
               "desc" = "WGWIDE19_sam",
