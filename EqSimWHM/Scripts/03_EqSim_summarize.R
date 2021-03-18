@@ -321,6 +321,102 @@ plotvar <- function(mystock      =  "WHOM",
   
 }
 
+#assessment/advice error investigations
+
+#const F
+#stock development
+plotvar(mystock      = "WHOM", myassess     = "SS3",
+        myassessyear = c("2019"), mymethod  = "EQSIM",
+        myom         = c("OM2.2"), myniters     = "1000",
+        mymp         = c("MP5.00","MP5.00.perf","MP5.00.def"),
+        mynyrs       = "23", myftgt       = c(0.0, 0.05, 0.075, 0.10, 0.15),
+        myperfstat   = "stock", mycolour     = "blue",
+        myyintercept = 611814, myvalue      = "median",
+        myfacets     = c("mp","ftgt"), myfirstyear  = 2000)
+
+#risk
+plotvar(mystock      = "WHOM", myassess     = "SS3",
+        myassessyear = c("2019"), mymethod  = "EQSIM",
+        myom         = c("OM2.2"), myniters     = "1000",
+        mymp         = c("MP5.00","MP5.00.perf","MP5.00.def"),
+        mynyrs       = "23", myftgt       = c(0.0, 0.05, 0.075, 0.10, 0.15),
+        myperfstat   = "pblim", mycolour     = "blue",
+        myyintercept = NA, myvalue      = "mean",
+        myfacets     = c("mp","ftgt"), myfirstyear  = 2020)
+
+plotvar(mystock      = "WHOM", myassess     = "SS3",
+        myassessyear = c("2019"), mymethod  = "EQSIM",
+        myom         = c("OM2.2"), myniters     = "1000",
+        mymp         = c("MP5.23","MP5.23.perf","MP5.23.def"),
+        mynyrs       = "23", myftgt       = c(0.0, 0.05, 0.075, 0.10, 0.15),
+        myperfstat   = "pblim", mycolour     = "blue",
+        myyintercept = NA, myvalue      = "mean",
+        myfacets     = c("mp","ftgt"), myfirstyear  = 2020)
+
+MPLookup <- c("MP5.00" = "WGWIDE19", "MP5.00.perf" = "Perfect Knowledge", "MP5.00.def" = "Defaults (WKMSYREF)")
+df <- dplyr::mutate(df,Title=paste0("Constant Ftarget = ",ftgt),MPDesc=MPLookup[mp])
+ggplot(data = filter(df,perfstat=="pblim" & om=="OM2.2" & mp %in% c("MP5.00","MP5.00.perf","MP5.00.def") 
+                     & nyrs==100 & ftgt %in% c(0.025,0.05,0.075,0.1)), 
+       mapping = aes(x=year, y=mean, group=MPDesc, col=MPDesc)) + geom_line() + facet_wrap(~Title) + 
+  ylim(0,0.35) + xlim(2020,2050) + ylab("Risk to Blim (%)") + xlab("Year") + 
+  theme(legend.position = "bottom",legend.title = element_blank()) + ggtitle("Risk Sensitivity to Assessment/Advice Error")
+
+MPLookup <- c("MP5.23" = "WGWIDE19", "MP5.23.perf" = "Perfect Knowledge", "MP5.23.def" = "Defaults (WKMSYREF)")
+df <- dplyr::mutate(df,Title=paste0("Double BP With IAV, Ftarget = ",ftgt),MPDesc=MPLookup[mp])
+ggplot(data = filter(df,perfstat=="pblim" & om=="OM2.2" & mp %in% c("MP5.23","MP5.23.perf","MP5.23.def") 
+                     & nyrs==100 & ftgt %in% c(0.025,0.05,0.075,0.1)), 
+       mapping = aes(x=year, y=mean, group=MPDesc, col=MPDesc)) + geom_line() + facet_wrap(~Title) + 
+  ylim(0,0.3) + xlim(2020,2050) + ylab("Risk to Blim (%)") + xlab("Year") + 
+  theme(legend.position = "bottom",legend.title = element_blank()) + ggtitle("Risk Sensitivity to Assessment/Advice Error")
+
+#recruitment comparisons
+plotvar(mystock      = "WHOM", myassess = "SS3", myassessyear = c("2019"),
+        mymethod  = "EQSIM", myom = c("OM2.2","OM2.2.RR.5lowest","OM2.2.RR","OM2.2.RR.V5"),
+        myniters     = "1000", mymp = c("MP5.23"),
+        mynyrs       = "23", myftgt = c(0.0, 0.05, 0.075, 0.10, 0.15),
+        myperfstat   = "stock", mycolour     = "blue",
+        myyintercept = 611814, myvalue      = "median",
+        myfacets     = c("om","ftgt"),
+        myfirstyear  = 2000)
+
+plotvar(mystock      = "WHOM", myassess = "SS3", myassessyear = c("2019"),
+        mymethod  = "EQSIM", myom = c("OM2.2","OM2.2.RR.5lowest","OM2.2.RR","OM2.2.RR.V5","OM2.2.RR.V6"),
+        myniters     = "1000", mymp = c("MP5.23"),
+        mynyrs       = "23", myftgt = c(0.0, 0.05, 0.075, 0.10, 0.15),
+        myperfstat   = "pblim", mycolour     = "blue",
+        myyintercept = 0.05, myvalue      = "mean",
+        myfacets     = c("om","ftgt"),
+        myfirstyear  = 2000)
+
+
+OMLookup <- c("OM2.2" = "Baseline","OM2.2.RR.V6" = "Baseline/2", "OM2.2.RR.V5" = "GM 2002-2013", 
+              "OM2.2.RR.V7" = "Mean 5 Lowest")
+
+df <- dplyr::mutate(df,Title=paste0("Double BP With IAV, Ftarget = ",ftgt),OMDesc=OMLookup[om])
+
+tt = filter(df,om %in% c("OM2.2","OM2.2.RR.V5","OM2.2.RR.V6","OM2.2.RR.V7") & mp=="MP5.23" 
+            & nyrs==23 & ftgt %in% c(0.025,0.05,0.075,0.1))
+
+ggplot(data = filter(tt,perfstat=="pblim"), mapping = aes(x=year, y=100*mean, group=OMDesc, col=OMDesc)) + geom_line() + 
+  facet_wrap(~Title) + ylim(0,100) + xlim(2020,2040) + ylab("Risk to Blim (%)") + xlab("Year") + 
+  theme(legend.position = "bottom",legend.title = element_blank()) + ggtitle("Risk Sensitivity to Reduced Recruitment 2014-2018")
+
+ggplot(data = filter(tt,perfstat=="precblim"), mapping = aes(x=year, y=100*mean, group=OMDesc, col=OMDesc)) + geom_line() + 
+  facet_wrap(~Title) + ylim(0,100) + xlim(2020,2040) + ylab("Risk to Blim (%)") + xlab("Year") + 
+  theme(legend.position = "bottom",legend.title = element_blank()) + ggtitle("Risk Sensitivity to Reduced Recruitment 2014-2018")
+
+df <- dplyr::mutate(df,Title=paste0("Constant Ftarget = ",ftgt),OMDesc=OMLookup[om])
+
+tt = filter(df,om %in% c("OM2.2","OM2.2.RR.V5","OM2.2.RR.V6","OM2.2.RR.V7") & mp=="MP5.00" 
+            & nyrs==23 & ftgt %in% c(0.025,0.05,0.075,0.1))
+ggplot(data = filter(tt,perfstat=="pblim"), mapping = aes(x=year, y=100*mean, group=OMDesc, col=OMDesc)) + geom_line() + 
+  facet_wrap(~Title) + ylim(0,100) + xlim(2020,2040) + ylab("Risk to Blim (%)") + xlab("Year") + 
+  theme(legend.position = "bottom",legend.title = element_blank()) + ggtitle("Risk Sensitivity to Reduced Recruitment 2014-2018")
+
+
+
+
+
 
 plotvar(mystock      = "WHOM",
         myassess     = "SAM",
