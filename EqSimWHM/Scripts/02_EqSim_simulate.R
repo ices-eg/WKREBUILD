@@ -40,10 +40,28 @@ rebuiltThreshold <- 0.5
 # assess         <- "SS3"
 # assessyear     <- "2019"
 # FLStockfile    <- "WGWIDE19.RData"
-# OM <- OM2.2;            
-# OM <- OM2.2.RR;         FLStockSimfile <- "WHOM_SS19_FLS_V3_RR.RData"
-# OM <- OM2.2.RR.5lowest; FLStockSimfile <- "WHOM_SS19_FLS_V3_RR_5lowest.RData"
-# OM             <- OM2.2.WR;     FLStockSimfile <- "WHOM_SS19_FLS_V3.RData"      #wrong reference points
+
+#early efforts
+#OM <- OM2.2; FLStockSimfile <- "WHOM_SS19_FLS_V1.RData"    #V1 iterations as single FLStock
+#OM <- OM2.2; FLStockSimfile <- "WHOM_SS19_FLS_V2.RData"    #V2 new draw, contains variability in selection and weights
+
+#base case
+#OM <- OM2.2; FLStockSimfile <- "WHOM_SS19_FLS_V3.RData"
+
+#reduced recruitment scenarios - now replaced by V5,V6 & V7 below
+#OM <- OM2.2.RR; FLStockSimfile <- "WHOM_SS19_FLS_V3_RR.RData"
+#OM <- OM2.2.RR.5lowest; FLStockSimfile <- "WHOM_SS19_FLS_V3_RR_5lowest.RData"
+
+#gm of 2002-2013 (1620516)
+#OM <- OM2.2.RR.V5; FLStockSimfile <- "WHOM_SS19_FLS_V5.RData"
+
+#half of baseline estimate
+#OM <- OM2.2.RR.V6; FLStockSimfile <- "WHOM_SS19_FLS_V6.RData"
+
+#mean of 5 lowest (1001051)
+#OM <- OM2.2.RR.V7; FLStockSimfile <- "WHOM_SS19_FLS_V7.RData"
+
+
 
 # WHOM SS 2020
 stock          <- "WHOM"
@@ -128,7 +146,11 @@ worms <- c(1,sample(seq(2,1000),numWorm))
 # mp <- c("MP5.23")
 # for (mp in c("MP5.00","MP5.01","MP5.10","MP5.11","MP5.20","MP5.21")) {
 for (mp in c("MP5.23")) {
-# for (mp in c("MP5.23.def")) {
+#for (mp in c("MP5.23.def")) {
+#for (mp in c("MP5.00","MP5.00.perf","MP5.00.def")) {
+#for (mp in c("MP5.13.def","MP5.13.perf","MP5.13")) {
+#for (mp in c("MP5.23.def","MP5.23.perf","MP5.23")) {
+  
 # for (mp in c("MP5.00","MP5.01","MP5.03",
 #              "MP5.10","MP5.11","MP5.13",
 #              "MP5.20","MP5.21","MP5.23", 
