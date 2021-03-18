@@ -51,6 +51,25 @@ nYrs_WG20 <- length(yrs_WG20)
 FLSs_WG19 <- loadRData(file=file.path(RData.dir,"WHOM_SS19_FLS_V2.RData"))
 FLSs_WG20 <- loadRData(file=file.path(RData.dir,"WHOM_SS20_FLS_V2.RData"))
 
+#alternative recruitment scenarios
+FLSs_RRV5 <- loadRData(file=file.path(RData.dir,"WHOM_SS19_FLS_V5.RData"))  #GM 02-13
+FLSs_RRV6 <- loadRData(file=file.path(RData.dir,"WHOM_SS19_FLS_V6.RData"))  #Baseline//2
+FLSs_RRV7 <- loadRData(file=file.path(RData.dir,"WHOM_SS19_FLS_V7.RData"))  #Lowest 5 Mean
+
+#starting SSBs
+dfInitSSB <- data.frame(Scenario=rep(c("Baseline","GM 02-14","Baseline/2","Mn 5Low"),each=nits),
+                        SSB=c(as.numeric(ssb(FLSs_WG19[,'2018'])),as.numeric(ssb(FLSs_RRV5[,'2018'])),
+                              as.numeric(ssb(FLSs_RRV6[,'2018'])),as.numeric(ssb(FLSs_RRV7[,'2018']))),
+                        iter=rep(seq(1,nits),4))
+
+gInitSSB <- ggplot(data = dfInitSSB, mapping = aes(x=Scenario,y=SSB/1e6)) + geom_boxplot() + 
+  geom_hline(yintercept=834480/1e6, col="red") + scale_x_discrete(limits=c("Baseline","Baseline/2","GM 02-14","Mn 5Low")) +
+  ylab("Initial SSB(Mt)")
+
+png(filename = file.path(Rep.dir,"InitSSB_Comparisons.png"),width = 400, height = 600)
+print(gInitSSB)
+dev.off()
+
 #maturity
 dfMat <- data.frame(Age=ages,Mat=as.numeric(FLCore::mat(WG19)[,'2018']))
 gMat <- ggplot(data = select(dfMat,Age,Maturity=Mat), mapping = aes(x=Age,y=Maturity)) + geom_line(lwd=1) + ylab("Proportion Mature")
