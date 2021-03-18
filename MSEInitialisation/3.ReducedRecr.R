@@ -1,5 +1,7 @@
 #poor recruitment scenarios
 
+#this script superceded by code appended to 2.FLStocks.R
+
 rm(list=ls())
 gc()
 
@@ -11,14 +13,12 @@ mainDir <- getwd()
 
 load(file=file.path(mainDir,Base,"RData","WHOM_SS19_FLS_V3.RData"))
 
-FLSs.1k.RR <- FLSs.1k
-
 #assessment terminal year
 tyr <- range(FLSs.1k[,,,,,1])["maxyear"]
 
-for(iter in seq(1,1000)){stock.n(FLSs.1k.RR[1:5,as.character(tyr),,,,iter]) <- 0.5*as.numeric(stock.n(FLSs.1k[1:5,as.character(tyr),,,,iter]))}
+for(iter in seq(2,1000)){stock.n(FLSs.1k[1:5,as.character(tyr),,,,iter]) <- 0.5*as.numeric(stock.n(FLSs.1k[1:5,as.character(tyr),,,,iter]))}
 
-save(FLSs.1k.RR,file=file.path(getwd(),Base,"RData","WHOM_SS19_FLS_V3_RR.RData"))
+save(FLSs.1k,file=file.path(getwd(),Base,"RData","WHOM_SS19_FLS_V3_RR.RData"))
 
 #multipliers for ages 0-4 based on an assumption that the recruitment over the last 5 years is 
 #equivalent to the mean of the 5 lowest recorded recruitments

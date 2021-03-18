@@ -467,7 +467,66 @@ catch.wt(FLSs.1k[,as.character(seq(tyr-10,tyr-1)),,,,2:1000]) <- catch.wt(FLSs.1
 
 #save(FLSs.1k,file = file.path(getwd(),Base,paste0("MSE_",Base,"RData","_FLStocks_1k15PG_varSelection_varWgt.RData")))
 save(FLSs.1k,file = file.path(getwd(),Base,"RData",paste0("WHOM_SS",substr(Base,7,8),"_FLS_varSelvarWgt_V3.RData")))
-#load(file=file.path(getwd(),Base,"RData",paste0("WHOM_SS",substr(Base,7,8),"_FLS_varSelvarWgt.RData")))
+#load(file=file.path(getwd(),Base,"RData",paste0("WHOM_SS",substr(Base,7,8),"_FLS_varSelvarWgt_V3.RData")))
+
+
+####################GENERATE INITIALISATION FILES FOR REDUCED RECRUITMENT SCENARIOS###################
+#replace the abundance at age in the first simulation year to mimic reduced recruitment
+gm_mean = function(x, na.rm=TRUE){exp(sum(log(x[x > 0]), na.rm=na.rm) / length(x))}
+
+#geometric mean 
+gm_mean(window(rec(FLS),1983,2018))   #2572649
+#since 1995
+gm_mean(window(rec(FLS),1995,2018))
+#since 2002 (after last big yc)
+gm_mean(window(rec(FLS),2002,2018))   #2036363
+#2002-2013 (largely poor recruitment,except for 2008)
+tgt <- gm_mean(window(rec(FLS),2002,2013))  #1620516
+#arithmetic mean
+mean(window(rec(FLS),2002,2013))
+
+#mean of 5 lowest
+low5 <- mean(sort(as.numeric(rec(FLS)))[1:5])
+
+
+for (iter in 2:1000){
+  stock.n(FLSs.1k['0','2018',,,,iter]) <- tgt
+  stock.n(FLSs.1k['1','2018',,,,iter]) <- tgt*exp(-(as.numeric(harvest(FLSs.1k['0','2017',,,,iter]))+0.15))
+  stock.n(FLSs.1k['2','2018',,,,iter]) <- tgt*exp(-(as.numeric(harvest(FLSs.1k['0','2016',,,,iter]))+0.15))*exp(-(as.numeric(harvest(FLSs.1k['1','2017',,,,iter]))+0.15))
+  stock.n(FLSs.1k['3','2018',,,,iter]) <- tgt*exp(-(as.numeric(harvest(FLSs.1k['0','2015',,,,iter]))+0.15))*exp(-(as.numeric(harvest(FLSs.1k['1','2016',,,,iter]))+0.15))*exp(-(as.numeric(harvest(FLSs.1k['2','2017',,,,iter]))+0.15))
+  stock.n(FLSs.1k['4','2018',,,,iter]) <- tgt*exp(-(as.numeric(harvest(FLSs.1k['0','2014',,,,iter]))+0.15))*exp(-(as.numeric(harvest(FLSs.1k['1','2015',,,,iter]))+0.15))*exp(-(as.numeric(harvest(FLSs.1k['2','2016',,,,iter]))+0.15))*exp(-(as.numeric(harvest(FLSs.1k['3','2017',,,,iter]))+0.15))
+}
+
+save(FLSs.1k,file = file.path(getwd(),Base,"RData",paste0("WHOM_SS",substr(Base,7,8),"_FLS_V5.RData")))
+
+
+#1/2 previous estimate
+load(file=file.path(getwd(),Base,"RData",paste0("WHOM_SS",substr(Base,7,8),"_FLS_varSelvarWgt_V3.RData")))
+
+for (iter in 2:1000){
+  cat(iter,"\n")
+  stock.n(FLSs.1k['0','2018',,,,iter]) <- as.numeric((rec(FLSs.1k[,'2018',,,,iter])/2))
+  stock.n(FLSs.1k['1','2018',,,,iter]) <- as.numeric(rec(FLSs.1k[,'2017',,,,iter])/2)*exp(-(as.numeric(harvest(FLSs.1k['0','2017',,,,iter]))+0.15))
+  stock.n(FLSs.1k['2','2018',,,,iter]) <- as.numeric(rec(FLSs.1k[,'2016',,,,iter])/2)*exp(-(as.numeric(harvest(FLSs.1k['0','2016',,,,iter]))+0.15))*exp(-(as.numeric(harvest(FLSs.1k['1','2017',,,,iter]))+0.15))
+  stock.n(FLSs.1k['3','2018',,,,iter]) <- as.numeric(rec(FLSs.1k[,'2015',,,,iter])/2)*exp(-(as.numeric(harvest(FLSs.1k['0','2015',,,,iter]))+0.15))*exp(-(as.numeric(harvest(FLSs.1k['1','2016',,,,iter]))+0.15))*exp(-(as.numeric(harvest(FLSs.1k['2','2017',,,,iter]))+0.15))
+  stock.n(FLSs.1k['4','2018',,,,iter]) <- as.numeric(rec(FLSs.1k[,'2014',,,,iter])/2)*exp(-(as.numeric(harvest(FLSs.1k['0','2014',,,,iter]))+0.15))*exp(-(as.numeric(harvest(FLSs.1k['1','2015',,,,iter]))+0.15))*exp(-(as.numeric(harvest(FLSs.1k['2','2016',,,,iter]))+0.15))*exp(-(as.numeric(harvest(FLSs.1k['3','2017',,,,iter]))+0.15))
+}
+
+save(FLSs.1k,file = file.path(getwd(),Base,"RData",paste0("WHOM_SS",substr(Base,7,8),"_FLS_V6.RData")))
+
+#mean of 5 lowest
+load(file=file.path(getwd(),Base,"RData",paste0("WHOM_SS",substr(Base,7,8),"_FLS_varSelvarWgt_V3.RData")))
+
+for (iter in 2:1000){
+  cat(iter,"\n")
+  stock.n(FLSs.1k['0','2018',,,,iter]) <- low5
+  stock.n(FLSs.1k['1','2018',,,,iter]) <- low5*exp(-(as.numeric(harvest(FLSs.1k['0','2017',,,,iter]))+0.15))
+  stock.n(FLSs.1k['2','2018',,,,iter]) <- low5*exp(-(as.numeric(harvest(FLSs.1k['0','2016',,,,iter]))+0.15))*exp(-(as.numeric(harvest(FLSs.1k['1','2017',,,,iter]))+0.15))
+  stock.n(FLSs.1k['3','2018',,,,iter]) <- low5*exp(-(as.numeric(harvest(FLSs.1k['0','2015',,,,iter]))+0.15))*exp(-(as.numeric(harvest(FLSs.1k['1','2016',,,,iter]))+0.15))*exp(-(as.numeric(harvest(FLSs.1k['2','2017',,,,iter]))+0.15))
+  stock.n(FLSs.1k['4','2018',,,,iter]) <- low5*exp(-(as.numeric(harvest(FLSs.1k['0','2014',,,,iter]))+0.15))*exp(-(as.numeric(harvest(FLSs.1k['1','2015',,,,iter]))+0.15))*exp(-(as.numeric(harvest(FLSs.1k['2','2016',,,,iter]))+0.15))*exp(-(as.numeric(harvest(FLSs.1k['3','2017',,,,iter]))+0.15))
+}
+
+save(FLSs.1k,file = file.path(getwd(),Base,"RData",paste0("WHOM_SS",substr(Base,7,8),"_FLS_V7.RData")))
 
 #old code
 #create the FLStock objects
