@@ -26,15 +26,50 @@ for (i in 1:length(file.list)) {
 }
 # NEEDS TO BE DONE IN SIMULATION CODE
 df <- df %>%  mutate(method = ifelse(is.na(method),"EQSIM", method))
-df <- df %>%  mutate(period = ifelse(is.na(period) & year < (an(assessyear)-1), "HI",period)) 
-df <- df %>%  mutate(metric = ifelse(is.na(metric) & !is.na(iter), "worm",metric)) 
-df <- df %>%  mutate(perfstat = ifelse(perfstat=="ssb", "stock",perfstat)) 
+df <- df %>%  mutate(period = ifelse(is.na(period) & year < (an(assessyear)), "HI",period)) 
+# df <- df %>%  mutate(metric = ifelse(is.na(metric) & !is.na(iter), "worm",metric)) 
+# df <- df %>%  mutate(perfstat = ifelse(perfstat=="ssb", "stock",perfstat)) 
 df <- df %>%  mutate(ftgt = ac(ftgt)) 
+df <- df %>% 
+  mutate(mean = ifelse(perfstat %in% c("firstyearrebuildtoblim","firstyearrebuildtobpa") & 
+                      (!is.na(data)), 
+                      data, mean)) %>% 
+  mutate(mean = ifelse(is.infinite(mean),NA, mean))
+
+t <- 
+  df %>% 
+  filter(perfstat=="stock") %>% 
+  group_by(stock, assess, assessyear, method, om, mp, iter) %>% 
+  arrange(stock, assess, assessyear, method, om, mp, iter,year) %>% 
+  mutate(v1 = lag(data, n=1),
+         v2 = lag(data, n=2)) %>% 
+  mutate(recovblim = ifelse(v2 >= Blim & v1 >= Blim & data >= Blim, TRUE, FALSE),
+         recovbpa  = ifelse(v2 >= Bpa & v1 >= Bpa & data >= Bpa, TRUE, FALSE)) %>% 
+  filter(!is.na(v1), !is.na(v2)) %>% 
+  group_by(year) %>% 
+  summarize(
+    recovblim = sum(recovblim, na.rm=TRUE)/n(),
+    recovbpa  = sum(recovbpa, na.rm=TRUE)/n()
+  ) %>% 
+  
+df %>% 
+  ungroup() %>% 
+  filter(mp=="MP5.23", assessyear==2019, method=="EQSIM") %>% 
+  filter(perfstat %in% c("precblim", "precbpa","recovblim","recovbpa")) %>% 
+  
+  ggplot(aes(x=year, y=mean, group=perfstat)) +
+  theme_publication() +
+  geom_point(aes(colour=perfstat)) +
+  geom_line(aes(colour=perfstat)) +
+  facet_grid(om~ftgt)
+
+
+
 
 rebuiltThreshold <- 0.5
 
 
-# summary of simulations
+# meta data of simulations
 sim_meta <-
   df %>% 
   dplyr::select(stock, assess, assessyear, method, om, mp, niters, nyrs, ftgt) %>% 
@@ -53,6 +88,57 @@ sim_meta <-
         perfstat     = paste(perfstat, collapse=",")
       )    
   )
+
+
+
+# summary of simulations
+sim_summary <-
+  df %>% 
+  group_by(stock, assess, assessyear, method, om, mp, niters, nyrs, ftgt, perfstat) %>% 
+  mutate(data = ifelse(is.na(data), mean, data)) %>% 
+  summarise(
+    min     = min(data, na.rm=TRUE),
+    mean    = mean(data, na.rm=TRUE),
+    max     = max(data, na.rm=TRUE)
+  ) 
+
+sim_summary %>% 
+  filter(method=="SAMHCR") %>% 
+  filter(perfstat=="firstyearrebuildtobpa") %>% 
+  View()
+
+
+sim_summary %>% 
+  ungroup() %>% 
+  filter(perfstat=="firstyearrebuildtoblim",
+         grepl("MP5.23", mp)) %>% 
+  mutate(scenario = paste(method, om, mp)) %>% 
+  mutate(ftgt = an(ac(ftgt))) %>% 
+  
+  ggplot(aes(x=ftgt, y=mean, colour=scenario)) +
+  theme_publication() +
+  # geom_point() +
+  geom_jitter(width = 0.00, height = 0.1) +
+  geom_line(aes(colour=scenario)) +
+  scale_y_continuous(limits=c(2020,2040),breaks=seq(2020,2040,5)) +
+  facet_grid(assessyear~assess)
+
+sim_summary %>% 
+  ungroup() %>% 
+  filter(perfstat=="precbpa",
+         grepl("MP5.00|MP5.10|MP5.20", mp),
+         assessyear == 2019) %>% 
+  mutate(scenario = paste(method, om)) %>% 
+  mutate(ftgt = an(ac(ftgt))) %>% 
+  
+  ggplot(aes(x=ftgt, y=mean, colour=scenario)) +
+  theme_publication() +
+  geom_point() +
+  # geom_jitter(width = 0.1, height = 0.1) +
+  geom_line(aes(colour=scenario)) +
+  # scale_y_continuous(limits=c(2020,2040),breaks=seq(2020,2040,5)) +
+  facet_grid(mp~assess)
+
 
 # mystock      =  "WHOM"
 # myassess     = "SAM"
