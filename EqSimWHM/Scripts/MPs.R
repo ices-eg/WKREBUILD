@@ -5,10 +5,11 @@
 
 F_targets     <- seq(0.0, 0.15, by=0.025)
 
-Report <- list("cvF" = 0.2193, "phiF" = 0.0212, "cvSSB" = 0.2927, "phiSSB" = 0.5776)
 Uncertainties <- list("cvF" = 0.22, "phiF" = 0.03, "cvSSB" = 0.36, "phiSSB" = 0.51)
 Defaults <- list("cvF" = 0.24, "phiF" = 0.42, "cvSSB" = 0.24, "phiSSB" = 0.42)   # no defaults for SSB, assumed same as F for this
 Perfect <- list("cvF" = 0, "phiF" = 0, "cvSSB" = 0, "phiSSB" = 0)
+Extreme <- list("cvF" = 0.7, "phiF" = 0.7, "cvSSB" = 0.7, "phiSSB" = 0.7)
+Extreme.zeroCor <- list("cvF" = 0.7, "phiF" = 0, "cvSSB" = 0.7, "phiSSB" = 0)
   
 #baseline, no harvest rule, no IAV control, no minimum TAC, no assessment/advice error
 MP1.0 <- list("code" = "MP1.0",
@@ -285,31 +286,40 @@ MP5.02 <- list("code" = "MP5.02",
                "Obs" = Uncertainties)
 
 #as 5.0 but with 20% IAV limit applied only above B_trigger
-MP5.03 <- list("code" = "MP5.03",
-               "desc" = "ConstF IAV Btrig",
-               "xlab" = "ConstF IAV Btrig",
-               "HCRName" = "None",
-               "F_target" = F_targets,
-               "B_trigger" = "MSYBtrigger",
-               "minTAC" = NA,
-               "maxTAC" = NA,
-               "TAC_IAV" = c(0.2,0.2),
-               "Obs" = Uncertainties)
+MP5.03 <- list("code" = "MP5.03", "desc" = "ConstF IAV Btrig", "xlab" = "ConstF IAV Btrig", "HCRName" = "None",
+               "F_target" = F_targets, "B_trigger" = "MSYBtrigger", "minTAC" = NA, "maxTAC" = NA,
+               "TAC_IAV" = c(0.2,0.2), "Obs" = Uncertainties)
 
+MP5.03.perf <- list("code" = "MP5.03.perf", "desc" = "ConstF IAV Btrig", "xlab" = "ConstF IAV Btrig", "HCRName" = "None",
+               "F_target" = F_targets, "B_trigger" = "MSYBtrigger", "minTAC" = NA, "maxTAC" = NA,
+               "TAC_IAV" = c(0.2,0.2), "Obs" = Perfect)
+
+MP5.03.def <- list("code" = "MP5.03.def", "desc" = "ConstF IAV Btrig", "xlab" = "ConstF IAV Btrig", "HCRName" = "None",
+               "F_target" = F_targets, "B_trigger" = "MSYBtrigger", "minTAC" = NA, "maxTAC" = NA,
+               "TAC_IAV" = c(0.2,0.2), "Obs" = Defaults)
+
+MP5.03.ext <- list("code" = "MP5.03.ext", "desc" = "ConstF IAV Btrig", "xlab" = "ConstF IAV Btrig", "HCRName" = "None",
+                   "F_target" = F_targets, "B_trigger" = "MSYBtrigger", "minTAC" = NA, "maxTAC" = NA,
+                   "TAC_IAV" = c(0.2,0.2), "Obs" = Extreme)
+
+MP5.03.ext0 <- list("code" = "MP5.03.ext0", "desc" = "ConstF IAV Btrig", "xlab" = "ConstF IAV Btrig", "HCRName" = "None",
+                   "F_target" = F_targets, "B_trigger" = "MSYBtrigger", "minTAC" = NA, "maxTAC" = NA,
+                   "TAC_IAV" = c(0.2,0.2), "Obs" = Extreme.zeroCor)
 # ===========================================================================
 # ICES HCR, no IAV control, no minimum TAC, with assessment/advice error
 # ===========================================================================
 
-MP5.10 <- list("code" = "MP5.10",
-              "desc" = "ICESHCR",
-              "xlab" = "ICES AR",
-              "HCRName" = "ICES",
-              "F_target" = F_targets,
-              "B_trigger" = "MSYBtrigger",
-              "minTAC" = NA,
-              "maxTAC" = NA,
-              "TAC_IAV" = NA,
-              "Obs" = Uncertainties)
+MP5.10 <- list("code" = "MP5.10", "desc" = "ICESHCR", "xlab" = "ICES AR", "HCRName" = "ICES",
+              "F_target" = F_targets, "B_trigger" = "MSYBtrigger", "minTAC" = NA,"maxTAC" = NA,
+              "TAC_IAV" = NA, "Obs" = Uncertainties)
+
+MP5.10.perf <- list("code" = "MP5.10.perf", "desc" = "ICESHCR", "xlab" = "ICES AR", "HCRName" = "ICES",
+               "F_target" = F_targets, "B_trigger" = "MSYBtrigger", "minTAC" = NA, "maxTAC" = NA,
+               "TAC_IAV" = NA, "Obs" = Perfect)
+
+MP5.10.def <- list("code" = "MP5.10.def", "desc" = "ICESHCR", "xlab" = "ICES AR", "HCRName" = "ICES",
+                    "F_target" = F_targets, "B_trigger" = "MSYBtrigger", "minTAC" = NA, "maxTAC" = NA,
+                    "TAC_IAV" = NA, "Obs" = Defaults)
 
 #as MP5.10 but min TAC=50kt
 MP5.11 <- list("code" = "MP5.11",
@@ -371,33 +381,35 @@ MP5.13.perf <- list("code" = "MP5.13.perf",
                     "TAC_IAV" = c(0.2,0.2),
                     "Obs" = Perfect)
 
-#5.13 values as in report
-MP5.13.rep <- list("code" = "MP5.13.rep",
-                   "desc" = "ICESHCR IAV above Btrigger with report uncertainties",
-                   "xlab" = "ICES AR IAV above Btrigger",
-                   "HCRName" = "ICES",
-                   "F_target" = F_targets,
-                   "B_trigger" = "MSYBtrigger",
-                   "minTAC" = NA,
-                   "maxTAC" = NA,
-                   "TAC_IAV" = c(0.2,0.2),
-                   "Obs" = Report)
+#5.13 but extreme assessment uncertainty
+MP5.13.ext <- list("code" = "MP5.13.ext", "desc" = "ICESHCR IAV above Btrigger with extreme assessment",
+                    "xlab" = "ICES AR IAV above Btrigger", "HCRName" = "ICES", "F_target" = F_targets,
+                    "B_trigger" = "MSYBtrigger", "minTAC" = NA, "maxTAC" = NA,
+                    "TAC_IAV" = c(0.2,0.2), "Obs" = Extreme)
 
+MP5.13.ext0 <- list("code" = "MP5.13.ext0", "desc" = "ICESHCR IAV above Btrigger with extreme assessment",
+                   "xlab" = "ICES AR IAV above Btrigger", "HCRName" = "ICES", "F_target" = F_targets,
+                   "B_trigger" = "MSYBtrigger", "minTAC" = NA, "maxTAC" = NA,
+                   "TAC_IAV" = c(0.2,0.2), "Obs" = Extreme.zeroCor)
 
 # ===========================================================================
 # Double BP
 # ===========================================================================
 
-MP5.20 <- list("code" = "MP5.20",
-              "desc" = "Double BP HCR",
-              "xlab" = "Double BP",
-              "HCRName" = "DoubleBP",
-              "F_target" = F_targets,
-              "B_trigger" = "MSYBtrigger",
-              "minTAC" = NA,
-              "maxTAC" = NA,
-              "TAC_IAV" = NA,
+MP5.20 <- list("code" = "MP5.20", "desc" = "Double BP HCR", "xlab" = "Double BP",
+              "HCRName" = "DoubleBP", "F_target" = F_targets, "B_trigger" = "MSYBtrigger",
+              "minTAC" = NA, "maxTAC" = NA, "TAC_IAV" = NA,
               "Obs" = Uncertainties)
+
+MP5.20.perf <- list("code" = "MP5.20.perf", "desc" = "Double BP HCR", "xlab" = "Double BP",
+               "HCRName" = "DoubleBP", "F_target" = F_targets, "B_trigger" = "MSYBtrigger",
+               "minTAC" = NA, "maxTAC" = NA, "TAC_IAV" = NA,
+               "Obs" = Perfect)
+
+MP5.20.def <- list("code" = "MP5.20.def", "desc" = "Double BP HCR", "xlab" = "Double BP",
+               "HCRName" = "DoubleBP", "F_target" = F_targets, "B_trigger" = "MSYBtrigger",
+               "minTAC" = NA, "maxTAC" = NA, "TAC_IAV" = NA,
+               "Obs" = Defaults)
 
 #as 5.20 but with min TAC=50kt
 MP5.21 <- list("code" = "MP5.21",
@@ -436,42 +448,27 @@ MP5.23 <- list("code" = "MP5.23",
                "Obs" = Uncertainties)
 
 #as 5.2 but with min TAC=50kt
-MP5.23.def <- list("code" = "MP5.23.def",
-               "desc" = "Double BP HCR with default uncertainties",
-               "xlab" = "Double BP IAVBtrig",
-               "HCRName" = "DoubleBP",
-               "F_target" = F_targets,
-               "B_trigger" = "MSYBtrigger",
-               "minTAC" = NA,
-               "maxTAC" = NA,
-               "TAC_IAV" = c(0.2,0.2),
-               "Obs" = Defaults)
-
+MP5.23.def <- list("code" = "MP5.23.def", "desc" = "Double BP HCR with default uncertainties",
+               "xlab" = "Double BP IAVBtrig", "HCRName" = "DoubleBP", "F_target" = F_targets,
+               "B_trigger" = "MSYBtrigger", "minTAC" = NA, "maxTAC" = NA,
+               "TAC_IAV" = c(0.2,0.2), "Obs" = Defaults)
 
 #5.23 but zero assessment uncertainty
-MP5.23.perf <- list("code" = "MP5.23.perf",
-                   "desc" = "Double BP HCR with perfect assessment",
-                   "xlab" = "Double BP IAVBtrig",
-                   "HCRName" = "DoubleBP",
-                   "F_target" = F_targets,
-                   "B_trigger" = "MSYBtrigger",
-                   "minTAC" = NA,
-                   "maxTAC" = NA,
-                   "TAC_IAV" = c(0.2,0.2),
-                   "Obs" = Perfect)
+MP5.23.perf <- list("code" = "MP5.23.perf", "desc" = "Double BP HCR with perfect assessment",
+                   "xlab" = "Double BP IAVBtrig", "HCRName" = "DoubleBP", "F_target" = F_targets,
+                   "B_trigger" = "MSYBtrigger", "minTAC" = NA, "maxTAC" = NA,
+                   "TAC_IAV" = c(0.2,0.2), "Obs" = Perfect)
 
-#5.23 values as in report
-MP5.23.rep <- list("code" = "MP5.23.rep",
-                    "desc" = "Double BP HCR with report uncertainties",
-                    "xlab" = "Double BP IAVBtrig",
-                    "HCRName" = "DoubleBP",
-                    "F_target" = F_targets,
-                    "B_trigger" = "MSYBtrigger",
-                    "minTAC" = NA,
-                    "maxTAC" = NA,
-                    "TAC_IAV" = c(0.2,0.2),
-                    "Obs" = Report)
+#5.23 but extreme assessment uncertainty
+MP5.23.ext <- list("code" = "MP5.23.ext", "desc" = "Double BP HCR with extreme assessment error",
+                    "xlab" = "Double BP IAVBtrig", "HCRName" = "DoubleBP", "F_target" = F_targets,
+                    "B_trigger" = "MSYBtrigger", "minTAC" = NA, "maxTAC" = NA,
+                    "TAC_IAV" = c(0.2,0.2), "Obs" = Extreme)
 
+MP5.23.ext0 <- list("code" = "MP5.23.ext0", "desc" = "Double BP HCR with extreme assessment error",
+                   "xlab" = "Double BP IAVBtrig", "HCRName" = "DoubleBP", "F_target" = F_targets,
+                   "B_trigger" = "MSYBtrigger", "minTAC" = NA, "maxTAC" = NA,
+                   "TAC_IAV" = c(0.2,0.2), "Obs" = Extreme.zeroCor)
 # ===========================================================================
 # Basic Test
 # ===========================================================================

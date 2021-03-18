@@ -17,7 +17,7 @@ gc()
 
 stats.dir <- file.path(Res.dir, "Stats")
 
-file.list <- list.files(path=stats.dir, pattern="_Stats", full.names=TRUE)
+file.list <- list.files(path=stats.dir, pattern="_Stats.Rdata", full.names=TRUE)
 
 df <- data.frame(stringsAsFactors = FALSE)
 for (i in 1:length(file.list)) {
@@ -25,7 +25,8 @@ for (i in 1:length(file.list)) {
   df <- bind_rows(df, loadRData(file.list[i])[["df"]])
 }
 # NEEDS TO BE DONE IN SIMULATION CODE
-df <- df %>%  mutate(method = ifelse(is.na(method),"EQSIM", method))
+df$method <- "EQSIM"
+#df <- df %>%  mutate(method = ifelse(is.na(method),"EQSIM", method))
 df <- df %>%  mutate(period = ifelse(is.na(period) & year < (an(assessyear)), "HI",period)) 
 # df <- df %>%  mutate(metric = ifelse(is.na(metric) & !is.na(iter), "worm",metric)) 
 # df <- df %>%  mutate(perfstat = ifelse(perfstat=="ssb", "stock",perfstat)) 
@@ -353,21 +354,74 @@ plotvar(mystock      = "WHOM", myassess     = "SS3",
         myyintercept = NA, myvalue      = "mean",
         myfacets     = c("mp","ftgt"), myfirstyear  = 2020)
 
-MPLookup <- c("MP5.00" = "WGWIDE19", "MP5.00.perf" = "Perfect Knowledge", "MP5.00.def" = "Defaults (WKMSYREF)")
-df <- dplyr::mutate(df,Title=paste0("Constant Ftarget = ",ftgt),MPDesc=MPLookup[mp])
-ggplot(data = filter(df,perfstat=="pblim" & om=="OM2.2" & mp %in% c("MP5.00","MP5.00.perf","MP5.00.def") 
-                     & nyrs==100 & ftgt %in% c(0.025,0.05,0.075,0.1)), 
-       mapping = aes(x=year, y=mean, group=MPDesc, col=MPDesc)) + geom_line() + facet_wrap(~Title) + 
-  ylim(0,0.35) + xlim(2020,2050) + ylab("Risk to Blim (%)") + xlab("Year") + 
+
+
+#const F
+MPLookup <- c("MP5.00" = "WGWIDE19", "MP5.00.perf" = "Perfect Knowledge", "MP5.00.def" = "Default Vals")
+ggplot(data = filter(df, perfstat=="pblim" & 
+                       mp %in% c("MP5.00","MP5.00.perf","MP5.00.def") & 
+                       nyrs==23 & om=="OM2.2" & ftgt %in% c(0.025,0.05,0.075,0.1)) %>%
+         mutate(Title = paste0(Title=paste0("Constant Ftarget = ",ftgt)), MPDesc=MPLookup[mp]),
+       mapping = aes(x=year, y=100*mean, group=MPDesc, col=MPDesc)) +
+         geom_line() + facet_wrap(~Title) + ylim(0,35) + xlim(2020,2040) + ylab("Risk to Blim (%)") + xlab("Year") + 
   theme(legend.position = "bottom",legend.title = element_blank()) + ggtitle("Risk Sensitivity to Assessment/Advice Error")
 
-MPLookup <- c("MP5.23" = "WGWIDE19", "MP5.23.perf" = "Perfect Knowledge", "MP5.23.def" = "Defaults (WKMSYREF)")
-df <- dplyr::mutate(df,Title=paste0("Double BP With IAV, Ftarget = ",ftgt),MPDesc=MPLookup[mp])
-ggplot(data = filter(df,perfstat=="pblim" & om=="OM2.2" & mp %in% c("MP5.23","MP5.23.perf","MP5.23.def") 
-                     & nyrs==100 & ftgt %in% c(0.025,0.05,0.075,0.1)), 
-       mapping = aes(x=year, y=mean, group=MPDesc, col=MPDesc)) + geom_line() + facet_wrap(~Title) + 
-  ylim(0,0.3) + xlim(2020,2050) + ylab("Risk to Blim (%)") + xlab("Year") + 
+MPLookup <- c("MP5.10" = "WGWIDE19", "MP5.10.perf" = "Perfect Knowledge", "MP5.10.def" = "Default Vals")
+ggplot(data = filter(df, perfstat=="pblim" & 
+                       mp %in% c("MP5.10","MP5.10.perf","MP5.10.def") & 
+                       nyrs==23 & om=="OM2.2" & ftgt %in% c(0.025,0.05,0.075,0.1)) %>%
+         mutate(Title = paste0(Title=paste0("ICES AR Ftarget = ",ftgt)), MPDesc=MPLookup[mp]),
+       mapping = aes(x=year, y=100*mean, group=MPDesc, col=MPDesc)) +
+  geom_line() + facet_wrap(~Title) + ylim(0,35) + xlim(2020,2040) + ylab("Risk to Blim (%)") + xlab("Year") + 
   theme(legend.position = "bottom",legend.title = element_blank()) + ggtitle("Risk Sensitivity to Assessment/Advice Error")
+
+HCRTypeLookup <- c("MP5.0" = "Constant F","MP5.1" = "ICES AR", "MP5.2" = "Double BP")
+MPLookup <- c("MP5.23" = "WGWIDE19", "MP5.23.perf" = "Perfect Knowledge", "MP5.23.def" = "Default Vals","MP5.23.ext" = "Extreme Vals","MP5.23.ext0" = "Extreme, zero cor",
+              "MP5.13" = "WGWIDE19", "MP5.13.perf" = "Perfect Knowledge", "MP5.13.def" = "Default Vals","MP5.13.ext" = "Extreme Vals","MP5.13.ext0" = "Extreme, zero cor",
+              "MP5.03" = "WGWIDE19", "MP5.03.perf" = "Perfect Knowledge", "MP5.03.def" = "Default Vals","MP5.03.ext" = "Extreme Vals","MP5.03.ext0" = "Extreme, zero cor")
+ggplot(data = filter(df, perfstat=="pblim" & 
+                       mp %in% c("MP5.23","MP5.23.perf","MP5.23.def","MP5.23.ext","MP5.23.ext0",
+                                 "MP5.13","MP5.13.perf","MP5.13.def","MP5.13.ext","MP5.13.ext0",
+                                 "MP5.03","MP5.03.perf","MP5.03.def","MP5.03.ext","MP5.03.ext0") & 
+                       nyrs==23 & om=="OM2.2" & ftgt == 0.1) %>%
+         mutate(HCRType=HCRTypeLookup[substring(mp,1,5)], MPDesc=MPLookup[mp]),
+       mapping = aes(x=year, y=100*mean, group=MPDesc, col=MPDesc)) +
+  geom_line() + facet_wrap(~HCRType) + ylim(0,50) + xlim(2020,2040) + ylab("Risk to Blim (%)") + xlab("Year") + 
+  theme(legend.position = "bottom",legend.title = element_blank()) + ggtitle("Risk Sensitivity to Assessment/Advice Error (Ftarget = 0.1)")
+
+
+HCRTypeLookup <- c("MP5.0" = "Constant F","MP5.1" = "ICES AR", "MP5.2" = "Double BP")
+MPLookup <- c("MP5.23" = "WGWIDE19", "MP5.23.perf" = "Perfect Knowledge", "MP5.23.def" = "Default Vals",
+              "MP5.13" = "WGWIDE19", "MP5.13.perf" = "Perfect Knowledge", "MP5.13.def" = "Default Vals",
+              "MP5.03" = "WGWIDE19", "MP5.03.perf" = "Perfect Knowledge", "MP5.03.def" = "Default Vals")
+ggplot(data = filter(df, perfstat=="pblim" & 
+                       mp %in% c("MP5.23","MP5.23.perf","MP5.23.def",
+                                 "MP5.13","MP5.13.perf","MP5.13.def",
+                                 "MP5.03","MP5.03.perf","MP5.03.def") & 
+                       nyrs==23 & om=="OM2.2" & ftgt == 0.1) %>%
+         mutate(HCRType=HCRTypeLookup[substring(mp,1,5)], MPDesc=MPLookup[mp]),
+       mapping = aes(x=year, y=100*mean, group=MPDesc, col=MPDesc)) +
+  geom_line() + facet_wrap(~HCRType) + ylim(0,35) + xlim(2020,2040) + ylab("Risk to Blim (%)") + xlab("Year") + 
+  theme(legend.position = "bottom",legend.title = element_blank()) + ggtitle("Risk Sensitivity to Assessment/Advice Error (Ftarget = 0.1)")
+
+
+
+HCRTypeLookup <- c("MP5.0" = "Constant F","MP5.1" = "ICES AR", "MP5.2" = "Double BP")
+MPLookup <- c("MP5.20" = "WGWIDE19", "MP5.20.perf" = "Perfect Knowledge", "MP5.20.def" = "Default Vals",
+              "MP5.10" = "WGWIDE19", "MP5.10.perf" = "Perfect Knowledge", "MP5.10.def" = "Default Vals",
+              "MP5.00" = "WGWIDE19", "MP5.00.perf" = "Perfect Knowledge", "MP5.00.def" = "Default Vals")
+ggplot(data = filter(df, perfstat=="pblim" & 
+                       mp %in% c("MP5.20","MP5.20.perf","MP5.20.def",
+                                 "MP5.10","MP5.10.perf","MP5.10.def",
+                                 "MP5.00","MP5.00.perf","MP5.00.def") & 
+                       nyrs==23 & om=="OM2.2" & ftgt == 0.1) %>%
+         mutate(Title = paste0(Title=paste0("ICES AR Ftarget = ",ftgt)), HCRType=HCRTypeLookup[substring(mp,1,5)], MPDesc=MPLookup[mp]),
+       mapping = aes(x=year, y=100*mean, group=MPDesc, col=MPDesc)) +
+  geom_line() + facet_wrap(~HCRType) + ylim(0,50) + xlim(2020,2040) + ylab("Risk to Blim (%)") + xlab("Year") + 
+  theme(legend.position = "bottom",legend.title = element_blank()) + ggtitle("Risk Sensitivity to Assessment/Advice Error")
+
+
+
 
 #recruitment comparisons
 plotvar(mystock      = "WHOM", myassess = "SS3", myassessyear = c("2019"),
@@ -389,8 +443,8 @@ plotvar(mystock      = "WHOM", myassess = "SS3", myassessyear = c("2019"),
         myfirstyear  = 2000)
 
 
-OMLookup <- c("OM2.2" = "Baseline","OM2.2.RR.V6" = "Baseline/2", "OM2.2.RR.V5" = "GM 2002-2013", 
-              "OM2.2.RR.V7" = "Mean 5 Lowest")
+OMLookup <- c("OM2.2" = "Baseline","OM2.2.RR.V6" = "Baseline/2", "OM2.2.RR.V5" = "GM 02-13", 
+              "OM2.2.RR.V7" = "Mn 5Low")
 
 df <- dplyr::mutate(df,Title=paste0("Double BP With IAV, Ftarget = ",ftgt),OMDesc=OMLookup[om])
 
@@ -398,8 +452,14 @@ tt = filter(df,om %in% c("OM2.2","OM2.2.RR.V5","OM2.2.RR.V6","OM2.2.RR.V7") & mp
             & nyrs==23 & ftgt %in% c(0.025,0.05,0.075,0.1))
 
 ggplot(data = filter(tt,perfstat=="pblim"), mapping = aes(x=year, y=100*mean, group=OMDesc, col=OMDesc)) + geom_line() + 
-  facet_wrap(~Title) + ylim(0,100) + xlim(2020,2040) + ylab("Risk to Blim (%)") + xlab("Year") + 
+  facet_wrap(~Title) + ylim(0,100) + xlim(2018,2040) + ylab("Risk to Blim (%)") + xlab("Year") + 
   theme(legend.position = "bottom",legend.title = element_blank()) + ggtitle("Risk Sensitivity to Reduced Recruitment 2014-2018")
+
+ggplot(data = filter(tt,perfstat=="catch" & iter=="all"), mapping = aes(x=year, y=median/1e3, group=OMDesc, col=OMDesc)) + geom_line() + 
+  facet_wrap(~Title) + ylim(0,130) + xlim(2018,2040) + ylab("Yield (kt)") + xlab("Year") + 
+  theme(legend.position = "bottom",legend.title = element_blank()) + ggtitle("Yield Sensitivity to Reduced Recruitment 2014-2018")
+
+
 
 ggplot(data = filter(tt,perfstat=="precblim"), mapping = aes(x=year, y=100*mean, group=OMDesc, col=OMDesc)) + geom_line() + 
   facet_wrap(~Title) + ylim(0,100) + xlim(2020,2040) + ylab("Risk to Blim (%)") + xlab("Year") + 
