@@ -20,7 +20,7 @@ try(dev.off(),silent=TRUE)
 try(sink(),silent=TRUE)
 
 #packages
-library(stockassessment)  # for SAM forecasts etc. 
+library(stockassessment)  # for SAM forecasts etc.; devtools::install_github("fishfollower/SAM/stockassessment")
 library(FLCore)
 library(Cairo)    #plotting
 library(devEMF)   
