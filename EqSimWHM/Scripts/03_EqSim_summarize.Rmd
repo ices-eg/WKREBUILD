@@ -34,9 +34,12 @@ stats.dir <- file.path(Res.dir, "Stats")
 Source.dir <- file.path(MSE.dir,"R")              #R functions
 source(file.path(Source.dir,"utilities.R"))
 
+# Rebuilding threshold
+rebuiltThreshold <- 0.5
+
 file.list <- list.files(path=stats.dir, pattern="_Stats", full.names=TRUE)
 
-print(file.list)
+# print(file.list)
 
 df <- data.frame(stringsAsFactors = FALSE)
 for (i in 1:length(file.list)) {
@@ -397,6 +400,10 @@ plotpblim <- function(
 } # end of plotpblim
 
 
+
+
+
+  
 ```
 
 *Working document for WKWHMRP 2021*
@@ -1062,7 +1069,7 @@ _fig x Simulation summary of SS3 Assessment 2019 and 2020 and EqSim simulator. M
 
 MP5.23 Double BP with 20% IAV constraint above Btrigger. Minimum F in Double BP is 20% of Fmsy. 
 
-SS3 assessment of 2019 and 2020 using  Eqsim simulator
+SAM assessment of 2019 and 2020 using  Eqsim simulator
 
 ```{r echo=FALSE, fig.align="center", fig.asp=0.5, message=FALSE, warning=FALSE}
 
@@ -1150,3 +1157,261 @@ plotrecovery (
 _fig x Simulation summary of SAM Assessment 2019 and 2020 and EqSim simulator. MP5.23 Double BP with 20% IAV constraint above Btrigger. Minimum F in Double BP is 20% of Fmsy._
 
 
+### Sensitivity of 2019 SS3 with different recruitment assumptions
+
+2019 SS3 assessment using Eqsim simulator and different recruitment assumptions. MP5.23 Double BP with 20% IAV constraint above Btrigger. Minimum F in Double BP is 20% of Fmsy. 
+
+Recruitment assumptions:
+
+1. base case: recruitment from 2019 SS3 assessments. The geo mean of the full time series (ex 1982) is 2,572,649. The mean of the last 5 years from the 2019 assessment is 3,612,642
+
+2. RR.V5: 2014-2018 recruitments reduced to the GM of the time series from 2002-2013. Apart from 2008, this represents an extended period of low recruitment. The geo mean for 2002-2013 is 1,620,516
+
+3. RR.V6: 2014-2018 recruitments reduced to ½ of the baseline estimate. The mean of the last 5 years is then 1 806 321, similar to scenario RR.V5. 
+
+4. RR.V7: 2014-2018 recruitments reduced to the mean of the 5 lowest from the full time series. The mean of the 5 lowest is 1,001,051. This is the most pessimistic scenario.
+
+
+```{r echo=FALSE, fig.align="center", fig.asp=0.65, message=FALSE, warning=FALSE}
+
+plotvar(mystock      = "WHOM",
+        myassess     = "SS3",
+        myassessyear = c("2019"),
+        mymethod     = c("EQSIM"),
+        myom         = c("OM2.2","OM2.2.RR.V5", "OM2.2.RR.V6", "OM2.2.RR.V7"),
+        mymp         = c("MP5.23"),
+        myftgt       = c(0.0, 0.05, 0.075, 0.10, 0.15),
+        myperfstat   = "stock",
+        mycolour     = "blue",
+        myyintercept = "blim",
+        myvalue      = "median",
+        myfacets     = c("om","ftgt"),
+        myfirstyear  = 2000)
+
+plotvar(mystock      = "WHOM",
+        myassess     = "SS3",
+        myassessyear = c("2019"),
+        mymethod     = c("EQSIM"),
+        myom         = c("OM2.2","OM2.2.RR.V5", "OM2.2.RR.V6", "OM2.2.RR.V7"),
+        mymp         = c("MP5.23"),
+        myftgt       = c(0.0, 0.05, 0.075, 0.10, 0.15),
+        myperfstat   = "fbar",
+        mycolour     = "red",
+        myyintercept = "fmsy",
+        myvalue      = "median",
+        myfacets     = c("om","ftgt"),
+        myfirstyear  = 2000)
+
+plotvar(mystock      = "WHOM",
+        myassess     = "SS3",
+        myassessyear = c("2019"),
+        mymethod     = c("EQSIM"),
+        myom         = c("OM2.2","OM2.2.RR.V5", "OM2.2.RR.V6", "OM2.2.RR.V7"),
+        mymp         = c("MP5.23"),
+        myftgt       = c(0.0, 0.05, 0.075, 0.10, 0.15),
+        myperfstat   = "rec",
+        mycolour     = "darkgreen",
+        myyintercept = ac(NA),
+        myvalue      = "median",
+        myfacets     = c("om","ftgt"),
+        myfirstyear  = 2000)
+
+plotvar(mystock      = "WHOM",
+        myassess     = "SS3",
+        myassessyear = c("2019"),
+        mymethod     = c("EQSIM"),
+        myom         = c("OM2.2","OM2.2.RR.V5", "OM2.2.RR.V6", "OM2.2.RR.V7"),
+        mymp         = c("MP5.23"),
+        myftgt       = c(0.0, 0.05, 0.075, 0.10, 0.15),
+        myperfstat   = "catch",
+        mycolour     = "brown",
+        myyintercept = ac(NA),
+        myvalue      = "median",
+        myfacets     = c("om","ftgt"),
+        myfirstyear  = 2000)
+
+plotpblim (
+        mystock      = "WHOM",
+        myassess     = "SS3",
+        myassessyear = c("2019"),
+        mymethod     = c("EQSIM"),
+        myom         = c("OM2.2","OM2.2.RR.V5", "OM2.2.RR.V6", "OM2.2.RR.V7"),
+        mymp         = c("MP5.23"),
+        myftgt       = c(0.0, 0.05, 0.075, 0.10, 0.15),
+        myfacets     = c("om","ftgt"),
+        myfirstyear  = 2000)
+
+plotrecovery (
+        mystock      = "WHOM",
+        myassess     = "SS3",
+        myassessyear = c("2019"),
+        mymethod     = c("EQSIM"),
+        myom         = c("OM2.2","OM2.2.RR.V5", "OM2.2.RR.V6", "OM2.2.RR.V7"),
+        mymp         = c("MP5.23"),
+        myftgt       = c(0.0, 0.05, 0.075, 0.10, 0.15),
+        myyintercept = 0.5,
+        myfacets     = c("om","ftgt"),
+        myfirstyear  = 2000)
+
+# t <-
+#   df %>% 
+#   filter(perfstat %in% c("firstyearrebuildtoblim","firstyearrebuildtobpa")) %>% 
+#   filter(mp %in% c("MP5.23")) %>% 
+#   filter(assess %in% c("SS3")) 
+
+```
+
+_fig x Simulation summary of SS3 Assessment 2019, EqSim simulator and different recruitment assumptions. MP5.23 Double BP with 20% IAV constraint above Btrigger. Minimum F in Double BP is 20% of Fmsy._
+
+
+### First year rebuild to a biomass reference point under different recruitment assumptions
+
+```{r echo=FALSE, fig.align="center", fig.asp=0.65, message=FALSE, warning=FALSE}
+
+t <-
+  df %>% 
+  filter(mp %in% c("MP5.23")) %>% 
+  filter(!grepl("WR", om)) %>% 
+  filter(assess %in% c("SS3", "SAM")) %>% 
+  filter(!grepl("RR$|lowest$",om)) %>% 
+  filter(perfstat %in% c("precblim","precbpa")) %>%
+  # mutate(year = as.numeric(year) - as.numeric(assessyear)) %>% 
+  mutate(recscenario = gsub("OM2\\.2|OM2\\.3|OM2\\.4|OM2\\.5","", om)) %>% 
+  mutate(recscenario = gsub("^\\.","", recscenario)) %>% 
+  mutate(recscenario = ifelse(recscenario=="", "def", recscenario)) %>% 
+  mutate(scenario    = paste(assess, assessyear)) %>% 
+  group_by(assessyear, scenario, recscenario, mp, perfstat, ftgt) %>% 
+  filter(mean >= rebuiltThreshold) %>% 
+  group_by(assessyear, method, scenario, recscenario, mp, perfstat, ftgt) %>%
+  summarise(year = min(year)) 
+
+t1 <-
+  t %>% 
+  filter(ftgt == 0.0) %>% 
+  dplyr::select(ftgt, year, perfstat, scenario, recscenario)
+
+t2 <-
+  t %>% 
+  group_by(scenario, recscenario, perfstat) %>% 
+  filter(ftgt == max(ftgt, na.rm=TRUE)) %>% 
+  dplyr::select(ftgt, year, perfstat, scenario, recscenario)
+
+t3 <-
+  t %>% 
+  filter(ftgt == 0.075) %>% 
+  group_by(scenario, recscenario, perfstat) %>% 
+  filter(ftgt == max(ftgt, na.rm=TRUE)) %>% 
+  dplyr::select(ftgt, year, perfstat, scenario, recscenario)
+
+t %>% 
+  reshape2::dcast(perfstat+scenario+recscenario ~ ftgt, value.var="year", sum, fill=Inf, margins=FALSE) %>% 
+  group_by(perfstat) %>%
+  do(add_row(., .after=0)) %>%
+    
+  ungroup() %>% 
+  pander::pandoc.table(., 
+               style        = "simple",
+               split.tables = 100, 
+               split.cells  = c(rep(7,10)),
+               justify      = "right",
+               missing      = " ",
+               big.mark     = '', 
+               round        = c(0))
+
+
+t %>% 
+  group_by(scenario) %>% 
+  mutate(id = group_indices()) %>% 
+  mutate(offset = id * 0.1) %>% 
+  mutate(year = year + offset) %>% 
+  
+  ggplot(aes(x=ftgt, y=year, group=scenario)) +
+  theme_publication() +
+  geom_point(aes(colour=scenario)) +
+  geom_line(aes(colour=scenario)) +
+  ggrepel::geom_text_repel(data=t1, aes(x=ftgt, y=year, label=ac(year), colour=scenario), 
+                           force_pull = 0.5, nudge_x = -0.5,direction = "y", hjust = "right") +
+  ggrepel::geom_text_repel(data=t2, aes(x=ftgt, y=year, label=ac(year), colour=scenario), 
+                           force_pull = 0.5, nudge_x = 0.5,direction = "y", hjust = "left") +
+  ggrepel::geom_text_repel(data=t3, aes(x=ftgt, y=year, label=ac(year), colour=scenario), 
+                           force_pull = 0.5, nudge_x = 0.0,direction = "y", hjust = "middle") +
+  # scale_y_continuous(limits=c(2020,2040),breaks=seq(2020,2040,5)) +
+  facet_grid(perfstat~recscenario)
+
+
+```
+
+### First year rebuild to a biomass reference point under different reference point assumptions
+
+```{r echo=FALSE, fig.align="center", fig.asp=0.65, message=FALSE, warning=FALSE}
+
+t <-
+  df %>% 
+  filter(mp %in% c("MP5.23")) %>% 
+  filter(!grepl("RR", om)) %>% 
+  filter(assess %in% c("SS3", "SAM")) %>% 
+  filter(perfstat %in% c("precblim","precbpa")) %>%
+  # mutate(year = as.numeric(year) - as.numeric(assessyear)) %>% 
+  mutate(rpscenario = gsub("OM2\\.2|OM2\\.3|OM2\\.4|OM2\\.5","", om)) %>% 
+  mutate(rpscenario = gsub("^\\.","", rpscenario)) %>% 
+  mutate(rpscenario = ifelse(rpscenario=="", "def", rpscenario)) %>% 
+  mutate(scenario    = paste(assess, assessyear)) %>% 
+  group_by(assessyear, scenario, rpscenario, mp, perfstat, ftgt) %>% 
+  filter(mean >= rebuiltThreshold) %>% 
+  group_by(assessyear, method, scenario, rpscenario, mp, perfstat, ftgt) %>%
+  summarise(year = min(year)) 
+
+t1 <-
+  t %>% 
+  filter(ftgt == 0.0) %>% 
+  dplyr::select(ftgt, year, perfstat, scenario, rpscenario)
+
+t2 <-
+  t %>% 
+  group_by(scenario, rpscenario, perfstat) %>% 
+  filter(ftgt == max(ftgt, na.rm=TRUE)) %>% 
+  dplyr::select(ftgt, year, perfstat, scenario, rpscenario)
+
+t3 <-
+  t %>% 
+  filter(ftgt == 0.075) %>% 
+  group_by(scenario, rpscenario, perfstat) %>% 
+  filter(ftgt == max(ftgt, na.rm=TRUE)) %>% 
+  dplyr::select(ftgt, year, perfstat, scenario, rpscenario)
+
+t %>% 
+  reshape2::dcast(perfstat+scenario+rpscenario ~ ftgt, value.var="year", sum, fill=Inf, margins=FALSE) %>% 
+  group_by(perfstat) %>%
+  do(add_row(., .after=0)) %>%
+    
+  ungroup() %>% 
+  pander::pandoc.table(., 
+               style        = "simple",
+               split.tables = 100, 
+               split.cells  = c(rep(7,10)),
+               justify      = "right",
+               missing      = " ",
+               big.mark     = '', 
+               round        = c(0))
+
+t %>% 
+  group_by(scenario) %>% 
+  mutate(id = group_indices()) %>% 
+  mutate(offset = id * 0.1) %>% 
+  mutate(year = year + offset) %>% 
+  
+  ggplot(aes(x=ftgt, y=year, group=scenario)) +
+  theme_publication() +
+  geom_point(aes(colour=scenario)) +
+  geom_line(aes(colour=scenario)) +
+  ggrepel::geom_text_repel(data=t1, aes(x=ftgt, y=year, label=ac(year), colour=scenario), 
+                           force_pull = 0.5, nudge_x = -0.5,direction = "y", hjust = "right") +
+  ggrepel::geom_text_repel(data=t2, aes(x=ftgt, y=year, label=ac(year), colour=scenario), 
+                           force_pull = 0.5, nudge_x = 0.5,direction = "y", hjust = "left") +
+  ggrepel::geom_text_repel(data=t3, aes(x=ftgt, y=year, label=ac(year), colour=scenario), 
+                           force_pull = 0.5, nudge_x = 0.0,direction = "y", hjust = "middle") +
+  # scale_y_continuous(limits=c(2020,2040),breaks=seq(2020,2040,5)) +
+  facet_grid(perfstat~rpscenario)
+
+
+```
