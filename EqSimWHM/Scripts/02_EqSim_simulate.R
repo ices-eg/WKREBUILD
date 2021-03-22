@@ -64,21 +64,21 @@ rebuiltThreshold <- 0.5
 
 
 # WHOM SS 2020
-stock          <- "WHOM"
-assess         <- "SS3"
-assessyear     <- "2020"
-FLStockfile    <- "WGWIDE20.RData"
-FLStockSimfile <- "WHOM_SS20_FLS_V3.RData"
+# stock          <- "WHOM"
+# assess         <- "SS3"
+# assessyear     <- "2020"
+# FLStockfile    <- "WGWIDE20.RData"
+# FLStockSimfile <- "WHOM_SS20_FLS_V3.RData"
 # OM             <- OM2.3                       #WGWIDE SS 2020, stochastic weights, selection
-OM             <- OM2.3.WR                       #WGWIDE SS 2020, wrong reference points
+# OM             <- OM2.3.WR                       #WGWIDE SS 2020, wrong reference points
 
 # WHOM SAM 2019
-# stock          <- "WHOM"
-# assess         <- "SAM"
-# assessyear     <- "2019"
-# FLStockfile    <- "WHOM_SAM19_FLS_WGWIDE.RData"
-# FLStockSimfile <- "WHOM_SAM19_FLS_converged.RData"
-# OM             <- OM2.4                         #WGWIDE SAM 2019, stochastic weights, selection
+stock          <- "WHOM"
+assess         <- "SAM"
+assessyear     <- "2019"
+FLStockfile    <- "WHOM_SAM19_FLS_WGWIDE.RData"
+FLStockSimfile <- "WHOM_SAM19_FLS_converged.RData"
+OM             <- OM2.4                         #WGWIDE SAM 2019, stochastic weights, selection
 # OM             <- OM2.4.WR                         #WGWIDE SAM 2019, stochastic weights, selection
 
 # WHOM SAM 2020
