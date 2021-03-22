@@ -1,5 +1,6 @@
 #Report plots
 
+
 #code to generate plots for the evaluation report
 rm(list=ls())
 gc()
@@ -7,23 +8,26 @@ gc()
 library(tidyverse)
 library(FLCore)
 
+source("EqSimWHM/Scripts/01_EqSim_setup.R")
+
 #computer specific locations
 #Drive    <- "D:"
 #Base.dir <- file.path(Drive,"GIT")
-Drive    <- "C:"
-Base.dir <- file.path(Drive,"Stocks","hom_27_2a4a5b6a7a-ce-k8","MP_MSE")
-MSE.dir <- file.path(Base.dir,"wk_WKREBUILD","EqSimWHM")
-Data.dir <- file.path(MSE.dir,"Data")   
-RData.dir <- file.path(MSE.dir,"RData")
-Res.dir <- file.path(MSE.dir, "Results")
-stats.dir <- file.path(Res.dir, "Stats")
-Scripts.dir <- file.path(MSE.dir, "Scripts")
-Source.dir <- file.path(MSE.dir,"R")
-Rep.dir <- file.path(MSE.dir,"ReportGraphics")
+# Drive    <- "C:"
+# Base.dir <- file.path(Drive,"Stocks","hom_27_2a4a5b6a7a-ce-k8","MP_MSE")
+# MSE.dir <- file.path(Base.dir,"wk_WKREBUILD","EqSimWHM")
+# Data.dir <- file.path(MSE.dir,"Data")   
+# RData.dir <- file.path(MSE.dir,"RData")
+# Res.dir <- file.path(MSE.dir, "Results")
+# stats.dir <- file.path(Res.dir, "Stats")
+# Scripts.dir <- file.path(MSE.dir, "Scripts")
+# Source.dir <- file.path(MSE.dir,"R")
 
-source(file.path(MSE.dir,"R","utilities.R"))
-source(file = file.path(Scripts.dir,"OMs.R"))
-sapply(list.files(path=file.path(Source.dir), pattern=".R", full.names=TRUE), source)
+# source(file.path(MSE.dir,"R","utilities.R"))
+# source(file = file.path(Scripts.dir,"OMs.R"))
+# sapply(list.files(path=file.path(Source.dir), pattern=".R", full.names=TRUE), source)
+
+Rep.dir <- file.path(MSE.dir,"ReportGraphics")
 
 ages <- seq(0,15)
 nAges <- length(ages)
@@ -33,23 +37,43 @@ nits <- 1000
 ##############################DATA################################################################
 
 #historic data (assessments)
-WG17 <- loadRData(file.path(RData.dir,"WGWIDE17.RData")) %>% FLCore::setPlusGroup(., 15)
-name(WG17) <- "Western Horse Mackerel, WGWIDE17 SS Assessment"
-WG18 <- loadRData(file.path(RData.dir,"WGWIDE18.RData")) %>% FLCore::setPlusGroup(., 15)
-name(WG18) <- "Western Horse Mackerel, WGWIDE18 SS Assessment"
+
+# WG17 <- loadRData(file.path(RData.dir,"WGWIDE17.RData")) %>% FLCore::setPlusGroup(., 15)
+# name(WG17) <- "Western Horse Mackerel, WGWIDE17 SS Assessment"
+
+# WG18 <- loadRData(file.path(RData.dir,"WGWIDE18.RData")) %>% FLCore::setPlusGroup(., 15)
+# name(WG18) <- "Western Horse Mackerel, WGWIDE18 SS Assessment"
+
 WG19 <- loadRData(file.path(RData.dir,"WGWIDE19.RData")) %>% FLCore::setPlusGroup(., 15)
 name(WG19) <- "Western Horse Mackerel, WGWIDE19 SS Assessment"
+
 WG20 <- loadRData(file.path(RData.dir,"WGWIDE20.RData")) %>% FLCore::setPlusGroup(., 15)
 name(WG20) <- "Western Horse Mackerel, WGWIDE20 SS Assessment"
 
-yrs_WG19 <- seq(dims(WG19)$minyear,dims(WG19)$maxyear)
+SAM19 <- loadRData(file.path(RData.dir,"WHOM_SAM19_FLS_WGWIDE.RData")) %>% FLCore::setPlusGroup(., 15)
+name(WG19) <- "Western Horse Mackerel, WGWIDE19 SAM Assessment"
+
+SAM20 <- loadRData(file.path(RData.dir,"WHOM_SAM20_FLS_WGWIDE.RData")) %>% FLCore::setPlusGroup(., 15)
+name(WG20) <- "Western Horse Mackerel, WGWIDE20 SAM Assessment"
+
+yrs_WG19  <- seq(dims(WG19)$minyear,dims(WG19)$maxyear)
 nYrs_WG19 <- length(yrs_WG19)
-yrs_WG20 <- seq(dims(WG20)$minyear,dims(WG20)$maxyear)
+
+yrs_WG20  <- seq(dims(WG20)$minyear,dims(WG20)$maxyear)
 nYrs_WG20 <- length(yrs_WG20)
+
+yrs_SAM19  <- seq(dims(SAM19)$minyear,dims(SAM19)$maxyear)
+nYrs_SAM19 <- length(yrs_SAM19)
+
+yrs_SAM20  <- seq(dims(SAM20)$minyear,dims(SAM20)$maxyear)
+nYrs_SAM20 <- length(yrs_SAM20)
 
 #1000 iterations
 FLSs_WG19 <- loadRData(file=file.path(RData.dir,"WHOM_SS19_FLS_V2.RData"))
 FLSs_WG20 <- loadRData(file=file.path(RData.dir,"WHOM_SS20_FLS_V2.RData"))
+
+FLSs_SAM19 <- loadRData(file=file.path(RData.dir,"WHOM_SAM19_FLS_converged.RData"))
+FLSs_SAM20 <- loadRData(file=file.path(RData.dir,"WHOM_SAM20_FLS_converged.RData"))
 
 #alternative recruitment scenarios
 FLSs_RRV5 <- loadRData(file=file.path(RData.dir,"WHOM_SS19_FLS_V5.RData"))  #GM 02-13
@@ -57,14 +81,34 @@ FLSs_RRV6 <- loadRData(file=file.path(RData.dir,"WHOM_SS19_FLS_V6.RData"))  #Bas
 FLSs_RRV7 <- loadRData(file=file.path(RData.dir,"WHOM_SS19_FLS_V7.RData"))  #Lowest 5 Mean
 
 #starting SSBs
-dfInitSSB <- data.frame(Scenario=rep(c("Baseline","GM 02-14","Baseline/2","Mn 5Low"),each=nits),
-                        SSB=c(as.numeric(ssb(FLSs_WG19[,'2018'])),as.numeric(ssb(FLSs_RRV5[,'2018'])),
-                              as.numeric(ssb(FLSs_RRV6[,'2018'])),as.numeric(ssb(FLSs_RRV7[,'2018']))),
-                        iter=rep(seq(1,nits),4))
+# dfInitSSB <- data.frame(Scenario=rep(c("Baseline","GM 02-14","Baseline/2","Mn 5Low"),each=nits),
+#                         SSB=c(as.numeric(ssb(FLSs_WG19[,'2018'])),as.numeric(ssb(FLSs_RRV5[,'2018'])),
+#                               as.numeric(ssb(FLSs_RRV6[,'2018'])),as.numeric(ssb(FLSs_RRV7[,'2018']))),
+#                         iter=rep(seq(1,nits),4))
 
-gInitSSB <- ggplot(data = dfInitSSB, mapping = aes(x=Scenario,y=SSB/1e6)) + geom_boxplot() + 
-  geom_hline(yintercept=834480/1e6, col="red") + scale_x_discrete(limits=c("Baseline","Baseline/2","GM 02-14","Mn 5Low")) +
-  ylab("Initial SSB(Mt)")
+# gInitSSB <- ggplot(data = dfInitSSB, mapping = aes(x=Scenario,y=SSB/1e6)) + geom_boxplot() + 
+#   geom_hline(yintercept=834480/1e6, col="red") + scale_x_discrete(limits=c("Baseline","Baseline/2","GM 02-14","Mn 5Low")) +
+#   ylab("Initial SSB(Mt)")
+
+# SSBs for SS and SAM; different years. 
+dfInitSSB <- 
+  data.frame(Scenario=rep(c("SS19","SS20","SAM19","SAM20"),each=nits),
+             Assess  =rep(c("SS","SS","SAM","SAM"),each=nits),
+             SSB=c(as.numeric(ssb(FLSs_WG19[,'2018'])),
+                   as.numeric(ssb(FLSs_WG20[,'2018'])),
+                   as.numeric(ssb(FLSs_SAM19[,'2018'])),
+                   as.numeric(ssb(FLSs_SAM20[,'2018']))),
+             iter=rep(seq(1,nits),4)) %>% 
+  mutate(blim = ifelse(grepl("SS",Scenario), 834480/1e6, 611814/1e6))
+
+# gInitSSB <- 
+  ggplot(data = dfInitSSB, aes(x=Scenario,y=SSB/1e6)) + 
+    geom_boxplot() + 
+    geom_hline(aes(yintercept=blim), col="red") + 
+    ylab("2018 SSB (Mt)") +
+    expand_limits(y=0) +
+    facet_wrap(~Assess, scales = "free_x")
+  
 
 png(filename = file.path(Rep.dir,"InitSSB_Comparisons.png"),width = 400, height = 600)
 print(gInitSSB)
