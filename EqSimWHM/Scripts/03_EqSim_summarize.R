@@ -103,9 +103,8 @@ sim_summary <-
     max     = max(data, na.rm=TRUE)
   ) 
 
-sim_summary %>% 
-  filter(method=="SAMHCR") %>% 
-  filter(perfstat=="firstyearrebuildtobpa") %>% 
+sim_meta %>% 
+  filter(grepl("OM2\\.2", om)) %>% 
   View()
 
 
