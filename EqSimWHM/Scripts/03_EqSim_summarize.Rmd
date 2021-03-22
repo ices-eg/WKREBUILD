@@ -54,6 +54,7 @@ df <-
   mutate(period = ifelse(is.na(period) & year < (an(assessyear)), "HI",period)) %>% 
   mutate(ftgt = ac(ftgt)) 
 
+# save(df, file="df.RData")
 
 # plot function
 plotvar <- function(mystock      =  "WHOM",
