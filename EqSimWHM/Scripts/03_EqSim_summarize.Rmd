@@ -695,6 +695,97 @@ plotrecovery (
 
 _fig x Simulation summary 2019 assessment, SS3, EqSim. MP5.20 Double BP; MP5.21 Double BP with minimum TAC of 50kT; MP5.23 Double BP with 20% IAV constraint above Btrigger. Minimum F in Double BP is 20% of Fmsy._
 
+### Double breakpoint rule
+
+Simulation summary 2020 assessment, SS3, EqSim.
+
+MP5.20 Double BP; MP5.11 Double BP with minimum TAC of 50kT; MP5.13 Doubl BP with 20% IAV constraint above Btrigger. Minimum F in Double BP is 20% of Fmsy. 
+
+```{r echo=FALSE, fig.align="center", fig.asp=0.65, message=FALSE, warning=FALSE}
+
+plotvar(mystock      = "WHOM",
+        myassess     = "SS3",
+        myassessyear = c("2020"),
+        mymethod     = c("EQSIM"),
+        myom         = c("OM2.3"),
+        mymp         = c("MP5.20","MP5.21","MP5.23"),
+        myftgt       = c(0.0, 0.05, 0.075, 0.10, 0.15),
+        myperfstat   = "stock",
+        mycolour     = "blue",
+        myyintercept = "blim",
+        myvalue      = "median",
+        myfacets     = c("mp","ftgt"),
+        myfirstyear  = 2000)
+
+plotvar(mystock      = "WHOM",
+        myassess     = "SS3",
+        myassessyear = c("2020"),
+        mymethod     = c("EQSIM"),
+        myom         = c("OM2.3"),
+        mymp         = c("MP5.20","MP5.21","MP5.23"),
+        myftgt       = c(0.0, 0.05, 0.075, 0.10, 0.15),
+        myperfstat   = "fbar",
+        mycolour     = "red",
+        myyintercept = "fmsy",
+        myvalue      = "median",
+        myfacets     = c("mp","ftgt"),
+        myfirstyear  = 2000)
+
+plotvar(mystock      = "WHOM",
+        myassess     = "SS3",
+        myassessyear = c("2020"),
+        mymethod     = c("EQSIM"),
+        myom         = c("OM2.3"),
+        mymp         = c("MP5.20","MP5.21","MP5.23"),
+        myftgt       = c(0.0, 0.05, 0.075, 0.10, 0.15),
+        myperfstat   = "rec",
+        mycolour     = "darkgreen",
+        myyintercept = ac(NA),
+        myvalue      = "median",
+        myfacets     = c("mp","ftgt"),
+        myfirstyear  = 2000)
+
+plotvar(mystock      = "WHOM",
+        myassess     = "SS3",
+        myassessyear = c("2020"),
+        mymethod     = c("EQSIM"),
+        myom         = c("OM2.3"),
+        mymp         = c("MP5.20","MP5.21","MP5.23"),
+        myftgt       = c(0.0, 0.05, 0.075, 0.10, 0.15),
+        myperfstat   = "catch",
+        mycolour     = "brown",
+        myyintercept = ac(NA),
+        myvalue      = "median",
+        myfacets     = c("mp","ftgt"),
+        myfirstyear  = 2000)
+
+plotpblim (
+        mystock      = "WHOM",
+        myassess     = "SS3",
+        myassessyear = c("2020"),
+        mymethod     = c("EQSIM"),
+        myom         = c("OM2.3"),
+        mymp         = c("MP5.20","MP5.21","MP5.23"),
+        myftgt       = c(0.0, 0.05, 0.075, 0.10, 0.15),
+        myfacets     = c("mp","ftgt"),
+        myfirstyear  = 2000)
+
+plotrecovery (
+        mystock      = "WHOM",
+        myassess     = "SS3",
+        myassessyear = c("2020"),
+        mymethod     = c("EQSIM"),
+        myom         = c("OM2.3"),
+        mymp         = c("MP5.20","MP5.21","MP5.23"),
+        myftgt       = c(0.0, 0.05, 0.075, 0.10, 0.15),
+        myyintercept = 0.5,
+        myfacets     = c("mp","ftgt"),
+        myfirstyear  = 2000)
+
+```
+
+_fig x Simulation summary 2019 assessment, SS3, EqSim. MP5.20 Double BP; MP5.21 Double BP with minimum TAC of 50kT; MP5.23 Double BP with 20% IAV constraint above Btrigger. Minimum F in Double BP is 20% of Fmsy._
+
 ## SAM assessments in EqSim simulator
 
 ### ICES advice rule
