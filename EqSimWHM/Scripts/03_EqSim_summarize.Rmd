@@ -1447,30 +1447,17 @@ t <-
   mutate(rpscenario = gsub("OM2\\.2|OM2\\.3|OM2\\.4|OM2\\.5","", om)) %>% 
   mutate(rpscenario = gsub("^\\.","", rpscenario)) %>% 
   mutate(rpscenario = ifelse(rpscenario=="", "def", rpscenario)) %>% 
-  mutate(scenario    = paste(assess, assessyear)) %>% 
+  mutate(scenario   = paste(assess, assessyear)) %>% 
   group_by(assessyear, scenario, rpscenario, mp, perfstat, ftgt) %>% 
   filter(mean >= rebuiltThreshold) %>% 
   group_by(assessyear, method, scenario, rpscenario, mp, perfstat, ftgt) %>%
-  summarise(year = min(year)) 
+  summarise(year = min(year)) %>% 
+  mutate(assessment = stringr::word(scenario, 1, sep=" ")) %>% 
+  mutate(assessmentyear = stringr::word(scenario, 2, sep=" ")) 
 
-t1 <-
-  t %>% 
-  filter(ftgt == 0.0) %>% 
-  dplyr::select(ftgt, year, perfstat, scenario, rpscenario)
 
-t2 <-
-  t %>% 
-  group_by(scenario, rpscenario, perfstat) %>% 
-  filter(ftgt == max(ftgt, na.rm=TRUE)) %>% 
-  dplyr::select(ftgt, year, perfstat, scenario, rpscenario)
-
-t3 <-
-  t %>% 
-  filter(ftgt == 0.075) %>% 
-  group_by(scenario, rpscenario, perfstat) %>% 
-  filter(ftgt == max(ftgt, na.rm=TRUE)) %>% 
-  dplyr::select(ftgt, year, perfstat, scenario, rpscenario)
-
+# t %>% ungroup() %>% distinct(scenario, rpscenario) %>% View()
+# t %>% filter(ftgt==0.10, perfstat=="precbpa") %>% View()
 t %>% 
   reshape2::dcast(perfstat+scenario+rpscenario ~ ftgt, value.var="year", sum, fill=Inf, margins=FALSE) %>% 
   group_by(perfstat) %>%
@@ -1486,24 +1473,66 @@ t %>%
                big.mark     = '', 
                round        = c(0))
 
+
+t1 <-
+  t %>% 
+  filter(ftgt == 0.0) %>% 
+  filter(perfstat == "precbpa") %>% 
+  dplyr::select(ftgt, year, perfstat, scenario, rpscenario, assessment, assessmentyear)
+
+t2 <-
+  t %>% 
+  group_by(scenario, rpscenario, perfstat) %>% 
+  filter(ftgt == max(ftgt, na.rm=TRUE)) %>% 
+  filter(perfstat == "precbpa") %>% 
+  dplyr::select(ftgt, year, perfstat, scenario, rpscenario, assessment, assessmentyear)
+
+t3 <-
+  t %>% 
+  filter(ftgt == 0.075) %>% 
+  group_by(scenario, rpscenario, perfstat) %>% 
+  filter(ftgt == max(ftgt, na.rm=TRUE)) %>% 
+  filter(perfstat == "precbpa") %>% 
+  dplyr::select(ftgt, year, perfstat, scenario, rpscenario, assessment, assessmentyear)
+
+# t %>% 
+#   group_by(scenario) %>% 
+#   mutate(id = group_indices()) %>% 
+#   mutate(offset = id * 0.1) %>% 
+#   mutate(year = year + offset) %>% 
+#   
+#   ggplot(aes(x=ftgt, y=year, group=scenario)) +
+#   theme_publication() +
+#   geom_point(aes(colour=scenario)) +
+#   geom_line(aes(colour=scenario)) +
+#   ggrepel::geom_text_repel(data=t1, aes(x=ftgt, y=year, label=ac(year), colour=scenario), 
+#                            force_pull = 0.5, nudge_x = -0.5,direction = "y", hjust = "right") +
+#   ggrepel::geom_text_repel(data=t2, aes(x=ftgt, y=year, label=ac(year), colour=scenario), 
+#                            force_pull = 0.5, nudge_x = 0.5,direction = "y", hjust = "left") +
+#   ggrepel::geom_text_repel(data=t3, aes(x=ftgt, y=year, label=ac(year), colour=scenario), 
+#                            force_pull = 0.5, nudge_x = 0.0,direction = "y", hjust = "middle") +
+#   # scale_y_continuous(limits=c(2020,2040),breaks=seq(2020,2040,5)) +
+#   facet_grid(perfstat~rpscenario)
+
+
 t %>% 
   group_by(scenario) %>% 
   mutate(id = group_indices()) %>% 
   mutate(offset = id * 0.1) %>% 
   mutate(year = year + offset) %>% 
+  filter(perfstat=="precbpa") %>% 
   
   ggplot(aes(x=ftgt, y=year, group=scenario)) +
   theme_publication() +
-  geom_point(aes(colour=scenario)) +
-  geom_line(aes(colour=scenario)) +
-  ggrepel::geom_text_repel(data=t1, aes(x=ftgt, y=year, label=ac(year), colour=scenario), 
+  geom_point(aes(colour=assessmentyear)) +
+  geom_line(aes(colour=assessmentyear)) +
+  ggrepel::geom_text_repel(data=t1, aes(x=ftgt, y=year, label=ac(year), colour=assessmentyear), 
                            force_pull = 0.5, nudge_x = -0.5,direction = "y", hjust = "right") +
-  ggrepel::geom_text_repel(data=t2, aes(x=ftgt, y=year, label=ac(year), colour=scenario), 
+  ggrepel::geom_text_repel(data=t2, aes(x=ftgt, y=year, label=ac(year), colour=assessmentyear), 
                            force_pull = 0.5, nudge_x = 0.5,direction = "y", hjust = "left") +
-  ggrepel::geom_text_repel(data=t3, aes(x=ftgt, y=year, label=ac(year), colour=scenario), 
+  ggrepel::geom_text_repel(data=t3, aes(x=ftgt, y=year, label=ac(year), colour=assessmentyear), 
                            force_pull = 0.5, nudge_x = 0.0,direction = "y", hjust = "middle") +
   # scale_y_continuous(limits=c(2020,2040),breaks=seq(2020,2040,5)) +
-  facet_grid(perfstat~rpscenario)
-
+  facet_grid(assessment~rpscenario)
 
 ```
